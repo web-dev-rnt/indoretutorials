@@ -1,0 +1,517 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - All Courses{% endblock %}
+
+{% block content %}
+<style>
+    /* Category Hero */
+    .category-hero {
+        background: linear-gradient(135deg, #e1e8fa 0%, #f8f9fd 100%);
+        padding: 50px 20px 40px 20px;
+        text-align: center;
+        box-shadow: 0 4px 40px #ececfc;
+        margin-bottom: 40px;
+    }
+    
+    .category-hero h1 {
+        font-size: 2.4rem;
+        font-weight: 900;
+        color: #c7212f;
+        letter-spacing: .5px;
+        margin-bottom: 12px;
+    }
+    
+    .category-hero h1 i {
+        margin-right: 12px;
+        color: #c7212f;
+    }
+    
+    .category-hero > p {
+        font-size: 1.15rem;
+        color: #212121;
+        max-width: 900px;
+        margin: 0 auto 24px;
+        line-height: 1.6;
+    }
+    
+    .category-stats {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 4px 20px #f4f4f4;
+        width: 154px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 0 18px 0;
+        transition: box-shadow .2s, transform .2s;
+        margin-bottom: 12px;
+    }
+    
+    .stat-item:hover {
+        box-shadow: 0 10px 30px #e6e2e2;
+        transform: translateY(-2px);
+    }
+    
+    .stat-item i {
+        font-size: 30px;
+        margin-bottom: 8px;
+    }
+    
+    .stat-item:nth-child(1) i { color: #fa5623; }
+    .stat-item:nth-child(2) i { color: #7c44fe; }
+    .stat-item:nth-child(3) i { color: #15b650; }
+    .stat-item:nth-child(4) i { color: #26bfa9; }
+    .stat-item:nth-child(5) i { color: #ccb620; }
+    
+    .stat-number {
+        font-size: 20px;
+        color: #202133;
+        font-weight: bold;
+    }
+    
+    .stat-label {
+        font-size: 15px;
+        color: #5c606e;
+        margin-top: 4px;
+    }
+    
+    /* Category Content - SAME AS SEARCH RESULTS */
+    .category-content {
+        max-width: 1200px;
+        margin: 0 auto 40px auto;
+        padding: 0 20px;
+    }
+    
+    .results-section {
+        margin-bottom: 50px;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e5e5e5;
+    }
+    
+    .section-header h2 {
+        font-size: 22px;
+        color: #333;
+        margin: 0;
+    }
+    
+    .section-count {
+        background: #c7212f;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+    }
+    
+    .course-card {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .course-card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        text-decoration: none;
+    }
+    
+    .course-thumbnail {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: block;
+    }
+    
+    .course-content {
+        padding: 16px;
+    }
+    
+    .course-type-badge {
+        display: inline-block;
+        background: #e8f0fe;
+        color: #1967d2;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .course-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .course-meta {
+        display: flex;
+        gap: 12px;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .course-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .course-price {
+        font-size: 18px;
+        color: #c7212f;
+        font-weight: 700;
+    }
+    
+    /* No Courses */
+    .no-courses-container {
+        background: #fafafd;
+        padding: 80px 20px;
+        margin: 40px auto;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px #e2eaf2;
+        text-align: center;
+        max-width: 600px;
+    }
+    
+    .no-courses-container i {
+        font-size: 64px;
+        color: #ddd;
+        margin-bottom: 24px;
+    }
+    
+    .no-courses-container h2 {
+        font-size: 1.85rem;
+        color: #232540;
+        font-weight: 900;
+        margin-bottom: 14px;
+        letter-spacing: 0.5px;
+    }
+    
+    .no-courses-container p {
+        color: #313244;
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        line-height: 1.6;
+    }
+    
+    .back-btn {
+        display: inline-block;
+        margin-top: 20px;
+        background: #c7212f;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 20px;
+        padding: 11px 32px;
+        font-size: 1.05em;
+        font-weight: 700;
+        letter-spacing: .04em;
+        transition: background .17s, box-shadow .14s;
+        box-shadow: 0 2px 12px #c7212f25;
+    }
+    
+    .back-btn:hover {
+        background: #9d1827;
+        color: #fff;
+        text-decoration: none;
+        box-shadow: 0 4px 16px #c7212f35;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .category-hero {
+            padding: 32px 12px 28px 12px;
+        }
+        
+        .category-hero h1 {
+            font-size: 1.65rem;
+        }
+        
+        .category-stats {
+            gap: 15px;
+        }
+        
+        .stat-item {
+            width: 130px;
+            padding: 16px 0 14px 0;
+        }
+        
+        .course-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        
+        .category-content {
+            margin: 20px auto;
+        }
+    }
+</style>
+
+<!-- Category Hero Section -->
+<div class="category-hero">
+    <h1><i class="fa fa-folder-open"></i> {{ category.name }}</h1>
+    <p>{{ category.description|default:"Explore our comprehensive collection of courses in this category" }}</p>
+    
+    <div class="category-stats">
+        <div class="stat-item">
+            <i class="fa fa-graduation-cap"></i>
+            <div>
+                <div class="stat-number">{{ total_courses }}</div>
+                <div class="stat-label">Total Courses</div>
+            </div>
+        </div>
+        
+        {% if video_courses.count > 0 %}
+        <div class="stat-item">
+            <i class="fa fa-play-circle"></i>
+            <div>
+                <div class="stat-number">{{ video_courses.count }}</div>
+                <div class="stat-label">Video Courses</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if live_courses.count > 0 %}
+        <div class="stat-item">
+            <i class="fa fa-video-camera"></i>
+            <div>
+                <div class="stat-number">{{ live_courses.count }}</div>
+                <div class="stat-label">Live Classes</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if test_series.count > 0 %}
+        <div class="stat-item">
+            <i class="fa fa-file-text"></i>
+            <div>
+                <div class="stat-number">{{ test_series.count }}</div>
+                <div class="stat-label">Test Series</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if elibrary_courses.count > 0 %}
+        <div class="stat-item">
+            <i class="fa fa-book"></i>
+            <div>
+                <div class="stat-number">{{ elibrary_courses.count }}</div>
+                <div class="stat-label">E-Library</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="category-content">
+    {% if total_courses > 0 %}
+        
+        <!-- Video Courses Section -->
+        {% if video_courses %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Video Courses</h2>
+                <span class="section-count">{{ video_courses.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for course in video_courses %}
+                <a href="{% url 'video_course_detail' course.pk %}" class="course-card">
+                    {% if course.thumbnail %}
+                        <img src="{{ course.thumbnail.url }}" 
+                             alt="{{ course.name }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #1967d2 0%, #4285f4 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-play-circle\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #1967d2 0%, #4285f4 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-play-circle" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge">Video Course</span>
+                        <h3 class="course-title">{{ course.name }}</h3>
+                        <div class="course-meta">
+                            {% if course.total_hours %}
+                            <span><i class="fa fa-clock-o"></i> {{ course.total_hours }}h</span>
+                            {% endif %}
+                            {% if course.rating %}
+                            <span><i class="fa fa-star"></i> {{ course.rating }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">₹{{ course.selling_price }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Live Classes Section -->
+        {% if live_courses %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Live Classes</h2>
+                <span class="section-count">{{ live_courses.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for course in live_courses %}
+                <a href="{% url 'live_class_detail' course.pk %}" class="course-card">
+                    {% if course.banner_image_desktop %}
+                        <img src="{{ course.banner_image_desktop.url }}" 
+                             alt="{{ course.name }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #f57c00 0%, #ff9800 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-video-camera\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-video-camera" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #fef3e8; color: #f57c00;">Live Class</span>
+                        <h3 class="course-title">{{ course.name }}</h3>
+                        <div class="course-meta">
+                            {% if course.language %}
+                            <span><i class="fa fa-language"></i> {{ course.language }}</span>
+                            {% endif %}
+                            {% if course.start_date %}
+                            <span><i class="fa fa-calendar"></i> {{ course.start_date|date:"M d, Y" }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">₹{{ course.current_price }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Test Series Section -->
+        {% if test_series %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Test Series</h2>
+                <span class="section-count">{{ test_series.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for series in test_series %}
+                <a href="{% url 'front_exam_series_detail' series.pk %}" class="course-card">
+                    {% if series.thumbnail %}
+                        <img src="{{ series.thumbnail.url }}" 
+                             alt="{{ series.title }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #2e7d32 0%, #4caf50 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-file-text-o\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-file-text-o" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #e8f5e9; color: #2e7d32;">Test Series</span>
+                        <h3 class="course-title">{{ series.title }}</h3>
+                        <div class="course-meta">
+                            {% if series.total_tests %}
+                            <span><i class="fa fa-file-text-o"></i> {{ series.total_tests }} Tests</span>
+                            {% endif %}
+                            {% if series.difficulty %}
+                            <span><i class="fa fa-signal"></i> {{ series.difficulty|title }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">
+                            {% if series.is_free %}Free{% else %}₹{{ series.price }}{% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- E-Library Section -->
+        {% if elibrary_courses %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>E-Library</h2>
+                <span class="section-count">{{ elibrary_courses.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for course in elibrary_courses %}
+                <a href="{% url 'elibrary_course_detail' course.pk %}" class="course-card">
+                    {% if course.cover_image %}
+                        <img src="{{ course.cover_image.url }}" 
+                             alt="{{ course.title }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-book\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-book" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #f3e5f5; color: #7b1fa2;">E-Library</span>
+                        <h3 class="course-title">{{ course.title }}</h3>
+                        <div class="course-meta">
+                            {% if course.total_pdfs %}
+                            <span><i class="fa fa-file-pdf-o"></i> {{ course.total_pdfs }} PDFs</span>
+                            {% endif %}
+                            {% if course.total_pages %}
+                            <span><i class="fa fa-file-o"></i> {{ course.total_pages }} Pages</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">₹{{ course.current_price }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- No Courses Available -->
+        <div class="no-courses-container">
+            <i class="fa fa-folder-open-o"></i>
+            <h2>No Courses Available</h2>
+            <p>There are currently no courses available in the {{ category.name }} category.</p>
+            <p style="margin-bottom: 20px;">Check back soon for new courses or explore other categories</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

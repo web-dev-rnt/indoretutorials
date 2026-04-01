@@ -1,0 +1,323 @@
+<!-- message.html -->
+{% if messages %}
+<div class="admin-message-container">
+    {% for message in messages %}
+    <div class="admin-message admin-message-{{ message.tags }} {% if forloop.first %}admin-message-show{% endif %}" 
+         data-admin-message-id="{{ forloop.counter }}">
+        <div class="admin-message-content">
+            <div class="admin-message-icon">
+                {% if message.tags == 'success' %}
+                    <span class="admin-icon-success">✅</span>
+                {% elif message.tags == 'error' %}
+                    <span class="admin-icon-error">❌</span>
+                {% elif message.tags == 'warning' %}
+                    <span class="admin-icon-warning">⚠️</span>
+                {% elif message.tags == 'info' %}
+                    <span class="admin-icon-info">ℹ️</span>
+                {% else %}
+                    <span class="admin-icon-default">📢</span>
+                {% endif %}
+            </div>
+            <div class="admin-message-text">
+                <div class="admin-message-title">
+                    {% if message.tags == 'success' %}
+                        Success!
+                    {% elif message.tags == 'error' %}
+                        Error!
+                    {% elif message.tags == 'warning' %}
+                        Warning!
+                    {% elif message.tags == 'info' %}
+                        Information
+                    {% else %}
+                        Notification
+                    {% endif %}
+                </div>
+                <div class="admin-message-body">{{ message|safe }}</div>
+            </div>
+            <button class="admin-message-close" onclick="closeAdminMessage({{ forloop.counter }})">
+                <span>&times;</span>
+            </button>
+        </div>
+        <div class="admin-message-progress"></div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+/* Namespaced admin message styles to avoid conflicts */
+.admin-message-container {
+    position: fixed;
+    top: 80px; /* Adjusted to not overlap with your topbar */
+    right: 20px;
+    z-index: 99999; /* Higher z-index to ensure visibility */
+    max-width: 400px;
+    width: auto;
+    min-width: 300px;
+    pointer-events: none; /* Allow clicks through container */
+}
+
+.admin-message {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid;
+    pointer-events: auto; /* Enable clicks on messages */
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.admin-message.admin-message-show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.admin-message-success {
+    border-left-color: var(--ad-success, #10b981);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.admin-message-error {
+    border-left-color: var(--ad-danger, #ef4444);
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.admin-message-warning {
+    border-left-color: var(--ad-warning, #f59e0b);
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.admin-message-info {
+    border-left-color: var(--ad-accent, #3b82f6);
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.admin-message-default {
+    border-left-color: #6b7280;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.admin-message-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px 18px;
+    gap: 12px;
+}
+
+.admin-message-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    margin-top: 1px;
+}
+
+.admin-message-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-message-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.admin-message-body {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.admin-message-body strong {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.admin-message-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-top: -2px;
+}
+
+.admin-message-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #374151;
+}
+
+.admin-message-progress {
+    height: 3px;
+    background: rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-message-progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    transform: translateX(-100%);
+    animation: adminMessageProgress 6s linear forwards;
+}
+
+.admin-message-success .admin-message-progress::after {
+    background: var(--ad-success, #10b981);
+}
+
+.admin-message-error .admin-message-progress::after {
+    background: var(--ad-danger, #ef4444);
+}
+
+.admin-message-warning .admin-message-progress::after {
+    background: var(--ad-warning, #f59e0b);
+}
+
+.admin-message-info .admin-message-progress::after {
+    background: var(--ad-accent, #3b82f6);
+}
+
+.admin-message-default .admin-message-progress::after {
+    background: #6b7280;
+}
+
+@keyframes adminMessageProgress {
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .admin-message-container {
+        right: 12px;
+        left: 12px;
+        max-width: none;
+        top: 70px; /* Adjusted for mobile topbar */
+    }
+    
+    .admin-message-content {
+        padding: 14px 16px;
+    }
+    
+    .admin-message-title {
+        font-size: 13px;
+    }
+    
+    .admin-message-body {
+        font-size: 12px;
+    }
+}
+
+/* Special adjustments for your admin layout */
+@media (min-width: 768px) {
+    .admin-message-container {
+        right: 40px; /* More space from edge on desktop */
+    }
+}
+
+/* Ensure messages don't interfere with dropdowns or modals */
+.admin-message-container {
+    pointer-events: none;
+}
+
+.admin-message {
+    pointer-events: auto;
+}
+
+/* Hover effects */
+.admin-message:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.admin-message:hover .admin-message-progress::after {
+    animation-play-state: paused;
+}
+</style>
+
+<script>
+// Namespaced JavaScript to avoid conflicts
+(function() {
+    // Auto-hide messages after 6 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const adminMessages = document.querySelectorAll('.admin-message');
+        
+        adminMessages.forEach((message, index) => {
+            // Show message with staggered delay
+            setTimeout(() => {
+                message.classList.add('admin-message-show');
+            }, index * 150);
+            
+            // Auto-hide after 6 seconds (pause on hover)
+            let autoHideTimeout = setTimeout(() => {
+                closeAdminMessage(message.dataset.adminMessageId);
+            }, 6000 + (index * 150));
+            
+            // Pause auto-hide on hover
+            message.addEventListener('mouseenter', () => {
+                clearTimeout(autoHideTimeout);
+            });
+            
+            // Resume auto-hide on mouse leave
+            message.addEventListener('mouseleave', () => {
+                autoHideTimeout = setTimeout(() => {
+                    closeAdminMessage(message.dataset.adminMessageId);
+                }, 2000); // 2 seconds after mouse leave
+            });
+        });
+    });
+
+    // Global function for closing admin messages
+    window.closeAdminMessage = function(messageId) {
+        const message = document.querySelector(`[data-admin-message-id="${messageId}"]`);
+        if (message) {
+            message.style.transform = 'translateX(100%)';
+            message.style.opacity = '0';
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                    
+                    // Remove container if no messages left
+                    const container = document.querySelector('.admin-message-container');
+                    if (container && !container.querySelector('.admin-message')) {
+                        container.remove();
+                    }
+                }
+            }, 400);
+        }
+    };
+
+    // Close all messages when pressing Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const adminMessages = document.querySelectorAll('.admin-message');
+            adminMessages.forEach((message, index) => {
+                setTimeout(() => {
+                    closeAdminMessage(message.dataset.adminMessageId);
+                }, index * 50);
+            });
+        }
+    });
+})();
+</script>
+{% endif %}

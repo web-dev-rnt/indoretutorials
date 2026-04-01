@@ -1,0 +1,431 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+{% include 'message.html' %}
+
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-elibrary-list { display: none; }
+
+    .mobile-elibrary-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .mel-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .mel-thumb {
+        width: 50px;
+        height: 35px;
+        object-fit: cover;
+        border-radius: 6px;
+        flex-shrink: 0;
+    }
+
+    .mel-thumb-placeholder {
+        width: 50px;
+        height: 35px;
+        background: var(--admin-primary-100);
+        color: var(--admin-primary);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .mel-title { font-weight: 600; font-size: 14px; color: #1f2937; }
+    .mel-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+
+    .mel-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .mel-row:last-child { border-bottom: none; }
+    .mel-label { color: #6b7280; font-weight: 500; white-space: nowrap; min-width: 90px; }
+    .mel-value { color: #1f2937; text-align: right; word-break: break-word; }
+
+    .mel-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .mel-actions .action-btn {
+        flex: 1;
+        justify-content: center;
+        gap: 4px;
+        font-size: 13px;
+        padding: 7px 4px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        cursor: pointer;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s;
+        color: var(--admin-text);
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .mel-actions .delete-course-btn {
+        flex: 1;
+        justify-content: center;
+        gap: 4px;
+        font-size: 13px;
+        padding: 7px 4px;
+        border: 1px solid #fecaca;
+        background: white;
+        cursor: pointer;
+        border-radius: 6px;
+        color: #dc2626;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .desktop-elibrary-table { display: none; }
+        .mobile-elibrary-list   { display: block; }
+
+        /* Stack filters vertically */
+        .admin-filters form {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        .admin-filter-input,
+        .admin-filter-select { width: 100%; }
+    }
+</style>
+
+<div class="wrapper">
+    <h1 class="h1">E-Library Course Management</h1>
+    <p class="small">Manage digital courses and PDF collections for students</p>
+
+    <!-- Statistics -->
+    <section class="admin-kpis">
+        <div class="admin-kpi">
+            <div class="admin-kpi-ico">📚</div>
+            <div>
+                <div class="admin-kpi-label">Total Courses</div>
+                <div class="admin-kpi-value">{{ stats.total_courses }}</div>
+            </div>
+        </div>
+        <div class="admin-kpi">
+            <div class="admin-kpi-ico">✅</div>
+            <div>
+                <div class="admin-kpi-label">Active Courses</div>
+                <div class="admin-kpi-value">{{ stats.active_courses }}</div>
+            </div>
+        </div>
+        <div class="admin-kpi">
+            <div class="admin-kpi-ico">👥</div>
+            <div>
+                <div class="admin-kpi-label">Enrollments</div>
+                <div class="admin-kpi-value">{{ stats.total_enrollments }}</div>
+            </div>
+        </div>
+        <div class="admin-kpi">
+            <div class="admin-kpi-ico">💰</div>
+            <div>
+                <div class="admin-kpi-label">Total Revenue</div>
+                <div class="admin-kpi-value">₹{{ stats.total_revenue|floatformat:0 }}</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="panel">
+        <div class="nav-buttons">
+            <a href="{% url 'elibrary_course_create' %}" class="btn btn-primary">➕ Create New Course</a>
+            <a href="{% url 'manage_categories' %}" class="btn">📂 Manage Categories</a>
+        </div>
+
+        <!-- Filters -->
+        <div class="admin-card-hd">
+            <h3>E-Library Courses</h3>
+            <div class="admin-filters">
+                <form method="get" style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;flex-wrap:wrap;">
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search courses, instructor, tags..." class="admin-filter-input"/>
+                    <select name="category" class="admin-filter-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="difficulty" class="admin-filter-select">
+                        <option value="">All Levels</option>
+                        {% for code, name in difficulty_choices %}
+                            <option value="{{ code }}" {% if difficulty_filter == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="status" class="admin-filter-select">
+                        <option value="">All Status</option>
+                        <option value="active"   {% if status_filter == 'active'   %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="free"     {% if status_filter == 'free'     %}selected{% endif %}>Free Courses</option>
+                        <option value="paid"     {% if status_filter == 'paid'     %}selected{% endif %}>Paid Courses</option>
+                    </select>
+                    <button type="submit" class="admin-filter-btn">Filter</button>
+                    {% if search_query or category_filter or difficulty_filter or status_filter %}
+                        <a href="{% url 'elibrary_manage' %}" class="btn">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <div class="admin-card-bd">
+            {% if page_obj %}
+
+                <!-- Desktop table -->
+                <div class="table-wrapper desktop-elibrary-table">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Category</th>
+                                <th>Instructor</th>
+                                <th>Price</th>
+                                <th>PDFs</th>
+                                <th>Enrollments</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in page_obj %}
+                            <tr class="user-row">
+                                <td>
+                                    <div class="user-info">
+                                        {% if course.cover_image %}
+                                            <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" style="width:50px;height:35px;object-fit:cover;border-radius:6px;">
+                                        {% else %}
+                                            <div style="width:50px;height:35px;background:var(--admin-primary-100);color:var(--admin-primary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;">📚</div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="user-name">{{ course.title }}</div>
+                                            <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
+                                                {% if course.is_free %}<span class="badge" style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-weight:600;">🎁 FREE</span>{% endif %}
+                                                {% if course.is_featured %}<span class="badge" style="background:#fef3c7;color:#f59e0b;">Featured</span>{% endif %}
+                                                {% if course.is_bestseller %}<span class="badge" style="background:#fce7f3;color:#ec4899;">Bestseller</span>{% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ course.category.name }}</td>
+                                <td>{{ course.instructor }}</td>
+                                <td>
+                                    <div class="date-cell">
+                                        {% if course.is_free %}
+                                            <span class="date-primary" style="color:#10b981;font-weight:600;">FREE</span>
+                                        {% elif course.has_discount %}
+                                            <span class="date-primary" style="color:var(--admin-primary);">₹{{ course.current_price }}</span>
+                                            <span class="date-secondary" style="text-decoration:line-through;">₹{{ course.price }}</span>
+                                        {% else %}
+                                            <span class="date-primary" style="color:var(--admin-primary);">₹{{ course.price }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ course.total_pdfs }}</td>
+                                <td>{{ course.enrollment_count }}</td>
+                                <td>
+                                    {% if course.is_active %}
+                                        <span class="status-badge status-active">Active</span>
+                                    {% else %}
+                                        <span class="status-badge status-inactive">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'elibrary_course_detail' course.pk %}" class="action-btn" title="View"><i class="fas fa-eye"></i></a>
+                                        <a href="{% url 'elibrary_course_edit' course.pk %}" class="action-btn" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <a href="{% url 'elibrary_toggle_course_status' course.pk %}" class="action-btn" title="{% if course.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                            <i class="fas fa-{% if course.is_active %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                                        </a>
+                                        <button type="button" class="action-btn delete-course-btn"
+                                                data-course-id="{{ course.pk }}"
+                                                data-course-title="{{ course.title }}"
+                                                data-course-pdfs="{{ course.total_pdfs }}"
+                                                title="Delete Course"
+                                                style="color:#dc2626;background:none;border:none;cursor:pointer;padding:6px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <form method="post" action="{% url 'elibrary_course_delete' course.pk %}" class="delete-form" id="delete-form-{{ course.pk }}" style="display:none;">
+                                        {% csrf_token %}
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile cards -->
+                <div class="mobile-elibrary-list">
+                    {% for course in page_obj %}
+                    <div class="mobile-elibrary-card">
+
+                        <div class="mel-header">
+                            {% if course.cover_image %}
+                                <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" class="mel-thumb">
+                            {% else %}
+                                <div class="mel-thumb-placeholder">📚</div>
+                            {% endif %}
+                            <div>
+                                <div class="mel-title">{{ course.title }}</div>
+                                <div class="mel-badges">
+                                    {% if course.is_free %}<span class="badge" style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;">🎁 FREE</span>{% endif %}
+                                    {% if course.is_featured %}<span class="badge" style="background:#fef3c7;color:#f59e0b;font-size:11px;padding:2px 6px;border-radius:4px;">Featured</span>{% endif %}
+                                    {% if course.is_bestseller %}<span class="badge" style="background:#fce7f3;color:#ec4899;font-size:11px;padding:2px 6px;border-radius:4px;">Bestseller</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mel-row">
+                            <span class="mel-label">Category</span>
+                            <span class="mel-value">{{ course.category.name }}</span>
+                        </div>
+                        <div class="mel-row">
+                            <span class="mel-label">Instructor</span>
+                            <span class="mel-value">{{ course.instructor }}</span>
+                        </div>
+                        <div class="mel-row">
+                            <span class="mel-label">Price</span>
+                            <span class="mel-value">
+                                {% if course.is_free %}
+                                    <span style="color:#10b981;font-weight:600;">FREE</span>
+                                {% elif course.has_discount %}
+                                    <span style="color:var(--admin-primary);font-weight:600;">₹{{ course.current_price }}</span>
+                                    <span style="color:#9ca3af;text-decoration:line-through;font-size:11px;margin-left:4px;">₹{{ course.price }}</span>
+                                {% else %}
+                                    <span style="color:var(--admin-primary);font-weight:600;">₹{{ course.price }}</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="mel-row">
+                            <span class="mel-label">PDFs</span>
+                            <span class="mel-value">{{ course.total_pdfs }}</span>
+                        </div>
+                        <div class="mel-row">
+                            <span class="mel-label">Enrollments</span>
+                            <span class="mel-value">{{ course.enrollment_count }}</span>
+                        </div>
+                        <div class="mel-row">
+                            <span class="mel-label">Status</span>
+                            <span class="mel-value">
+                                {% if course.is_active %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">Inactive</span>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="mel-actions">
+                            <a href="{% url 'elibrary_course_detail' course.pk %}" class="action-btn" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'elibrary_course_edit' course.pk %}" class="action-btn" title="Edit"><i class="fas fa-edit"></i></a>
+                            <a href="{% url 'elibrary_toggle_course_status' course.pk %}" class="action-btn">
+                                <i class="fas fa-{% if course.is_active %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                            </a>
+                            <button type="button" class="delete-course-btn"
+                                    data-course-id="{{ course.pk }}"
+                                    data-course-title="{{ course.title }}"
+                                    data-course-pdfs="{{ course.total_pdfs }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Hidden delete form -->
+                        <form method="post" action="{% url 'elibrary_course_delete' course.pk %}" id="delete-form-{{ course.pk }}" style="display:none;">
+                            {% csrf_token %}
+                        </form>
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination-wrapper">
+                    <div class="pagination-info">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} courses
+                    </div>
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">First</a>
+                            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">Previous</a>
+                        {% endif %}
+                        <span class="page-btn page-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">Next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if difficulty_filter %}&difficulty={{ difficulty_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-btn">Last</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div class="empty-state" style="text-align:center;">
+                    <div class="empty-icon" style="font-size:48px;margin-bottom:16px;">📚</div>
+                    <h3 class="empty-title">No courses found</h3>
+                    <p class="empty-text">
+                        {% if search_query or category_filter or difficulty_filter or status_filter %}Try adjusting your filters or {% endif %}
+                        <a href="{% url 'elibrary_course_create' %}">create your first course</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.delete-course-btn').forEach(function (button) {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            const courseId    = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            const coursePdfs  = this.getAttribute('data-course-pdfs');
+
+            const confirmed = confirm(
+                '⚠️ DELETE ENTIRE COURSE?\n\n' +
+                'Course: "' + courseTitle + '"\n' +
+                'Total PDFs: ' + coursePdfs + '\n\n' +
+                'This will permanently delete:\n' +
+                '• All ' + coursePdfs + ' PDF files from storage\n' +
+                '• Course cover image and preview PDF\n' +
+                '• All enrollment records\n' +
+                '• All download statistics\n\n' +
+                'Students will lose access to this content!\n\n' +
+                'This action CANNOT be undone!\n\n' +
+                'Are you absolutely sure?'
+            );
+
+            if (confirmed) {
+                const form = document.getElementById('delete-form-' + courseId);
+                if (form) form.submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

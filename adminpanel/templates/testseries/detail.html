@@ -1,0 +1,139 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}{{ test_series.title }} - Tests{% endblock %}
+{% include 'message.html' %}
+{% block content %}
+<div class="wrapper">
+  <!-- Breadcrumb -->
+  <div style="margin-bottom: 20px; padding: 8px 0; border-bottom: 1px solid #e9ecf3;">
+    <a href="{% url 'test_series_manage' %}" style="color: #6366f1; text-decoration: none;">📚 Test Series Course</a> 
+    <span style="color: #6b7280;"> / </span>
+    <span style="color: #374151; font-weight: 600;">{{ test_series.title }}</span>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <h1 class="h1">{{ test_series.title }}</h1>
+      <p class="small">{{ test_series.category.name }} • {{ test_series.get_difficulty_display }} Level</p>
+    </div>
+    
+    <!-- Series Stats -->
+    <div style="display: flex; gap: 15px;">
+      <div style="text-align: center; padding: 10px; background: #eff6ff; border-radius: 8px;">
+        <div style="font-size: 20px; font-weight: 800; color: #2563eb;">{{ tests.count }}</div>
+        <div style="font-size: 12px; color: #6b7280;">Tests</div>
+      </div>
+      <div style="text-align: center; padding: 10px; background: #f0fdf4; border-radius: 8px;">
+        <div style="font-size: 20px; font-weight: 800; color: #16a34a;">{{ total_questions }}</div>
+        <div style="font-size: 12px; color: #6b7280;">Questions</div>
+      </div>
+      <div style="text-align: center; padding: 10px; background: #fef3c7; border-radius: 8px;">
+        <div style="font-size: 20px; font-weight: 800; color: #d97706;">{{ total_marks }}</div>
+        <div style="font-size: 12px; color: #6b7280;">Total Marks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <a href="{% url 'test_series_manage' %}" class="btn">← Back to Series List</a>
+    <a href="{% url 'test_series_edit' pk=test_series.pk %}" class="btn">✏️ Edit Series</a>
+    <a href="{% url 'test_create' series_pk=test_series.pk %}" class="btn btn-primary">➕ Add New Test</a>
+  </div>
+
+  <div class="panel">
+    <div class="ad-card-hd">
+      <h3>Tests in this Series</h3>
+    </div>
+
+    <div class="ad-card-bd">
+      {% if tests %}
+        <div style="display: grid; gap: 20px;">
+          {% for test in tests %}
+            <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: white; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 8px 25px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow=''; this.style.transform=''">
+              
+              <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 8px 0; color: #1f2937;">{{ test.title }}</h4>
+                  {% if test.description %}
+                    <p style="color: #6b7280; margin: 0 0 12px 0; font-size: 14px;">{{ test.description }}</p>
+                  {% endif %}
+                  
+                  <!-- Test Stats -->
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span style="background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+                      ⏱️ {{ test.duration_minutes }} min
+                    </span>
+                    <span style="background: {% if test.question_count > 0 %}#d1fae5; color: #065f46;{% else %}#fee2e2; color: #dc2626;{% endif %} padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+                      📝 {{ test.question_count }} question{{ test.question_count|pluralize }}
+                    </span>
+                    <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+                      🎯 {{ test.total_marks }} mark{{ test.total_marks|pluralize }}
+                    </span>
+                    <span style="background: #ede9fe; color: #7c3aed; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">
+                      🔁 {{ test.max_attempts }} attempt{{ test.max_attempts|pluralize }}
+                    </span>
+                  </div>
+                  
+                  <!-- Difficulty Breakdown -->
+                  {% if test.question_count > 0 %}
+                    <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center;">
+                      <span style="font-size: 12px; color: #6b7280;">Difficulty:</span>
+                      {% if test.difficulty_breakdown.easy %}
+                        <span style="background: #10b981; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Easy: {{ test.difficulty_breakdown.easy }}</span>
+                      {% endif %}
+                      {% if test.difficulty_breakdown.medium %}
+                        <span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Medium: {{ test.difficulty_breakdown.medium }}</span>
+                      {% endif %}
+                      {% if test.difficulty_breakdown.hard %}
+                        <span style="background: #dc2626; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Hard: {{ test.difficulty_breakdown.hard }}</span>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                  
+                </div>
+                
+                <!-- Status Badge -->
+                <div>
+                  {% if test.is_active %}
+                    <span style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">✅ Active</span>
+                  {% else %}
+                    <span style="background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;">❌ Inactive</span>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 15px; border-top: 1px solid #f3f4f6;">
+                <a href="{% url 'test_edit' pk=test.pk %}" class="btn" style="padding: 6px 12px; font-size: 12px;">
+                  ✏️ Edit Test
+                </a>
+                {% if test.question_count == 0 %}
+                  <a href="{% url 'question_create' test_pk=test.pk %}" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">
+                    ➕ Add First Question
+                  </a>
+                {% else %}
+                  <a href="{% url 'question_create' test_pk=test.pk %}" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">
+                    ➕ Add Question
+                  </a>
+                  <a href="{% url 'test_edit' pk=test.pk %}" class="btn" style="padding: 6px 12px; font-size: 12px; background: #8b5cf6; color: white;">
+                    📋 Manage Questions
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 60px 20px; background: #f9fafb; border-radius: 12px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+          <h3 style="color: #374151; margin: 0 0 8px 0;">No Tests Created Yet</h3>
+          <p style="color: #6b7280; margin: 0 0 20px 0;">Get started by creating your first test for this series.</p>
+          <a href="{% url 'test_create' series_pk=test_series.pk %}" class="btn btn-primary">
+            ➕ Create First Test
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

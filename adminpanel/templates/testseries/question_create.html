@@ -1,0 +1,180 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Add Question{% endblock %}
+
+{% block content %}
+{% include 'message.html' %}
+<div class="wrapper">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Add Question to "{{ test.title }}"</h1>
+            <p class="page-subtitle">Create a new question for this scheduled test</p>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <a href="{% url 'test_edit' test.pk %}" class="btn">← Back to Test</a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="questionForm">
+        {% csrf_token %}
+
+        <div class="panel">
+            <div class="panel-title">Question Details</div>
+
+            <p>
+                <label for="question_type">Question Type *</label>
+                <select id="question_type" name="question_type" required onchange="updateQuestionForm()">
+                    <option value="mcq_single">Multiple Choice (Single Answer)</option>
+                    <option value="mcq_multiple">Multiple Choice (Multiple Answers)</option>
+                    <option value="true_false">True/False</option>
+                    <option value="fill_blank">Fill in the Blank</option>
+                    <option value="numerical">Numerical Answer</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="subject">Subject</label>
+                <select id="subject" name="subject">
+                    <option value="">General</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <p>
+                <label for="question_text">Question Text *</label>
+                <textarea id="question_text" name="question_text" rows="4" placeholder="Enter the question..." required></textarea>
+            </p>
+
+            <p>
+                <label for="question_image">Question Image (Optional)</label>
+                <input type="file" id="question_image" name="question_image" accept="image/*">
+            </p>
+
+            <p>
+                <label for="difficulty">Difficulty *</label>
+                <select id="difficulty" name="difficulty" required>
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="marks">Marks *</label>
+                <input type="number" id="marks" name="marks" step="0.5" min="0.5" value="1" required>
+            </p>
+
+            <p>
+                <label for="negative_marks">Negative Marks</label>
+                <input type="number" id="negative_marks" name="negative_marks" step="0.01" min="0" value="0.25">
+            </p>
+        </div>
+
+        <!-- Options Panel (MCQ) -->
+        <div class="panel" id="optionsPanel">
+            <div class="panel-title">Answer Options</div>
+
+            <div id="optionsContainer">
+                <p>
+                    <label><input type="radio" name="correct_answer" value="a" required> Option A</label>
+                    <input type="text" name="option_1" placeholder="Option A" required>
+                </p>
+                <p>
+                    <label><input type="radio" name="correct_answer" value="b"> Option B</label>
+                    <input type="text" name="option_2" placeholder="Option B" required>
+                </p>
+                <p>
+                    <label><input type="radio" name="correct_answer" value="c"> Option C</label>
+                    <input type="text" name="option_3" placeholder="Option C" required>
+                </p>
+                <p>
+                    <label><input type="radio" name="correct_answer" value="d"> Option D</label>
+                    <input type="text" name="option_4" placeholder="Option D" required>
+                </p>
+            </div>
+        </div>
+
+        <!-- Direct Answer Panel (Fill/Numerical) -->
+        <div class="panel" id="answerPanel" style="display: none;">
+            <div class="panel-title">Correct Answer</div>
+            <p>
+                <label for="correct_answer_text">Answer *</label>
+                <input type="text" id="correct_answer_text" name="correct_answer" placeholder="Enter the correct answer">
+            </p>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Solution (Optional)</div>
+
+            <p>
+                <label for="explanation">Explanation</label>
+                <textarea id="explanation" name="explanation" rows="3" placeholder="Explain the solution..."></textarea>
+            </p>
+
+            <p>
+                <label for="solution_image">Solution Image (Optional)</label>
+                <input type="file" id="solution_image" name="solution_image" accept="image/*">
+            </p>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Add Question</button>
+            <a href="{% url 'test_edit' test.pk %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateQuestionForm() {
+    const questionType = document.getElementById('question_type').value;
+    const optionsPanel = document.getElementById('optionsPanel');
+    const answerPanel = document.getElementById('answerPanel');
+    const optionsContainer = document.getElementById('optionsContainer');
+
+    if (questionType === 'mcq_single' || questionType === 'mcq_multiple') {
+        optionsPanel.style.display = 'block';
+        answerPanel.style.display = 'none';
+        
+        if (questionType === 'mcq_multiple') {
+            optionsContainer.innerHTML = `
+                <p><label><input type="checkbox" name="correct_answers" value="a"> Option A</label>
+                <input type="text" name="option_1" placeholder="Option A" required></p>
+                <p><label><input type="checkbox" name="correct_answers" value="b"> Option B</label>
+                <input type="text" name="option_2" placeholder="Option B" required></p>
+                <p><label><input type="checkbox" name="correct_answers" value="c"> Option C</label>
+                <input type="text" name="option_3" placeholder="Option C" required></p>
+                <p><label><input type="checkbox" name="correct_answers" value="d"> Option D</label>
+                <input type="text" name="option_4" placeholder="Option D" required></p>
+            `;
+        } else {
+            optionsContainer.innerHTML = `
+                <p><label><input type="radio" name="correct_answer" value="a" required> Option A</label>
+                <input type="text" name="option_1" placeholder="Option A" required></p>
+                <p><label><input type="radio" name="correct_answer" value="b"> Option B</label>
+                <input type="text" name="option_2" placeholder="Option B" required></p>
+                <p><label><input type="radio" name="correct_answer" value="c"> Option C</label>
+                <input type="text" name="option_3" placeholder="Option C" required></p>
+                <p><label><input type="radio" name="correct_answer" value="d"> Option D</label>
+                <input type="text" name="option_4" placeholder="Option D" required></p>
+            `;
+        }
+    } else if (questionType === 'true_false') {
+        optionsPanel.style.display = 'block';
+        answerPanel.style.display = 'none';
+        optionsContainer.innerHTML = `
+            <p><label><input type="radio" name="correct_answer" value="a" required> True</label></p>
+            <p><label><input type="radio" name="correct_answer" value="b"> False</label></p>
+        `;
+    } else {
+        optionsPanel.style.display = 'none';
+        answerPanel.style.display = 'block';
+    }
+}
+
+// Initialize on load
+updateQuestionForm();
+</script>
+{% endblock %}

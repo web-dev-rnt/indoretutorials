@@ -1,0 +1,114 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Create Test Series Course{% endblock %}
+
+{% block content %}
+{% include 'message.html' %}
+<div class="wrapper">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Create Test Series Course</h1>
+            <p class="page-subtitle">Create a new test series course. You can schedule tests under it later.</p>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <a href="{% url 'test_series_manage' %}" class="btn">← Back to List</a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="panel">
+            <div class="panel-title">Basic Information</div>
+
+            <label for="title">Test Series Title *</label>
+            <p><input type="text" id="title" name="title" placeholder="e.g., JEE Main 2025 Mock Test Series" required></p>
+
+            <label for="category">Category *</label>
+            <p>
+                <select id="category" name="category" required>
+                    <option value="">Select Category</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <label for="description">Description *</label>
+            <p><textarea id="description" name="description" rows="4" placeholder="Describe what this test series covers..." required></textarea></p>
+
+            <label for="difficulty">Difficulty Level</label>
+            <p>
+                <select id="difficulty" name="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="expert">Expert</option>
+                </select>
+            </p>
+
+            <label for="estimated_duration">Estimated Duration</label>
+            <p><input type="text" id="estimated_duration" name="estimated_duration" placeholder="e.g., 3 months, 10 tests"></p>
+
+            <label for="thumbnail">Thumbnail Image</label>
+            <p>
+                <input type="file" id="thumbnail" name="thumbnail" accept="image/*">
+                <span class="help-text">Recommended size: 800x400px</span>
+            </p>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Pricing & Features</div>
+
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="is_free" name="is_free" onchange="togglePrice()"> 
+                Free Test Series
+            </label>
+
+            <p id="price_field">
+                <label for="price">Price (₹)</label><br>
+                <input type="number" id="price" name="price" step="0.01" min="0" value="0">
+            </p>
+
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" name="is_featured"> 
+                Featured Series
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" name="has_negative_marking"> 
+                Enable Negative Marking
+            </label>
+
+            <label for="negative_marks">Negative Marks</label>
+            <p><input type="number" id="negative_marks" name="negative_marks" step="0.01" min="0" value="0.25"></p>
+
+            <label for="pass_percentage">Pass Percentage (%)</label>
+            <p><input type="number" id="pass_percentage" name="pass_percentage" min="1" max="100" value="40"></p>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Create Test Series Course</button>
+            <a href="{% url 'test_series_manage' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function togglePrice() {
+        const isFree = document.getElementById('is_free').checked;
+        const priceField = document.getElementById('price_field');
+        const priceInput = document.getElementById('price');
+
+        if (isFree) {
+            priceField.style.display = 'none';
+            priceInput.value = '0';
+        } else {
+            priceField.style.display = 'block';
+        }
+    }
+
+    togglePrice();
+</script>
+{% endblock %}

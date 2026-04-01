@@ -1,0 +1,273 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}{{ action }} Footer Settings{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>{{ action }} Footer Settings</h1>
+        <a href="{% url 'footer_edit' %}" class="ad-btn ad-btn-secondary">← Back to Footer Management</a>
+    </div>
+
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>Footer Configuration</h2>
+        </div>
+        <div class="ad-card-body">
+            <form method="post" enctype="multipart/form-data" class="ad-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3>🏢 Company Information</h3>
+                    <div class="form-group">
+                        <label for="{{ form.logo.id_for_label }}">Footer Logo</label>
+                        {{ form.logo }}
+                        {% if footer_settings and footer_settings.logo %}
+                            <div class="current-logo">
+                                <img src="{{ footer_settings.logo.url }}" alt="Current footer logo" class="logo-preview">
+                            </div>
+                        {% endif %}
+                        <small class="form-help">Upload PNG/JPG footer logo (recommended size: 150x50px)</small>
+                        {% if form.logo.errors %}
+                            <div class="form-error">{{ form.logo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">Contact Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="form-error">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.copyright_text.id_for_label }}">Copyright Text</label>
+                        {{ form.copyright_text }}
+                        <small class="form-help">e.g., "Copyright © 2025 EduGorilla Community Pvt. Ltd."</small>
+                        {% if form.copyright_text.errors %}
+                            <div class="form-error">{{ form.copyright_text.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📱 App Store Links</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.google_play_url.id_for_label }}">Google Play Store URL</label>
+                            {{ form.google_play_url }}
+                            {% if form.google_play_url.errors %}
+                                <div class="form-error">{{ form.google_play_url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.app_store_url.id_for_label }}">Apple App Store URL</label>
+                            {{ form.app_store_url }}
+                            {% if form.app_store_url.errors %}
+                                <div class="form-error">{{ form.app_store_url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🔗 Social Media Links</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.facebook_url.id_for_label }}"><i class="fa fa-facebook"></i> Facebook URL</label>
+                            {{ form.facebook_url }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.twitter_url.id_for_label }}"><i class="fa fa-twitter"></i> Twitter URL</label>
+                            {{ form.twitter_url }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.youtube_url.id_for_label }}"><i class="fa fa-youtube"></i> YouTube URL</label>
+                            {{ form.youtube_url }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.linkedin_url.id_for_label }}"><i class="fa fa-linkedin"></i> LinkedIn URL</label>
+                            {{ form.linkedin_url }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.instagram_url.id_for_label }}"><i class="fa fa-instagram"></i> Instagram URL</label>
+                            {{ form.instagram_url }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.telegram_url.id_for_label }}"><i class="fa fa-telegram"></i> Telegram URL</label>
+                            {{ form.telegram_url }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>⚙️ Settings</h3>
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            {{ form.is_active }} Active (Show footer settings)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="ad-btn ad-btn-primary">Save Footer Settings</button>
+                    <a href="{% url 'footer_edit' %}" class="ad-btn ad-btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.form-section h3 {
+    color: #c7212f;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #c7212f;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-group {
+    flex: 1;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group label i {
+    margin-right: 5px;
+    width: 16px;
+    color: #007bff;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: #c7212f;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(199, 33, 47, 0.1);
+}
+
+.current-logo {
+    margin-top: 15px;
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.logo-preview {
+    max-width: 150px;
+    max-height: 60px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.form-help {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.form-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.ad-btn {
+    padding: 12px 24px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.ad-btn-primary {
+    background: #c7212f;
+    color: white;
+}
+
+.ad-btn-primary:hover {
+    background: #a01c26;
+}
+
+.ad-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.ad-btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-section {
+        padding: 20px 15px;
+    }
+}
+</style>
+{% endblock %}

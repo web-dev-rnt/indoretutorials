@@ -1,0 +1,130 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+<div class="wrapper">
+  {% include 'message.html' %}
+  <div class="h1">Edit Live Class Course</div>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <div class="course-meta-grid">
+      {{ form.non_field_errors }}
+      
+      <div style="grid-column: span 2;">
+        <label>Course Name*</label>
+        {{ form.name.errors }}{{ form.name }}
+      </div>
+      
+      <div>
+        <label>Language*</label>
+        {{ form.language.errors }}{{ form.language }}
+      </div>
+      
+      <div>
+        <label>Category</label>
+        {{ form.category.errors }}{{ form.category }}
+      </div>
+
+      <div style="grid-column: span 2;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+          {{ form.is_free }}
+          <span>{{ form.is_free.label }}</span>
+        </label>
+        <small style="color: #6b7280; font-size: 13px;">Check this if the course is completely free</small>
+        {{ form.is_free.errors }}
+      </div>
+      
+      <div id="pricing-section" style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div>
+          <label>Original Price*</label>
+          {{ form.original_price.errors }}{{ form.original_price }}
+        </div>
+        <div>
+          <label>Current Price*</label>
+          {{ form.current_price.errors }}{{ form.current_price }}
+        </div>
+      </div>
+      
+      <div>
+        <label>Banner Image (Desktop)*</label>
+        {{ form.banner_image_desktop.errors }}{{ form.banner_image_desktop }}
+        {% if course.banner_image_desktop %}
+          <img src="{{ course.banner_image_desktop.url }}" style="max-width: 200px; margin-top: 8px; border-radius: 4px;" alt="Current desktop banner">
+        {% endif %}
+        <small>Recommended: 1200 x 600px</small>
+      </div>
+      
+      <div>
+        <label>Banner Image (Mobile)*</label>
+        {{ form.banner_image_mobile.errors }}{{ form.banner_image_mobile }}
+        {% if course.banner_image_mobile %}
+          <img src="{{ course.banner_image_mobile.url }}" style="max-width: 200px; margin-top: 8px; border-radius: 4px;" alt="Current mobile banner">
+        {% endif %}
+        <small>Recommended: 800 x 400px</small>
+      </div>
+      
+      <div>
+        <label>Start Date*</label>
+        {{ form.start_date.errors }}{{ form.start_date }}
+      </div>
+      
+      <div>
+        <label>End Date*</label>
+        {{ form.end_date.errors }}{{ form.end_date }}
+      </div>
+      
+      <div style="grid-column: span 2;">
+        <label>About Course</label>
+        {{ form.about.errors }}{{ form.about }}
+      </div>
+
+      <div style="grid-column: span 2;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          {{ form.is_active }}
+          <span>{{ form.is_active.label }}</span>
+        </label>
+        {{ form.is_active.errors }}
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <button type="submit" class="btn btn-primary">Update Course</button>
+      <a href="{% url 'liveclass' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<style>
+.course-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 768px) {
+  .course-meta-grid {
+    grid-template-columns: 1fr;
+  }
+  #pricing-section {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const isFreeCheckbox = document.getElementById('{{ form.is_free.id_for_label }}');
+  const pricingSection = document.getElementById('pricing-section');
+  
+  function togglePricingFields() {
+    if (isFreeCheckbox.checked) {
+      pricingSection.style.opacity = '0.5';
+      pricingSection.style.pointerEvents = 'none';
+    } else {
+      pricingSection.style.opacity = '1';
+      pricingSection.style.pointerEvents = 'auto';
+    }
+  }
+  
+  isFreeCheckbox.addEventListener('change', togglePricingFields);
+  togglePricingFields(); // Initialize on page load
+});
+</script>
+{% endblock %}

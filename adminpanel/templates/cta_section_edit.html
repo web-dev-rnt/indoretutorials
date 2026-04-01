@@ -1,0 +1,195 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+{% include 'message.html' %}
+<style>
+/* Form Layout */
+.form-layout {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-main-column {
+    flex: 2;
+    min-width: 0;
+}
+
+.form-sidebar-column {
+    flex: 1;
+    min-width: 280px;
+}
+
+/* Form Row */
+.form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.form-col-half {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Image Preview */
+.image-preview {
+    margin-bottom: 8px;
+}
+
+.preview-image {
+    max-width: 100%;
+    border-radius: 4px;
+    display: block;
+}
+
+.preview-caption {
+    font-size: 12px;
+    color: var(--ad-muted);
+    margin-top: 4px;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .form-layout {
+        flex-direction: column;
+    }
+    
+    .form-sidebar-column {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="wrapper">
+    <h1 class="h1">Edit CTA Section</h1>
+    <p class="small">Update the call-to-action section on your homepage</p>
+
+    <div class="nav-buttons">
+        <a href="{% url 'other_details_edit' %}" class="btn">← Back to Site Details</a>
+    </div>
+
+    <div class="panel">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-layout">
+                <!-- Main Column -->
+                <div class="form-main-column">
+                    <div class="form-group">
+                        <label for="{{ form.title.id_for_label }}">Title*</label>
+                        {{ form.title }}
+                        <div class="help-text">Main heading for the CTA section</div>
+                        {% if form.title.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.title.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}">Description*</label>
+                        {{ form.description }}
+                        <div class="help-text">Brief description or tagline for the call-to-action</div>
+                        {% if form.description.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.description.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col-half">
+                            <div class="form-group">
+                                <label for="{{ form.button_text.id_for_label }}">Button Text*</label>
+                                {{ form.button_text }}
+                                <div class="help-text">Text displayed on the action button</div>
+                                {% if form.button_text.errors %}
+                                    <ul class="errorlist">
+                                        {% for error in form.button_text.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-col-half">
+                            <div class="form-group">
+                                <label for="{{ form.button_link.id_for_label }}">Button Link*</label>
+                                {{ form.button_link }}
+                                <div class="help-text">URL or path the button links to</div>
+                                {% if form.button_link.errors %}
+                                    <ul class="errorlist">
+                                        {% for error in form.button_link.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Column -->
+                <div class="form-sidebar-column">
+                    <div class="form-group">
+                        <label for="{{ form.background_image.id_for_label }}">Background Image</label>
+                        {% if cta_section.background_image %}
+                            <div class="image-preview">
+                                <img src="{{ cta_section.background_image.url }}" alt="Current background" class="preview-image">
+                                <div class="preview-caption">Current background image</div>
+                            </div>
+                        {% endif %}
+                        {{ form.background_image }}
+                        <div class="help-text">Leave blank to keep current image. Recommended: 1920x600px</div>
+                        {% if form.background_image.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.background_image.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            {{ form.is_active }}
+                            <span>Active</span>
+                        </label>
+                        <div class="help-text">Show this CTA section on homepage</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Update CTA Section</button>
+                <a href="{% url 'other_details_edit' %}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

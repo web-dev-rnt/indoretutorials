@@ -1,0 +1,93 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}Edit Category{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    <div class="nav-buttons">
+        <a href="{% url 'manage_categories' %}" class="btn">
+            <span>←</span> Back to Categories
+        </a>
+        <a href="{% url 'delete_category' category.id %}" class="btn btn-danger">
+            Delete Category
+        </a>
+    </div>
+
+    <h1 class="h1">Edit Category: {{ category.name }}</h1>
+    <p class="small">Modify category details and settings</p>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="panel">
+        <h3 class="panel-title">Category Details</h3>
+        
+        <form method="post" onsubmit="showLoading(this)">
+            {% csrf_token %}
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="name">Category Name *</label>
+                        <input type="text" id="name" name="name" value="{{ category.name }}" 
+                               required maxlength="120" oninput="generateSlugPreview(this.value)">
+                        <div class="help-text">Current slug: <code>{{ category.slug }}</code></div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>Category Information</label>
+                        <div style="padding: 10px 12px; background: #f8fafc; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <div><strong>ID:</strong> {{ category.id }}</div>
+                            <div style="margin-top: 4px;"><strong>Created:</strong> {{ category.created_at|date:"M d, Y g:i A" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="4">{{ category.description }}</textarea>
+                        <div class="help-text">Help users understand what courses belong in this category</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin: 16px 0; font-size: 13px;">
+                <strong>Last Updated:</strong> {{ category.updated_at|date:"F d, Y g:i A" }}
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">
+                    <span class="spinner" style="display: none;"></span>
+                    <span class="btn-text">Update Category</span>
+                </button>
+                <a href="{% url 'manage_categories' %}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function generateSlugPreview(name) {
+    // Optional: Show what the new slug would be
+    console.log('New slug would be:', name.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-'));
+}
+
+function showLoading(form) {
+    const btn = form.querySelector('button[type="submit"]');
+    const spinner = btn.querySelector('.spinner');
+    const text = btn.querySelector('.btn-text');
+    
+    spinner.style.display = 'inline-block';
+    text.textContent = 'Updating...';
+    btn.classList.add('btn-loading');
+}
+</script>
+{% endblock %}

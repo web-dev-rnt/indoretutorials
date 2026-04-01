@@ -1,0 +1,479 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}{% if mode == 'create' %}Create Bundle{% else %}Edit Bundle{% endif %}{% endblock %}
+
+{% block content %}
+{% include 'message.html' %}
+<div class="wrapper">
+  <!-- Navigation Buttons -->
+  <div class="nav-buttons">
+    <a href="{% url 'bundle_manage' %}" class="btn">
+      <i class="fas fa-arrow-left"></i> Back to Bundles
+    </a>
+  </div>
+
+  <!-- Page Header -->
+  <h1 class="h1">{% if mode == 'create' %}Create New Bundle{% else %}Edit Bundle{% endif %}</h1>
+  <p class="small">Bundle multiple courses together with custom pricing</p>
+
+  <!-- Form Errors Display -->
+  {% if form.errors %}
+    <div class="message error" style="margin-bottom: 20px;">
+      <h3 style="margin-top: 0;">Please correct the following errors:</h3>
+      <ul style="margin: 10px 0;">
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <li>
+              {% if field == '__all__' %}
+                {{ error }}
+              {% else %}
+                <strong>{{ field|title }}:</strong> {{ error }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" id="bundleForm">
+    {% csrf_token %}
+
+    <!-- Basic Information -->
+    <div class="panel">
+      <h2 class="panel-title">Basic Information</h2>
+      <div class="grid">
+        <div class="col-12">
+          <label for="{{ form.title.id_for_label }}">Bundle Title *</label>
+          {{ form.title }}
+          {% if form.title.errors %}
+            <ul class="errorlist">
+              {% for error in form.title.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-6">
+          <label for="{{ form.bundle_type.id_for_label }}">Bundle Type *</label>
+          {{ form.bundle_type }}
+          {% if form.bundle_type.errors %}
+            <ul class="errorlist">
+              {% for error in form.bundle_type.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-6">
+          <label for="{{ form.category.id_for_label }}">Category</label>
+          {{ form.category }}
+          {% if form.category.errors %}
+            <ul class="errorlist">
+              {% for error in form.category.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-12">
+          <label for="{{ form.description.id_for_label }}">Description *</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <ul class="errorlist">
+              {% for error in form.description.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-12">
+          <label for="{{ form.short_description.id_for_label }}">Short Description</label>
+          {{ form.short_description }}
+          <p class="help-text">Brief description for card view (max 300 characters)</p>
+          {% if form.short_description.errors %}
+            <ul class="errorlist">
+              {% for error in form.short_description.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Media -->
+    <div class="panel">
+      <h2 class="panel-title">Media</h2>
+      <div class="grid">
+        <div class="col-6">
+          <label for="{{ form.thumbnail.id_for_label }}">Thumbnail Image</label>
+          {{ form.thumbnail }}
+          {% if bundle and bundle.thumbnail %}
+            <div style="margin-top: 10px;">
+              <img src="{{ bundle.thumbnail.url }}" alt="Current thumbnail" style="max-width: 200px; border-radius: 8px;">
+            </div>
+          {% endif %}
+          {% if form.thumbnail.errors %}
+            <ul class="errorlist">
+              {% for error in form.thumbnail.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-6">
+          <label for="{{ form.banner_image.id_for_label }}">Banner Image</label>
+          {{ form.banner_image }}
+          {% if bundle and bundle.banner_image %}
+            <div style="margin-top: 10px;">
+              <img src="{{ bundle.banner_image.url }}" alt="Current banner" style="max-width: 200px; border-radius: 8px;">
+            </div>
+          {% endif %}
+          {% if form.banner_image.errors %}
+            <ul class="errorlist">
+              {% for error in form.banner_image.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Select Products -->
+    <div class="panel">
+      <h2 class="panel-title">Select Products to Include</h2>
+      
+      <!-- Video Courses -->
+      <fieldset style="margin-bottom: 24px;">
+        <legend><i class="fas fa-video"></i> Video Courses</legend>
+        <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--ad-border); border-radius: 8px; padding: 12px;">
+          {% for course in video_courses %}
+            <div style="margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" name="video_courses" value="{{ course.id }}" 
+                  {% if bundle and course in bundle.video_courses.all %}checked{% endif %}
+                  style="margin-right: 8px;" class="product-checkbox" data-price="{{ course.selling_price }}">
+                <span>{{ course.name }} - ₹{{ course.selling_price }}</span>
+              </label>
+            </div>
+          {% empty %}
+            <p style="color: var(--ad-muted); font-size: 14px;">No video courses available</p>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <!-- Live Classes -->
+      <fieldset style="margin-bottom: 24px;">
+        <legend><i class="fas fa-chalkboard-teacher"></i> Live Class Courses</legend>
+        <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--ad-border); border-radius: 8px; padding: 12px;">
+          {% for course in live_classes %}
+            <div style="margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" name="live_classes" value="{{ course.id }}" 
+                  {% if bundle and course in bundle.live_classes.all %}checked{% endif %}
+                  style="margin-right: 8px;" class="product-checkbox" data-price="{{ course.current_price }}">
+                <span>{{ course.name }} - ₹{{ course.current_price }}</span>
+              </label>
+            </div>
+          {% empty %}
+            <p style="color: var(--ad-muted); font-size: 14px;">No live class courses available</p>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <!-- Test Series -->
+      <fieldset style="margin-bottom: 24px;">
+        <legend><i class="fas fa-clipboard"></i> Test Series</legend>
+        <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--ad-border); border-radius: 8px; padding: 12px;">
+          {% for test in test_series %}
+            <div style="margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" name="test_series" value="{{ test.id }}" 
+                  {% if bundle and test in bundle.test_series.all %}checked{% endif %}
+                  style="margin-right: 8px;" class="product-checkbox" data-price="{% if test.is_free %}0{% else %}{{ test.price }}{% endif %}">
+                <span>{{ test.title }} - {% if test.is_free %}Free{% else %}₹{{ test.price }}{% endif %}</span>
+              </label>
+            </div>
+          {% empty %}
+            <p style="color: var(--ad-muted); font-size: 14px;">No test series available</p>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <!-- E-Library Courses -->
+      <fieldset style="margin-bottom: 24px;">
+        <legend><i class="fas fa-book"></i> E-Library Courses</legend>
+        <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--ad-border); border-radius: 8px; padding: 12px;">
+          {% for course in elibrary_courses %}
+            <div style="margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" name="elibrary_courses" value="{{ course.id }}" 
+                  {% if bundle and course in bundle.elibrary_courses.all %}checked{% endif %}
+                  style="margin-right: 8px;" class="product-checkbox" data-price="{{ course.current_price }}">
+                <span>{{ course.title }} - ₹{{ course.current_price }}</span>
+              </label>
+            </div>
+          {% empty %}
+            <p style="color: var(--ad-muted); font-size: 14px;">No e-library courses available</p>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      {% if form.video_courses.errors or form.live_classes.errors or form.test_series.errors or form.elibrary_courses.errors %}
+        <ul class="errorlist">
+          {% for error in form.video_courses.errors %}<li>{{ error }}</li>{% endfor %}
+          {% for error in form.live_classes.errors %}<li>{{ error }}</li>{% endfor %}
+          {% for error in form.test_series.errors %}<li>{{ error }}</li>{% endfor %}
+          {% for error in form.elibrary_courses.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <!-- Pricing -->
+    <div class="panel">
+      <h2 class="panel-title">Pricing</h2>
+      
+      <!-- Free Bundle Toggle -->
+      <div class="col-12" style="margin-bottom: 20px; padding: 16px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 10px;">
+        <label style="display: flex; align-items: center; cursor: pointer; font-weight: 600; font-size: 16px;">
+          {{ form.is_free }}
+          <span style="margin-left: 10px; color: #16a34a;">
+            <i class="fas fa-gift"></i> This is a FREE Bundle
+          </span>
+        </label>
+        <p style="margin: 8px 0 0 32px; font-size: 13px; color: #15803d;">
+          {{ form.is_free.help_text }}
+        </p>
+      </div>
+
+      <div class="" id="pricingFields">
+        <div class="col-3">
+          <label for="{{ form.original_price.id_for_label }}">Original Price *</label>
+          <div style="display: flex; gap: 8px; align-items: flex-start;">
+            {{ form.original_price }}
+            <button type="button" class="btn btn-success" id="calculateBtn" style="white-space: nowrap;">
+              <i class="fas fa-calculator"></i> Auto
+            </button>
+          </div>
+          <p class="help-text">{{ form.original_price.help_text }}</p>
+          {% if form.original_price.errors %}
+            <ul class="errorlist">
+              {% for error in form.original_price.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-3">
+          <label for="{{ form.bundle_price.id_for_label }}">Bundle Price *</label>
+          {{ form.bundle_price }}
+          <p class="help-text">{{ form.bundle_price.help_text }}</p>
+          {% if form.bundle_price.errors %}
+            <ul class="errorlist">
+              {% for error in form.bundle_price.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-3">
+          <label for="{{ form.currency.id_for_label }}">Currency *</label>
+          {{ form.currency }}
+          <p class="help-text">{{ form.currency.help_text }}</p>
+          {% if form.currency.errors %}
+            <ul class="errorlist">
+              {% for error in form.currency.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-3">
+          <label>Discount Preview</label>
+          <div id="discountPreview" style="padding: 10px 12px; border: 2px solid #dcfce7; border-radius: 8px; background: #f0fdf4; color: #16a34a; font-weight: 600; font-size: 18px; text-align: center;">
+            0% OFF
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label for="{{ form.features.id_for_label }}">Features & Benefits</label>
+          {{ form.features }}
+          <p class="help-text">Enter one feature per line (e.g., - Feature 1)</p>
+          {% if form.features.errors %}
+            <ul class="errorlist">
+              {% for error in form.features.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Validity & Settings -->
+    <div class="panel">
+      <h2 class="panel-title">Validity & Settings</h2>
+      <div class="grid">
+        <div class="col-4">
+          <label for="{{ form.validity_days.id_for_label }}">Validity (Days) *</label>
+          {{ form.validity_days }}
+          {% if form.validity_days.errors %}
+            <ul class="errorlist">
+              {% for error in form.validity_days.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-4">
+          <label for="{{ form.start_date.id_for_label }}">Start Date</label>
+          {{ form.start_date }}
+          {% if form.start_date.errors %}
+            <ul class="errorlist">
+              {% for error in form.start_date.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-4">
+          <label for="{{ form.end_date.id_for_label }}">End Date</label>
+          {{ form.end_date }}
+          {% if form.end_date.errors %}
+            <ul class="errorlist">
+              {% for error in form.end_date.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-4">
+          <label for="{{ form.status.id_for_label }}">Status *</label>
+          {{ form.status }}
+          {% if form.status.errors %}
+            <ul class="errorlist">
+              {% for error in form.status.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-4">
+          <label for="{{ form.display_order.id_for_label }}">Display Order</label>
+          {{ form.display_order }}
+          <p class="help-text">Lower number = higher priority</p>
+          {% if form.display_order.errors %}
+            <ul class="errorlist">
+              {% for error in form.display_order.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-4">
+          <label for="{{ form.max_enrollments.id_for_label }}">Max Enrollments</label>
+          {{ form.max_enrollments }}
+          <p class="help-text">Leave empty for unlimited</p>
+          {% if form.max_enrollments.errors %}
+            <ul class="errorlist">
+              {% for error in form.max_enrollments.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="col-4">
+          <label style="display: flex; align-items: center; cursor: pointer; margin-top: 20px;">
+            {{ form.is_featured }}
+            <span style="margin-left: 8px;">Featured Bundle</span>
+          </label>
+        </div>
+
+        <div class="col-4">
+          <label style="display: flex; align-items: center; cursor: pointer; margin-top: 20px;">
+            {{ form.is_bestseller }}
+            <span style="margin-left: 8px;">Bestseller</span>
+          </label>
+        </div>
+
+        <div class="col-4">
+          <label style="display: flex; align-items: center; cursor: pointer; margin-top: 20px;">
+            {{ form.is_trending }}
+            <span style="margin-left: 8px;">Trending</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="actions">
+      <a href="{% url 'bundle_manage' %}" class="btn">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> {% if mode == 'create' %}Create Bundle{% else %}Update Bundle{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+// Toggle pricing fields based on is_free checkbox
+function togglePricing(checkbox) {
+  const pricingFields = document.getElementById('pricingFields');
+  const originalPrice = document.getElementById('id_original_price');
+  const bundlePrice = document.getElementById('id_bundle_price');
+  const discountPreview = document.getElementById('discountPreview');
+  
+  if (checkbox.checked) {
+    // Free bundle - disable pricing fields
+    originalPrice.value = '0.00';
+    bundlePrice.value = '0.00';
+    originalPrice.disabled = true;
+    bundlePrice.disabled = true;
+    pricingFields.style.opacity = '0.5';
+    pricingFields.style.pointerEvents = 'none';
+    discountPreview.innerHTML = '100% FREE';
+    discountPreview.style.background = '#d1fae5';
+    discountPreview.style.borderColor = '#86efac';
+    discountPreview.style.color = '#065f46';
+  } else {
+    // Paid bundle - enable pricing fields
+    originalPrice.disabled = false;
+    bundlePrice.disabled = false;
+    pricingFields.style.opacity = '1';
+    pricingFields.style.pointerEvents = 'auto';
+    calculateDiscount();
+  }
+}
+
+// Auto-calculate original price
+document.getElementById('calculateBtn').addEventListener('click', function() {
+  const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+  let total = 0;
+  
+  checkboxes.forEach(checkbox => {
+    const price = parseFloat(checkbox.dataset.price) || 0;
+    total += price;
+  });
+  
+  document.getElementById('id_original_price').value = total.toFixed(2);
+  calculateDiscount();
+});
+
+// Calculate discount percentage
+function calculateDiscount() {
+  const isFree = document.getElementById('id_is_free').checked;
+  
+  if (isFree) {
+    document.getElementById('discountPreview').innerHTML = '100% FREE';
+    return;
+  }
+  
+  const originalPrice = parseFloat(document.getElementById('id_original_price').value) || 0;
+  const bundlePrice = parseFloat(document.getElementById('id_bundle_price').value) || 0;
+  
+  if (originalPrice > 0 && bundlePrice < originalPrice) {
+    const discount = ((originalPrice - bundlePrice) / originalPrice) * 100;
+    document.getElementById('discountPreview').innerHTML = Math.round(discount) + '% OFF';
+    document.getElementById('discountPreview').style.background = '#f0fdf4';
+    document.getElementById('discountPreview').style.borderColor = '#dcfce7';
+    document.getElementById('discountPreview').style.color = '#16a34a';
+  } else {
+    document.getElementById('discountPreview').innerHTML = '0% OFF';
+  }
+}
+
+// Add event listeners
+document.getElementById('id_original_price').addEventListener('input', calculateDiscount);
+document.getElementById('id_bundle_price').addEventListener('input', calculateDiscount);
+
+// Initialize on page load
+window.addEventListener('load', function() {
+  const isFreeCheckbox = document.getElementById('id_is_free');
+  togglePricing(isFreeCheckbox);
+  calculateDiscount();
+});
+</script>
+{% endblock %}

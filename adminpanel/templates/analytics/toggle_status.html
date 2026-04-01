@@ -1,0 +1,159 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+<main>
+  <div class="page-header">
+    <div class="header-content">
+      <h1 style="color: {% if user_obj.is_active %}var(--ad-warning){% else %}var(--ad-success){% endif %};">
+        <i class="{% if user_obj.is_active %}fas fa-ban{% else %}fas fa-check{% endif %}" style="margin-right: 12px;"></i>
+        {% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %} User Account
+      </h1>
+      <p class="page-subtitle">
+        {% if user_obj.is_active %}Suspend user access to the system{% else %}Restore user access to the system{% endif %}
+      </p>
+    </div>
+    <div class="header-actions">
+      <a href="{% url 'signupdashboard' %}" class="btn" style="background: var(--ad-accent); color: white; border-color: var(--ad-accent);">
+        <i class="fas fa-arrow-left"></i> Back to Users
+      </a>
+    </div>
+  </div>
+  
+  <div class="wrapper">
+    <div class="panel" style="max-width: 600px; margin: 0 auto;">
+      <div class="panel-title" style="background: {% if user_obj.is_active %}#fef3c7{% else %}#dcfce7{% endif %}; color: {% if user_obj.is_active %}var(--ad-warning){% else %}var(--ad-success){% endif %}; margin: -20px -20px 16px -20px; padding: 24px; border-radius: var(--ad-radius) var(--ad-radius) 0 0;">
+        <i class="{% if user_obj.is_active %}fas fa-ban{% else %}fas fa-check{% endif %}" style="margin-right: 10px;"></i>
+        {% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %} User Account
+      </div>
+      
+      <div class="analytics-card" style="background: {% if user_obj.is_active %}#fffbeb{% else %}#f0fdf4{% endif %}; border: 2px dashed {% if user_obj.is_active %}#fbbf24{% else %}#22c55e{% endif %}; margin-bottom: 24px;">
+        <div class="analytics-icon {% if user_obj.is_active %}icon-usage{% else %}icon-active{% endif %}" style="width: 60px; height: 60px; font-size: 28px;">
+          {% if user_obj.is_active %}🚫{% else %}✅{% endif %}
+        </div>
+        <div class="analytics-value" style="color: {% if user_obj.is_active %}var(--ad-warning){% else %}var(--ad-success){% endif %};">
+          {% if user_obj.is_active %}DEACTIVATION{% else %}ACTIVATION{% endif %}
+        </div>
+        <div class="analytics-label">
+          {% if user_obj.is_active %}
+            Suspend user system access
+          {% else %}
+            Restore user system access
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="message {% if user_obj.is_active %}error{% else %}success{% endif %}" style="border-radius: var(--ad-radius); position: relative; padding: 24px;">
+        <p><strong>
+          Are you sure you want to {% if user_obj.is_active %}deactivate{% else %}activate{% endif %} this user account?
+        </strong></p>
+        
+        <div class="coupon-card" style="background: var(--ad-panel-2); border-left: 4px solid {% if user_obj.is_active %}var(--ad-warning){% else %}var(--ad-success){% endif %};">
+          <div class="coupon-stats" style="grid-template-columns: 1fr 1fr;">
+            <div class="stat-item">
+              <div class="stat-label">Full Name</div>
+              <div class="stat-value" style="font-size: 14px; font-weight: 600;">{{ user_obj.get_full_name|default:"Not provided" }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Email Address</div>
+              <div class="stat-value" style="font-size: 14px; font-weight: 600;">{{ user_obj.email }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">User ID</div>
+              <div class="stat-value" style="font-size: 14px; font-weight: 600;">#{{ user_obj.id }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Current Status</div>
+              <div class="stat-value" style="font-size: 12px;">
+                {% if user_obj.is_active %}
+                  <span class="status-badge status-active">Active</span>
+                {% else %}
+                  <span class="status-badge status-inactive">Inactive</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Account Type</div>
+              <div class="stat-value" style="font-size: 14px; font-weight: 600;">
+                {% if user_obj.is_superuser %}
+                  <span class="type-badge type-super">Superuser</span>
+                {% elif user_obj.is_staff %}
+                  <span class="type-badge type-staff">Staff</span>
+                {% else %}
+                  <span class="type-badge type-regular">Regular</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Join Date</div>
+              <div class="stat-value" style="font-size: 14px; font-weight: 600;">{{ user_obj.date_joined|date:"M d, Y" }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="search-filters" style="border: 1px solid var(--ad-border);">
+          <div class="coupon-header">
+            <span style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+              <i class="{% if user_obj.is_active %}fas fa-mobile-alt{% else %}fas fa-mobile{% endif %}"></i>
+              What will happen:
+            </span>
+          </div>
+          <div class="empty-state" style="padding: 16px 0;">
+            {% if user_obj.is_active %}
+              <div class="empty-text" style="margin-bottom: 8px;">• User will be logged out from all sessions</div>
+              <div class="empty-text" style="margin-bottom: 8px;">• User cannot log in to the system</div>
+              <div class="empty-text" style="margin-bottom: 8px;">• User data preserved but inaccessible</div>
+              <div class="empty-text" style="margin-bottom: 8px;">• Action can be reversed by reactivation</div>
+              <div class="empty-text">• All active sessions terminated</div>
+            {% else %}
+              <div class="empty-text" style="margin-bottom: 8px;">• User regains access to account</div>
+              <div class="empty-text" style="margin-bottom: 8px;">• User can log in normally</div>
+              <div class="empty-text" style="margin-bottom: 8px;">• All data and settings restored</div>
+              <div class="empty-text" style="margin-bottom: 8px;">• Reactivation notification sent</div>
+              <div class="empty-text">• All features accessible again</div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="ad-footer-note" style="color: {% if user_obj.is_active %}var(--ad-warning){% else %}var(--ad-success){% endif %}; font-weight: 500; font-size: 14px; text-align: center; padding: 12px; background: {% if user_obj.is_active %}#fffbeb{% else %}#f0fdf4{% endif %}; border-radius: var(--ad-radius-sm);">
+          {% if user_obj.is_active %}
+            <i class="fas fa-exclamation-triangle"></i> This action temporarily suspends the user but preserves all data.
+          {% else %}
+            <i class="fas fa-check-circle"></i> This action restores full access to the user account.
+          {% endif %}
+        </div>
+      </div>
+      
+      <form method="POST" onsubmit="return confirmStatusChange()">
+        {% csrf_token %}
+        <div class="actions" style="justify-content: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--ad-border); gap: 16px;">
+          <button type="submit" class="btn {% if user_obj.is_active %}btn-danger{% else %}btn-success{% endif %}" id="statusBtn" style="min-width: 180px; padding: 14px 24px; text-transform: uppercase; letter-spacing: 0.5px;">
+            <i class="{% if user_obj.is_active %}fas fa-ban{% else %}fas fa-check{% endif %}"></i>
+            {% if user_obj.is_active %}Deactivate User{% else %}Activate User{% endif %}
+          </button>
+          <a href="{% url 'signupdashboard' %}" class="btn btn-secondary" style="min-width: 140px; padding: 14px 24px; text-transform: uppercase; letter-spacing: 0.5px;">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+function confirmStatusChange() {
+  const action = "{% if user_obj.is_active %}deactivate{% else %}activate{% endif %}";
+  const userEmail = "{{ user_obj.email }}";
+  const actionText = action === 'deactivate' ? 'suspend access for' : 'restore access for';
+  
+  const confirmed = confirm(`Are you sure you want to ${actionText} the user:\n\n${userEmail}?\n\nThis action can be reversed later.`);
+  
+  if (confirmed) {
+    const statusBtn = document.getElementById('statusBtn');
+    statusBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${action === 'deactivate' ? 'Deactivating' : 'Activating'} User...`;
+    statusBtn.disabled = true;
+    return true;
+  }
+  
+  return false;
+}
+</script>
+{% endblock %}

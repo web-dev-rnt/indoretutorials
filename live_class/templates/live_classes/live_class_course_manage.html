@@ -1,0 +1,418 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+{% include 'message.html' %}
+
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-lc-list { display: none; }
+
+    .mobile-lc-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .mlc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+
+    .mlc-title { font-weight: 600; font-size: 14px; color: #1f2937; flex: 1; }
+
+    .mlc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .mlc-row:last-child { border-bottom: none; }
+    .mlc-label { color: #6b7280; font-weight: 500; white-space: nowrap; min-width: 100px; }
+    .mlc-value { color: #1f2937; text-align: right; word-break: break-word; }
+
+    .mlc-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+        flex-wrap: wrap;
+    }
+
+    .mlc-actions .btn { flex: 1; text-align: center; font-size: 12px; padding: 7px 8px; min-width: 70px; }
+
+    @media (max-width: 768px) {
+        .desktop-lc-table { display: none; }
+        .mobile-lc-list   { display: block; }
+
+        /* Stack filters */
+        .admin-filters { flex-wrap: wrap; gap: 8px; }
+        .admin-filter-input { width: 100% !important; }
+    }
+</style>
+
+<div class="wrapper">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Manage Live Class Courses</h1>
+      <p class="page-subtitle">Create and manage your live class courses and schedules</p>
+    </div>
+    <a href="{% url 'live_class_course_create' %}" class="btn btn-success">+ New Live Class Course</a>
+  </div>
+
+  <div class="panel">
+    <div class="admin-card-hd">
+      <h3>All Courses</h3>
+      <div class="admin-filters">
+        <input name="q" type="text" class="admin-filter-input" placeholder="Search By Name" value="{{ request.GET.q }}" form="search-form">
+        <select name="type" form="search-form" class="admin-filter-input" style="width:auto;">
+          <option value="">All Types</option>
+          <option value="free" {% if selected_type == 'free' %}selected{% endif %}>Free Only</option>
+          <option value="paid" {% if selected_type == 'paid' %}selected{% endif %}>Paid Only</option>
+        </select>
+        <form id="search-form" method="get" style="display:contents;">
+          <button type="submit" class="admin-filter-btn">Apply</button>
+        </form>
+        <a href="{% url 'liveclass' %}" class="admin-filter-btn" style="background:#6c757d;border-color:#6c757d;">Reset</a>
+      </div>
+    </div>
+
+    <div class="admin-card-bd">
+
+      <!-- Desktop table -->
+      <div class="table-wrapper desktop-lc-table">
+        <table class="admin-table">
+          <colgroup>
+            <col style="width:3%"><col style="width:14%"><col style="width:7%">
+            <col style="width:7%"><col style="width:8%"><col style="width:8%">
+            <col style="width:7%"><col style="width:7%"><col style="width:10%">
+            <col style="width:10%"><col style="width:10%"><col style="width:12%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>#</th><th>Name</th><th>Language</th><th>Type</th>
+              <th>Original Price</th><th>Current Price</th><th>Active</th>
+              <th>Banner</th><th>Category</th><th>Date Created</th>
+              <th>Batch</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in courses %}
+            <tr class="user-row">
+              <td>{{ forloop.counter }}</td>
+              <td><div class="user-name">{{ c.name }}</div></td>
+              <td>{{ c.language }}</td>
+              <td>
+                <span class="status-badge {% if c.is_free %}status-active{% else %}status-pending{% endif %}">
+                  {% if c.is_free %}Free{% else %}Paid{% endif %}
+                </span>
+              </td>
+              <td>{% if c.is_free %}<span style="color:var(--admin-muted);">-</span>{% else %}₹{{ c.original_price }}{% endif %}</td>
+              <td>{% if c.is_free %}<span style="color:var(--admin-muted);">-</span>{% else %}₹{{ c.current_price }}{% endif %}</td>
+              <td>
+                <button class="status-badge {% if c.is_active %}status-active{% else %}status-inactive{% endif %} toggle-status-btn"
+                        data-id="{{ c.id }}" style="cursor:pointer;border:none;">
+                  {% if c.is_active %}Active{% else %}Inactive{% endif %}
+                </button>
+              </td>
+              <td>
+                {% if c.banner_image_desktop %}
+                  <img src="{{ c.banner_image_desktop.url }}" style="width:40px;height:30px;object-fit:cover;border-radius:4px;" alt="Banner">
+                {% else %}
+                  <span style="color:var(--admin-muted);font-size:12px;">No image</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if c.category %}
+                  <span class="type-badge" style="background:#dbeafe;color:#1e40af;">{{ c.category.name }}</span>
+                {% else %}
+                  <span style="color:var(--admin-muted);font-style:italic;font-size:12px;">No Category</span>
+                {% endif %}
+              </td>
+              <td><div class="date-cell"><span class="date-primary">{{ c.created_at|date:"M d, Y" }}</span></div></td>
+              <td>
+                <div class="date-cell">
+                  <span class="date-primary">{{ c.start_date|date:"M d, Y" }}</span>
+                  <span class="date-secondary">{{ c.end_date|date:"M d, Y" }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="action-buttons" style="display:flex;flex-direction:column;gap:6px;">
+                  <button class="btn btn-primary classes-btn" data-id="{{ c.id }}" style="font-size:11px;padding:6px 10px;width:100%;">
+                    Classes ({{ c.sessions.count }})
+                  </button>
+                  <a class="btn btn-success" href="{% url 'live_class_course_edit' c.id %}" style="font-size:11px;padding:6px 10px;width:100%;text-align:center;">Edit</a>
+                  <form action="{% url 'live_class_course_delete' c.id %}" method="post" style="display:block;margin:0;width:100%;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this course?')" style="font-size:11px;padding:6px 10px;width:100%;">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="12">
+                <div class="empty-state" style="text-align:center;">
+                  <div class="empty-icon"><i class="fas fa-chalkboard-teacher" style="font-size:48px;color:var(--admin-muted);"></i></div>
+                  <h3 class="empty-title">No live class courses yet</h3>
+                  <p class="empty-text">Add a new course to get started.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="mobile-lc-list">
+        {% for c in courses %}
+        <div class="mobile-lc-card">
+
+          <div class="mlc-header">
+            <div class="mlc-title">{{ c.name }}</div>
+            <span class="status-badge {% if c.is_free %}status-active{% else %}status-pending{% endif %}">
+              {% if c.is_free %}Free{% else %}Paid{% endif %}
+            </span>
+          </div>
+
+          <div class="mlc-row">
+            <span class="mlc-label">Language</span>
+            <span class="mlc-value">{{ c.language }}</span>
+          </div>
+          <div class="mlc-row">
+            <span class="mlc-label">Price</span>
+            <span class="mlc-value">
+              {% if c.is_free %}
+                <span style="color:var(--admin-muted);">Free</span>
+              {% else %}
+                <span style="font-weight:600;">₹{{ c.current_price }}</span>
+                <span style="color:#9ca3af;text-decoration:line-through;font-size:11px;margin-left:4px;">₹{{ c.original_price }}</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="mlc-row">
+            <span class="mlc-label">Status</span>
+            <span class="mlc-value">
+              <button class="status-badge {% if c.is_active %}status-active{% else %}status-inactive{% endif %} toggle-status-btn"
+                      data-id="{{ c.id }}" style="cursor:pointer;border:none;">
+                {% if c.is_active %}Active{% else %}Inactive{% endif %}
+              </button>
+            </span>
+          </div>
+          <div class="mlc-row">
+            <span class="mlc-label">Category</span>
+            <span class="mlc-value">
+              {% if c.category %}
+                <span class="type-badge" style="background:#dbeafe;color:#1e40af;">{{ c.category.name }}</span>
+              {% else %}
+                <span style="color:#9ca3af;font-style:italic;">No Category</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="mlc-row">
+            <span class="mlc-label">Batch</span>
+            <span class="mlc-value">
+              {{ c.start_date|date:"M d, Y" }} → {{ c.end_date|date:"M d, Y" }}
+            </span>
+          </div>
+          <div class="mlc-row">
+            <span class="mlc-label">Created</span>
+            <span class="mlc-value">{{ c.created_at|date:"M d, Y" }}</span>
+          </div>
+          {% if c.banner_image_desktop %}
+          <div class="mlc-row">
+            <span class="mlc-label">Banner</span>
+            <span class="mlc-value">
+              <img src="{{ c.banner_image_desktop.url }}" style="width:48px;height:32px;object-fit:cover;border-radius:4px;" alt="Banner">
+            </span>
+          </div>
+          {% endif %}
+
+          <div class="mlc-actions">
+            <button class="btn btn-primary classes-btn" data-id="{{ c.id }}">
+              Classes ({{ c.sessions.count }})
+            </button>
+            <a class="btn btn-success" href="{% url 'live_class_course_edit' c.id %}">Edit</a>
+            <form action="{% url 'live_class_course_delete' c.id %}" method="post" style="flex:1;margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this course?')" style="width:100%;">Delete</button>
+            </form>
+          </div>
+
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:40px;color:#9ca3af;">
+          <i class="fas fa-chalkboard-teacher" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+          No live class courses yet.
+          <a href="{% url 'live_class_course_create' %}" class="btn btn-success" style="display:block;margin-top:16px;">+ New Live Class Course</a>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Classes Modal -->
+<div id="classes-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;">
+  <div class="panel" style="width:100%;max-width:900px;max-height:90vh;overflow-y:auto;">
+    <div class="admin-card-hd">
+      <h3 id="modal-course-title" class="panel-title">Loading...</h3>
+      <button onclick="closeModal()" class="btn" style="padding:6px 12px;min-width:auto;">&times;</button>
+    </div>
+
+    <form id="add-schedule-form" style="display:none;margin-bottom:20px;">
+      <div class="grid">
+        <div class="col-12"><label>Class Name*</label><input type="text" id="class_name" name="class_name" required></div>
+        <div class="col-12"><label>Subject</label><input type="text" id="subject" name="subject"></div>
+        <div class="col-12"><label>Scheduled Date & Time*</label><input type="datetime-local" id="scheduled_datetime" name="scheduled_datetime" required></div>
+        <div class="col-6"><label>Duration (minutes)*</label><input type="number" id="duration_minutes" name="duration_minutes" min="1" placeholder="60" required></div>
+        <div class="col-6"><label>Max Participants (fixed)</label><input type="number" id="max_participants" name="max_participants" value="100" readonly style="background:#f5f5f5;"></div>
+        <div class="col-12">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="is_free" name="is_free"> Free Class
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:6px;margin-left:16px;cursor:pointer;">
+            <input type="checkbox" id="enable_auto_recording" name="enable_auto_recording"> Auto Recording
+          </label>
+          <p id="course-type-info" style="margin-top:8px;font-size:12px;color:var(--admin-muted);"></p>
+        </div>
+        <div class="col-12">
+          <div class="actions">
+            <button type="button" class="btn" onclick="hideAddScheduleForm()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Schedule</button>
+          </div>
+        </div>
+        <input type="hidden" id="session_id" name="session_id">
+      </div>
+    </form>
+
+    <button class="btn btn-success" onclick="showAddScheduleForm()" style="margin-bottom:16px;">+ Add New Schedule</button>
+    <div id="classes-list"></div>
+  </div>
+</div>
+
+<script>
+let currentCourseId = null;
+let isCourseFreeCurrent = false;
+const canStart = {{ request.user.is_staff|yesno:"true,false" }};
+
+function getCsrf() {
+  const m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toast-container') || (() => {
+    const div = document.createElement('div');
+    div.id = 'toast-container';
+    div.style.cssText = 'position:fixed;top:80px;right:20px;z-index:10002;';
+    document.body.appendChild(div);
+    return div;
+  })();
+  const toast = document.createElement('div');
+  toast.className = `message ${type === 'error' ? 'error' : 'success'}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, 3000);
+}
+
+function closeModal() {
+  document.getElementById('classes-modal').style.display = 'none';
+  hideAddScheduleForm();
+  resetAddScheduleForm();
+}
+
+function showAddScheduleForm() { document.getElementById('add-schedule-form').style.display='block'; resetAddScheduleForm(); updateCourseTypeInfo(); }
+function hideAddScheduleForm() { document.getElementById('add-schedule-form').style.display='none'; }
+function resetAddScheduleForm() { document.getElementById('add-schedule-form').reset(); document.getElementById('max_participants').value=100; document.getElementById('session_id').value=''; }
+
+function updateCourseTypeInfo() {
+  const el = document.getElementById('course-type-info');
+  if (isCourseFreeCurrent) { el.textContent='ℹ️ Free course. All sessions inherit free access unless overridden.'; el.style.color='#10b981'; }
+  else { el.textContent='ℹ️ Paid course. Check "Free Class" to make individual sessions free.'; el.style.color='#6366f1'; }
+}
+
+function reloadClasses(courseId) {
+  currentCourseId = courseId;
+  fetch(`/liveclass/classes/${courseId}/`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('classes-modal').style.display = 'flex';
+      document.getElementById('modal-course-title').textContent = data.course_name;
+      isCourseFreeCurrent = data.is_course_free;
+      let html = `<div class="table-wrapper"><table class="admin-table"><thead><tr><th>#</th><th>Class Name</th><th>Subject</th><th>Date</th><th>Duration</th><th>Free</th><th>Actions</th></tr></thead><tbody>`;
+      if (data.classes.length) {
+        data.classes.forEach((cls, i) => {
+          html += `<tr class="user-row"><td>${i+1}</td><td><div class="user-name">${cls.class_name}</div></td><td>${cls.subject||'-'}</td><td>${cls.scheduled_datetime}</td><td>${cls.duration_minutes}m</td><td><span class="status-badge ${cls.is_free?'status-active':'status-pending'}">${cls.is_free?'Yes':'No'}</span></td><td><div class="action-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">${canStart?`<a class="btn btn-success" href="/liveclass/session/${cls.id}/join/" style="font-size:11px;padding:6px 10px;">Start</a>`:''}<button class="btn btn-danger" onclick="deleteSchedule(${cls.id})" style="font-size:11px;padding:6px 10px;">Delete</button></div></td></tr>`;
+        });
+      } else {
+        html += `<tr><td colspan="7"><div class="empty-state" style="text-align:center;"><i class="fas fa-calendar-times" style="font-size:36px;color:var(--admin-muted);"></i><h4 class="empty-title">No scheduled classes</h4></div></td></tr>`;
+      }
+      html += '</tbody></table></div>';
+      document.getElementById('classes-list').innerHTML = html;
+      hideAddScheduleForm();
+    })
+    .catch(() => showToast('Failed to load classes', 'error'));
+}
+
+document.getElementById('add-schedule-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const sessionId = document.getElementById('session_id').value;
+  const url = sessionId ? `/liveclass/schedule/edit/${sessionId}/` : `/liveclass/schedule/add/${currentCourseId}/`;
+  const payload = {
+    class_name: document.getElementById('class_name').value.trim(),
+    subject: document.getElementById('subject').value.trim(),
+    scheduled_datetime: document.getElementById('scheduled_datetime').value,
+    duration_minutes: parseInt(document.getElementById('duration_minutes').value),
+    max_participants: 100,
+    is_free: document.getElementById('is_free').checked,
+    enable_auto_recording: document.getElementById('enable_auto_recording').checked,
+  };
+  fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify(payload) })
+    .then(r=>r.json())
+    .then(res => { if(res.success){showToast(res.message||(sessionId?'Updated':'Added'));reloadClasses(currentCourseId);}else{showToast(res.error||'Failed','error');} })
+    .catch(()=>showToast('Network error','error'));
+});
+
+function deleteSchedule(sessionId) {
+  if (!confirm('Delete this class?')) return;
+  fetch(`/liveclass/schedule/delete/${sessionId}/`,{method:'POST',headers:{'X-CSRFToken':getCsrf()}})
+    .then(r=>r.json())
+    .then(res=>{if(res.success){showToast('Deleted');reloadClasses(currentCourseId);}else{showToast('Failed','error');}})
+    .catch(()=>showToast('Network error','error'));
+}
+
+function toggleStatus(courseId, btn) {
+  fetch(`/liveclass/toggle-status/${courseId}/`,{method:'POST',headers:{'X-CSRFToken':getCsrf()}})
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.success){
+        const active=!!data.status;
+        /* Update ALL toggle buttons with this course id (desktop + mobile) */
+        document.querySelectorAll(`.toggle-status-btn[data-id="${courseId}"]`).forEach(b=>{
+          b.textContent=active?'Active':'Inactive';
+          b.className=`status-badge ${active?'status-active':'status-inactive'} toggle-status-btn`;
+        });
+        showToast(data.message||'Status updated');
+      }else{showToast('Failed','error');}
+    })
+    .catch(()=>showToast('Network error','error'));
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.toggle-status-btn').forEach(btn => { btn.onclick = () => toggleStatus(btn.dataset.id, btn); });
+  document.querySelectorAll('.classes-btn').forEach(btn => { btn.onclick = () => reloadClasses(btn.dataset.id); });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,638 @@
+{% extends "admin_dashboard.html" %}
+{% include "message.html" %}
+{% block content %}
+
+
+<style>
+    /* ── Responsive grid ── */
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .col-2  { grid-column: span 2; }
+    .col-3  { grid-column: span 3; }
+    .col-4  { grid-column: span 4; }
+    .col-6  { grid-column: span 6; }
+    .col-12 { grid-column: span 12; }
+
+
+    @media (max-width: 768px) {
+        .col-2, .col-3, .col-4, .col-6, .col-12 { grid-column: span 12; }
+        .panel { padding: 14px 12px; }
+        .coupon-card { padding: 12px; }
+        .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        input, select, textarea { width: 100%; box-sizing: border-box; }
+    }
+
+
+    /* ── Prevent long file links / filenames from causing horizontal scroll ── */
+    .video-duration-display,
+    .help-text {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        max-width: 100%;
+    }
+
+
+    /* ── Hide Django's auto-generated "Currently: <link>" completely ── */
+    .file-input-wrapper a { display: none !important; }
+    .file-input-wrapper p { display: none !important; }
+
+
+    /* ── File preview containers ── */
+    .file-preview {
+        margin-top: 8px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f3f4f6;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    .file-preview img {
+        display: block;
+        max-width: 180px;
+        max-height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .file-preview video {
+        display: block;
+        max-width: 100%;
+        width: 300px;
+        max-height: 170px;
+        border-radius: 8px;
+        background: #000;
+        outline: none;
+    }
+
+    @media (max-width: 768px) {
+        .file-preview video { width: 100%; }
+        .file-preview img  { max-width: 140px; }
+    }
+
+    .file-change-label {
+        display: block;
+        font-size: 12px;
+        color: #6366f1;
+        margin-top: 6px;
+        font-weight: 500;
+    }
+
+
+    /* ────────────────────────────────────────────────
+       CHECKBOX ALIGNMENT FIX
+       Django renders checkbox fields as:
+         <input type="checkbox"> inside a <label>
+       On mobile, the grid collapses and the inline-flex
+       label can break or float. This ensures every
+       checkbox + its label text are always a clean,
+       left-aligned, properly spaced row.
+    ──────────────────────────────────────────────── */
+
+    /* The wrapper col for any checkbox field */
+    .form-group {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    /* The label wrapping checkbox + text */
+    .form-group > label,
+    .form-group label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        /* Prevent the label from stretching full width and pushing checkbox off */
+        width: auto !important;
+        max-width: 100%;
+        /* Reset any inherited text-align that could centre the checkbox */
+        text-align: left !important;
+    }
+
+    /* The checkbox input itself */
+    .form-group input[type="checkbox"] {
+        /* Explicit, fixed size so it never collapses or overflows */
+        width: 18px !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        cursor: pointer;
+        accent-color: var(--admin-primary, #6366f1);
+        /* Stop global `input { width: 100% }` from stretching checkboxes */
+        flex-shrink: 0;
+    }
+
+    /* Mobile-specific: make the touch target bigger */
+    @media (max-width: 768px) {
+        .form-group input[type="checkbox"] {
+            width: 20px !important;
+            min-width: 20px !important;
+            height: 20px !important;
+        }
+
+        .form-group > label,
+        .form-group label {
+            gap: 12px !important;
+            font-size: 15px;
+            padding: 4px 0; /* extra vertical tap area */
+        }
+    }
+</style>
+
+
+<main>
+  <div class="page-header">
+    <div class="header-content">
+      <h1>{% if course %}Edit Video Course{% else %}Create Video Course{% endif %}</h1>
+      <p class="page-subtitle">Enter the course name first, upload videos, then fill remaining details. You can edit later.</p>
+    </div>
+  </div>
+
+
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+
+  <div class="wrapper">
+    <form method="post" enctype="multipart/form-data" id="courseForm">
+      {% csrf_token %}
+
+
+      <!-- 1) Course Identity -->
+      <div class="panel">
+        <div class="panel-title">Course Identity</div>
+        <div class="grid">
+          <div class="col-6">
+            <label>Course Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}<ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-6">
+            <label>Category</label>
+            {{ form.category }}
+            {% if form.category.errors %}<ul class="errorlist">{% for e in form.category.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 2) Videos -->
+      <div class="panel">
+        <div class="panel-title">Videos</div>
+        <p class="small">Upload your lessons. Duration is auto-detected after upload. Mark "Preview" if applicable.</p>
+        {{ video_fs.management_form }}
+        {% for v in video_fs %}
+          <div class="coupon-card" data-video-form data-video-index="{{ forloop.counter0 }}">
+            {{ v.id }}
+            <div class="grid">
+              <div class="col-6">
+                <label>Title</label>
+                {{ v.title }}
+                {% if v.title.errors %}<ul class="errorlist">{% for e in v.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+              <div class="col-3">
+                <div class="form-group">
+                  <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                    {{ v.is_preview }} <span>Preview?</span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-3"></div>
+
+
+              <!-- Video File -->
+              <div class="col-6">
+                <label>Video File</label>
+                <div class="file-input-wrapper">{{ v.file }}</div>
+                {% if v.file.errors %}<ul class="errorlist">{% for e in v.file.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                {% if v.instance.pk and v.instance.file %}
+                  <div class="file-preview">
+                    <video src="{{ v.instance.file.url }}" controls preload="metadata" title="{{ v.instance.title }}"></video>
+                  </div>
+                  <span class="file-change-label">↑ Select a new file above to replace</span>
+                {% endif %}
+                <div class="video-duration-display" style="margin-top:6px;font-size:12px;color:#64748b;">
+                  {% if v.instance.pk and v.instance.file %}
+                    {% if v.instance.duration %}
+                      <strong>Duration:</strong>
+                      <span class="duration-value" data-seconds="{{ v.instance.duration }}">{{ v.instance.duration_display|default:"Calculating..." }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="duration-placeholder">Select a video file to see duration</span>
+                  {% endif %}
+                </div>
+              </div>
+
+
+              <!-- Thumb Image -->
+              <div class="col-6">
+                <label>Thumb Image</label>
+                <div class="file-input-wrapper">{{ v.thumb_image }}</div>
+                {% if v.thumb_image.errors %}<ul class="errorlist">{% for e in v.thumb_image.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                {% if v.instance.pk and v.instance.thumb_image %}
+                  <div class="file-preview">
+                    <img src="{{ v.instance.thumb_image.url }}" alt="Thumbnail for {{ v.instance.title }}" loading="lazy">
+                  </div>
+                  <span class="file-change-label">↑ Select a new image above to replace</span>
+                {% else %}
+                  <div class="help-text" style="margin-top:4px;font-size:12px;color:#64748b;">
+                    If no thumbnail is uploaded, a default thumbnail will be generated from the video.
+                  </div>
+                {% endif %}
+              </div>
+
+
+              {% if v.instance.pk %}
+                <div class="col-12">
+                  <div class="form-group">
+                    <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                      {{ v.DELETE }} <span>Delete this video</span>
+                    </label>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+
+
+        <div class="actions">
+          <button type="button" class="btn" onclick="addFormset('vid')"><i class="fas fa-plus"></i> Add Video</button>
+        </div>
+        <div class="message" style="margin-top:12px;">
+          <strong>💡 Tip:</strong> If you have many videos, scroll down to see all video upload forms.
+        </div>
+      </div>
+
+
+      <!-- 3) Core Details -->
+      <div class="panel">
+        <div class="panel-title">Core Details</div>
+        <div class="grid">
+          <div class="col-12">
+            <label>Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-4">
+            <label>Original Price</label>
+            {{ form.original_price }}
+            {% if form.original_price.errors %}<ul class="errorlist">{% for e in form.original_price.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-4">
+            <label>Selling Price</label>
+            {{ form.selling_price }}
+            {% if form.selling_price.errors %}<ul class="errorlist">{% for e in form.selling_price.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-4">
+            <label>Currency</label>
+            {{ form.currency }}
+            {% if form.currency.errors %}<ul class="errorlist">{% for e in form.currency.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+
+
+          <!-- Course Thumbnail -->
+          <div class="col-6">
+            <label>Thumbnail</label>
+            <div class="file-input-wrapper">{{ form.thumbnail }}</div>
+            {% if form.thumbnail.errors %}<ul class="errorlist">{% for e in form.thumbnail.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if course and course.thumbnail %}
+              <div class="file-preview" style="margin-top:8px;">
+                <img src="{{ course.thumbnail.url }}" alt="Course thumbnail" loading="lazy" style="max-width:200px;max-height:130px;">
+              </div>
+              <span class="file-change-label">↑ Select a new image above to replace</span>
+            {% else %}
+              <div class="help-text" style="margin-top:4px;font-size:12px;color:#64748b;">
+                Recommended 16:9 image. If not uploaded, first video thumbnail will be used.
+              </div>
+            {% endif %}
+          </div>
+          <div class="col-6"></div>
+        </div>
+
+
+        <hr style="height:1px;background:var(--ad-border);margin:12px 0;border:none;">
+
+
+        <div class="grid">
+          <div class="col-3">
+            <div class="form-group">
+              <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                {{ form.is_free }} <span>Free Course</span>
+              </label>
+              <div class="help-text" style="font-size:12px;margin-top:4px;padding-left:28px;">
+                {% if form.is_free.help_text %}{{ form.is_free.help_text|safe }}{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                {{ form.is_premium }} <span>Premium</span>
+              </label>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                {{ form.is_bestseller }} <span>Bestseller</span>
+              </label>
+            </div>
+          </div>
+          <div class="col-3"></div>
+
+
+          <div class="col-2">
+            <label>Rating</label>
+            {{ form.rating }}
+            {% if form.rating.errors %}<ul class="errorlist">{% for e in form.rating.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-2">
+            <label>Rating Count</label>
+            {{ form.rating_count }}
+            {% if form.rating_count.errors %}<ul class="errorlist">{% for e in form.rating_count.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-2">
+            <label>Total Hours <span id="totalHoursCalc" style="font-size:11px;color:#16a34a;font-weight:600;"></span></label>
+            {{ form.total_hours }}
+            {% if form.total_hours.errors %}<ul class="errorlist">{% for e in form.total_hours.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            <div class="help-text" style="margin-top:4px;font-size:12px;color:#64748b;">Auto-calculated from video durations</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 4) What you'll learn -->
+      <div class="panel">
+        <div class="panel-title">What you'll learn</div>
+        {{ learn_fs.management_form }}
+        {% for f in learn_fs %}
+          <div class="coupon-card">
+            {{ f.id }}
+            <div class="grid">
+              <div class="col-12">
+                <label>Point</label>
+                {{ f.text }}
+                {% if f.text.errors %}<ul class="errorlist">{% for e in f.text.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+              {% if f.instance.pk %}
+                <div class="col-12">
+                  <div class="form-group">
+                    <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                      {{ f.DELETE }} <span>Delete</span>
+                    </label>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+        <div class="actions">
+          <button type="button" class="btn" onclick="addFormset('learn')"><i class="fas fa-plus"></i> Add Point</button>
+        </div>
+      </div>
+
+
+      <!-- 5) Includes -->
+      <div class="panel">
+        <div class="panel-title">Includes</div>
+        {{ include_fs.management_form }}
+        {% for f in include_fs %}
+          <div class="coupon-card">
+            {{ f.id }}
+            <div class="grid">
+              <div class="col-12">
+                <label>Label</label>
+                {{ f.label }}
+                {% if f.label.errors %}<ul class="errorlist">{% for e in f.label.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+              </div>
+              {% if f.instance.pk %}
+                <div class="col-12">
+                  <div class="form-group">
+                    <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+                      {{ f.DELETE }} <span>Delete</span>
+                    </label>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+        <div class="actions">
+          <button type="button" class="btn" onclick="addFormset('incl')"><i class="fas fa-plus"></i> Add Include</button>
+        </div>
+      </div>
+
+
+      <!-- 6) Instructor -->
+      <div class="panel">
+        <div class="panel-title">Instructor</div>
+        <div class="grid">
+          <div class="col-6">
+            <label>Name</label>
+            {{ form.instructor_name }}
+            {% if form.instructor_name.errors %}<ul class="errorlist">{% for e in form.instructor_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-6">
+            <label>Headline</label>
+            {{ form.instructor_headline }}
+            {% if form.instructor_headline.errors %}<ul class="errorlist">{% for e in form.instructor_headline.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="col-6">
+            <label>Avatar</label>
+            <div class="file-input-wrapper">{{ form.instructor_avatar }}</div>
+            {% if form.instructor_avatar.errors %}<ul class="errorlist">{% for e in form.instructor_avatar.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            {% if course and course.instructor_avatar %}
+              <div class="file-preview" style="margin-top:8px;">
+                <img src="{{ course.instructor_avatar.url }}" alt="Instructor avatar" loading="lazy" style="max-width:80px;max-height:80px;border-radius:50%;">
+              </div>
+              <span class="file-change-label">↑ Select a new image above to replace</span>
+            {% endif %}
+          </div>
+          <div class="col-6"></div>
+        </div>
+      </div>
+
+
+      <!-- Save -->
+      <div class="panel">
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" id="saveCourseBtn">
+            <span class="btn-icon"><i class="fas fa-save"></i></span>
+            <span class="btn-text">{% if mode == 'edit' %}Update Course{% else %}Save Course{% endif %}</span>
+          </button>
+        </div>
+      </div>
+
+
+    </form>
+  </div>
+</main>
+
+
+<script>
+/* ── Notification system ── */
+function showNotification(message, type = 'success', duration = 4000) {
+  document.querySelectorAll('.custom-notification').forEach(n => n.remove());
+  const c = { success:{bg:'#f0fdf4',text:'#16a34a',border:'#bbf7d0',icon:'fa-check-circle'}, error:{bg:'#fef2f2',text:'#dc2626',border:'#fecaca',icon:'fa-exclamation-circle'}, info:{bg:'#eff6ff',text:'#2563eb',border:'#bfdbfe',icon:'fa-info-circle'} }[type] || {};
+  const n = document.createElement('div');
+  n.className = `custom-notification custom-notification-${type}`;
+  n.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><span style="color:${c.text};"><i class="fas ${c.icon}"></i></span><span style="flex:1;">${message}</span><button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:${c.text};opacity:.6;">×</button></div>`;
+  n.style.cssText = `position:fixed;top:20px;right:20px;z-index:10000;max-width:400px;min-width:280px;background:${c.bg};color:${c.text};border:1px solid ${c.border};border-radius:8px;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,.1);font-size:14px;font-weight:500;animation:slideInRight .3s ease-out;`;
+  document.body.appendChild(n);
+  setTimeout(() => { if (n.parentNode) { n.style.animation='slideOutRight .3s ease-out'; setTimeout(()=>n.remove(),300); } }, duration);
+}
+
+const _s = document.createElement('style');
+_s.textContent = `
+@keyframes slideInRight  { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes slideOutRight { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+.custom-notification:hover { transform:translateX(-5px);transition:transform .2s ease; }
+.spinner { display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }`;
+document.head.appendChild(_s);
+
+/* ── Video duration ── */
+const videoDurations = {};
+
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = Math.floor(seconds % 60);
+  return [h && `${h}h`, m && `${m}m`, (s || (!h && !m)) && `${s}s`].filter(Boolean).join(' ');
+}
+
+function updateTotalHours() {
+  let total = Object.values(videoDurations).reduce((a, b) => a + b, 0);
+  document.querySelectorAll('.duration-value[data-seconds]').forEach(el => {
+    const idx = el.closest('[data-video-form]')?.dataset.videoIndex;
+    if (idx && !videoDurations[idx]) total += parseFloat(el.dataset.seconds) || 0;
+  });
+  const inp = document.querySelector('input[name$="total_hours"]');
+  if (inp) { inp.value = (total / 3600).toFixed(2); inp.style.background='#f0fdf4'; setTimeout(()=>inp.style.background='',1000); }
+  const lbl = document.getElementById('totalHoursCalc');
+  if (lbl && total > 0) lbl.textContent = `(${formatDuration(total)})`;
+}
+
+function handleVideoFileChange(e) {
+  const input = e.target, file = input.files[0];
+  const form  = input.closest('[data-video-form]');
+  const disp  = form.querySelector('.video-duration-display');
+  const idx   = form.dataset.videoIndex;
+
+  if (!file) { delete videoDurations[idx]; disp.innerHTML='<span class="duration-placeholder">Select a video file to see duration</span>'; updateTotalHours(); return; }
+  if (!file.type.startsWith('video/')) { disp.innerHTML='<span style="color:#dc2626;">⚠️ Please select a valid video file</span>'; delete videoDurations[idx]; updateTotalHours(); return; }
+  disp.innerHTML='<span style="color:#2563eb;"><i class="fas fa-spinner fa-spin"></i> Detecting duration...</span>';
+
+  let preview = form.querySelector('.new-video-preview');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.className = 'file-preview new-video-preview';
+    preview.style.marginTop = '8px';
+    const vid = document.createElement('video');
+    vid.controls = true; vid.preload = 'metadata';
+    preview.appendChild(vid);
+    disp.before(preview);
+  }
+  preview.querySelector('video').src = URL.createObjectURL(file);
+
+  const v2 = document.createElement('video');
+  v2.preload = 'metadata';
+  v2.onloadedmetadata = () => {
+    URL.revokeObjectURL(v2.src);
+    const dur = Math.floor(v2.duration);
+    videoDurations[idx] = dur;
+    disp.innerHTML = `<strong style="color:#16a34a;">✓ Selected:</strong> ${file.name}<br><strong>Duration:</strong> ${formatDuration(dur)} | <strong>Size:</strong> ${(file.size/1048576).toFixed(2)} MB`;
+    updateTotalHours();
+    showNotification(`Video duration detected: ${formatDuration(dur)}`, 'success', 2000);
+  };
+  v2.onerror = () => { URL.revokeObjectURL(v2.src); disp.innerHTML='<span style="color:#dc2626;">⚠️ Could not read video duration</span>'; delete videoDurations[idx]; updateTotalHours(); };
+  v2.src = URL.createObjectURL(file);
+}
+
+function handleImageFileChange(e) {
+  const input = e.target, file = input.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const wrapper = input.closest('.col-6, .col-12') || input.parentElement;
+  let preview = wrapper.querySelector('.new-image-preview');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.className = 'file-preview new-image-preview';
+    preview.style.marginTop = '8px';
+    const img = document.createElement('img');
+    img.alt = 'New image preview';
+    img.style.cssText = 'max-width:180px;max-height:120px;object-fit:cover;border-radius:8px;display:block;';
+    preview.appendChild(img);
+    const fiw = wrapper.querySelector('.file-input-wrapper');
+    if (fiw) fiw.after(preview); else wrapper.appendChild(preview);
+  }
+  const img = preview.querySelector('img');
+  if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  img.src = URL.createObjectURL(file);
+}
+
+function attachVideoFileListeners() {
+  document.querySelectorAll('input[type="file"][name*="-file"]').forEach(inp => {
+    inp.removeEventListener('change', handleVideoFileChange);
+    inp.addEventListener('change', handleVideoFileChange);
+  });
+  document.querySelectorAll('input[type="file"][name*="-thumb_image"], input[type="file"][name*="thumbnail"], input[type="file"][name*="instructor_avatar"]').forEach(inp => {
+    inp.removeEventListener('change', handleImageFileChange);
+    inp.addEventListener('change', handleImageFileChange);
+  });
+}
+
+function addFormset(prefix) {
+  const total = document.querySelector(`input[name="${prefix}-TOTAL_FORMS"]`);
+  if (!total) return;
+  const count = parseInt(total.value, 10);
+  const panels = Array.from(document.querySelectorAll('.panel'));
+  let target = panels.find(p => p.querySelector(`input[name="${prefix}-TOTAL_FORMS"]`));
+  if (!target) return;
+  const items = target.querySelectorAll('.coupon-card');
+  const last  = items[items.length - 1];
+  if (!last) return;
+  const clone = last.cloneNode(true);
+  clone.dataset.videoIndex = count;
+  clone.querySelectorAll('[name]').forEach(el => {
+    el.name = el.name.replace(new RegExp(`${prefix}-\\d+-`), `${prefix}-${count}-`);
+    if (el.id) el.id = el.id.replace(new RegExp(`${prefix}-\\d+-`), `${prefix}-${count}-`);
+    if      (el.type === 'checkbox') el.checked = false;
+    else if (el.type === 'file')    el.value   = '';
+    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else                             el.value   = '';
+  });
+  const dd = clone.querySelector('.video-duration-display');
+  if (dd) dd.innerHTML = '<span class="duration-placeholder">Select a video file to see duration</span>';
+  clone.querySelectorAll('.file-preview, .file-change-label, .new-video-preview, .new-image-preview').forEach(el => el.remove());
+  clone.querySelectorAll('.errorlist').forEach(e => e.remove());
+  last.after(clone);
+  total.value = count + 1;
+  attachVideoFileListeners();
+  clone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('courseForm').addEventListener('submit', function () {
+  const btn  = document.getElementById('saveCourseBtn');
+  btn.querySelector('.btn-icon').innerHTML = '<div class="spinner"></div>';
+  btn.querySelector('.btn-text').textContent = 'Saving...';
+  btn.disabled = true;
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.messages .message').forEach(el => {
+    const type = el.classList.contains('error') ? 'error' : 'success';
+    const text = el.textContent.trim();
+    if (text) { showNotification(text, type); el.style.display='none'; }
+  });
+  attachVideoFileListeners();
+  updateTotalHours();
+});
+</script>
+{% endblock content %}

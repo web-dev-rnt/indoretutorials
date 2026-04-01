@@ -1,0 +1,279 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}
+    {{ action }} 
+    {% if type == 'footer_link' %}Footer Link{% else %}Footer Legal Link{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>{{ action }} {% if type == 'footer_link' %}🔗 Footer Link{% else %}⚖️ Footer Legal Link{% endif %}</h1>
+        <a href="{% url 'footer_edit' %}" class="ad-btn ad-btn-secondary">← Back to Footer Management</a>
+    </div>
+
+    <div class="ad-form-container">
+        <div class="ad-card">
+            <div class="ad-card-header">
+                <h2>{% if type == 'footer_link' %}Footer Link{% else %}Footer Legal Link{% endif %} Details</h2>
+            </div>
+            <div class="ad-card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="ad-form-grid">
+                        {% if type == 'footer_link' %}
+                            <div class="form-group">
+                                <label for="{{ form.section.id_for_label }}">Footer Section *</label>
+                                {{ form.section }}
+                                <small class="ad-help-text">Choose which footer section this link belongs to</small>
+                                {% if form.section.errors %}
+                                    <div class="ad-error">{{ form.section.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.order.id_for_label }}">Display Order</label>
+                            {{ form.order }}
+                            <small class="ad-help-text">Lower numbers appear first</small>
+                            {% if form.order.errors %}
+                                <div class="ad-error">{{ form.order.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group ad-full-width">
+                            <label for="{{ form.title.id_for_label }}">Link Title *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="ad-error">{{ form.title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group ad-full-width">
+                            <label for="{{ form.url.id_for_label }}">Link URL *</label>
+                            {{ form.url }}
+                            <small class="ad-help-text">Enter full URL or use # for placeholder links</small>
+                            {% if form.url.errors %}
+                                <div class="ad-error">{{ form.url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group ad-full-width">
+                            <label class="ad-checkbox-label">
+                                {{ form.is_active }}
+                                <span>Active (Show on website)</span>
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="ad-error">{{ form.is_active.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="ad-form-actions">
+                        <button type="submit" class="ad-btn ad-btn-primary">{{ action }} {% if type == 'footer_link' %}Link{% else %}Legal Link{% endif %}</button>
+                        <a href="{% url 'footer_edit' %}" class="ad-btn ad-btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="ad-card">
+            <div class="ad-card-header">
+                <h3>🔍 Preview</h3>
+            </div>
+            <div class="ad-card-body">
+                <div class="link-preview">
+                    {% if type == 'footer_link' %}
+                        <div class="preview-section">
+                            <strong id="preview-section">
+                                {% if footer_link.section %}{{ footer_link.get_section_display }}{% else %}About{% endif %}
+                            </strong>
+                        </div>
+                    {% endif %}
+                    <div class="preview-link">
+                        <a href="#" id="preview-title">
+                            {% if footer_link.title or footer_legal.title %}
+                                {{ footer_link.title|default:footer_legal.title }}
+                            {% else %}
+                                Sample Link Title
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="preview-url">
+                        <small id="preview-url">
+                            {% if footer_link.url or footer_legal.url %}
+                                {{ footer_link.url|default:footer_legal.url }}
+                            {% else %}
+                                #
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ad-form-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.ad-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.ad-form-grid .form-group.ad-full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.ad-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.ad-help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.ad-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.ad-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Preview Styles */
+.link-preview {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.preview-section {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #495057;
+}
+
+.preview-link a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.preview-link a:hover {
+    text-decoration: underline;
+}
+
+.preview-url {
+    margin-top: 5px;
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.ad-btn {
+    padding: 10px 20px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.ad-btn-primary {
+    background: #c7212f;
+    color: white;
+}
+
+.ad-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .ad-form-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .ad-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Live preview updates
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('#id_title');
+    const urlInput = document.querySelector('#id_url');
+    const previewTitle = document.querySelector('#preview-title');
+    const previewUrl = document.querySelector('#preview-url');
+    
+    {% if type == 'footer_link' %}
+        const sectionInput = document.querySelector('#id_section');
+        const previewSection = document.querySelector('#preview-section');
+        
+        function updatePreview() {
+            if (titleInput && previewTitle) {
+                previewTitle.textContent = titleInput.value || 'Sample Link Title';
+            }
+            if (urlInput && previewUrl) {
+                previewUrl.textContent = urlInput.value || '#';
+            }
+            if (sectionInput && previewSection) {
+                const selectedOption = sectionInput.options[sectionInput.selectedIndex];
+                previewSection.textContent = selectedOption.text || 'About';
+            }
+        }
+        
+        if (sectionInput) sectionInput.addEventListener('change', updatePreview);
+    {% else %}
+        function updatePreview() {
+            if (titleInput && previewTitle) {
+                previewTitle.textContent = titleInput.value || 'Sample Legal Link';
+            }
+            if (urlInput && previewUrl) {
+                previewUrl.textContent = urlInput.value || '#';
+            }
+        }
+    {% endif %}
+    
+    if (titleInput) titleInput.addEventListener('input', updatePreview);
+    if (urlInput) urlInput.addEventListener('input', updatePreview);
+    
+    // Initial update
+    updatePreview();
+});
+</script>
+{% endblock %}

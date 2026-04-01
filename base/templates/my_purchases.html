@@ -1,0 +1,590 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Purchases - {{ block.super }}{% endblock %}
+
+{% block content %}
+<style>
+    .purchases-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 400;
+        color: #333;
+        margin: 40px 0 20px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #ddd;
+        display: inline-block;
+        letter-spacing: 0.3px;
+    }
+
+    .purchase-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .purchase-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .purchase-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border-color: #c7212f;
+    }
+
+    .purchase-thumbnail {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+    }
+
+    .purchase-content {
+        padding: 20px;
+    }
+
+    .purchase-type-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .badge-video { background: #e3f2fd; color: #1976d2; }
+    .badge-live  { background: #fff3e0; color: #f57c00; }
+    .badge-test  { background: #e8f5e9; color: #388e3c; }
+    .badge-elibrary { background: #f3e5f5; color: #7b1fa2; }
+    .badge-bundle   { background: #fff9c4; color: #f57f17; }
+
+    .purchase-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+        margin: 0 0 12px 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .purchase-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .meta-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .meta-row i {
+        width: 16px;
+        color: #999;
+    }
+
+    .purchase-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-access {
+        flex: 1;
+        padding: 12px;
+        background: #c7212f;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-access:hover {
+        background: #a01a26;
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(199, 33, 47, 0.3);
+    }
+
+    .btn-access:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .expires-warning {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #fff3cd;
+        color: #856404;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 8px;
+        margin-bottom: 5px;
+    }
+
+    .price-paid {
+        font-size: 20px;
+        font-weight: 700;
+        color: #c7212f;
+        margin-top: 8px;
+        margin-bottom: 5px;
+    }
+
+    /* ── Empty State ── */
+    .empty-state-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        padding: 20px;
+    }
+
+    .empty-state-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 32px rgba(0,0,0,0.09);
+        padding: 56px 48px 48px;
+        max-width: 520px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .empty-state-icon-wrap {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #fff0f1 0%, #ffe0e3 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 28px;
+    }
+
+    .empty-state-icon-wrap i {
+        font-size: 44px;
+        color: #c7212f;
+    }
+
+    .empty-state-card h2 {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0 0 12px;
+    }
+
+    .empty-state-card p {
+        font-size: 15px;
+        color: #888;
+        line-height: 1.6;
+        margin: 0 0 32px;
+    }
+
+    .empty-state-features {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 36px;
+        flex-wrap: wrap;
+    }
+
+    .feature-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: #f7f8fa;
+        border-radius: 30px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .feature-pill i {
+        color: #c7212f;
+        font-size: 14px;
+    }
+
+    .btn-browse-courses {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px 36px;
+        background: #c7212f;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 16px rgba(199,33,47,0.25);
+    }
+
+    .btn-browse-courses:hover {
+        background: #a01a26;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(199,33,47,0.35);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .btn-browse-courses i {
+        font-size: 18px;
+    }
+
+    .empty-state-divider {
+        height: 1px;
+        background: #f0f0f0;
+        margin: 32px 0 24px;
+    }
+
+    .empty-state-help {
+        font-size: 13px;
+        color: #aaa;
+    }
+
+    .empty-state-help a {
+        color: #c7212f;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .empty-state-help a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .purchase-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .empty-state-card {
+            padding: 40px 24px 36px;
+        }
+
+        .empty-state-card h2 {
+            font-size: 22px;
+        }
+
+        .empty-state-features {
+            gap: 12px;
+        }
+
+        .btn-browse-courses {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .empty-state-icon-wrap {
+            width: 80px;
+            height: 80px;
+        }
+
+        .empty-state-icon-wrap i {
+            font-size: 34px;
+        }
+    }
+</style>
+
+<div class="purchases-container">
+
+    {% if purchases.video_courses %}
+    <h2 class="section-title"><i class="fa fa-video-camera"></i> Video Courses</h2>
+    <div class="purchase-grid">
+        {% for item in purchases.video_courses %}
+        <div class="purchase-card">
+            {% if item.course.thumbnail %}
+                <img src="{{ item.course.thumbnail.url }}" alt="{{ item.course.name }}" class="purchase-thumbnail">
+            {% else %}
+                <div class="purchase-thumbnail" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+            {% endif %}
+            <div class="purchase-content">
+                <span class="purchase-type-badge badge-video">Video Course</span>
+                <h3 class="purchase-title">{{ item.course.name|default:"Video Course" }}</h3>
+                <div class="purchase-meta">
+                    <div class="meta-row">
+                        <i class="fa fa-calendar"></i>
+                        <span>Purchased: {{ item.access_granted|date:"d M, Y" }}</span>
+                    </div>
+                    {% if item.payment %}
+                    <div class="meta-row">
+                        <i class="fa fa-credit-card"></i>
+                        <span>Order ID: {{ item.payment.razorpay_order_id|truncatechars:20 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.course.is_free %}
+                    <div class="price-paid" style="color: #10b981;">FREE</div>
+                {% else %}
+                    <div class="price-paid">₹{{ item.course.selling_price|floatformat:2 }}</div>
+                {% endif %}
+                {% if item.expires_at %}
+                <div class="expires-warning">
+                    <i class="fa fa-clock-o"></i> Expires: {{ item.expires_at|date:"d M, Y" }}
+                </div>
+                {% endif %}
+                <div class="purchase-actions">
+                    <a href="{% url 'video_course_detail' pk=item.course.id %}" class="btn-access">
+                        <i class="fa fa-play-circle"></i> Access Course
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if purchases.live_classes %}
+    <h2 class="section-title"><i class="fa fa-television"></i> Live Classes</h2>
+    <div class="purchase-grid">
+        {% for item in purchases.live_classes %}
+        <div class="purchase-card">
+            {% if item.course.banner_image_desktop %}
+                <img src="{{ item.course.banner_image_desktop.url }}" alt="{{ item.course.name }}" class="purchase-thumbnail">
+            {% elif item.course.banner_image_mobile %}
+                <img src="{{ item.course.banner_image_mobile.url }}" alt="{{ item.course.name }}" class="purchase-thumbnail">
+            {% else %}
+                <div class="purchase-thumbnail" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+            {% endif %}
+            <div class="purchase-content">
+                <span class="purchase-type-badge badge-live">Live Class</span>
+                <h3 class="purchase-title">{{ item.course.name|default:"Live Class" }}</h3>
+                <div class="purchase-meta">
+                    <div class="meta-row">
+                        <i class="fa fa-calendar"></i>
+                        <span>Purchased: {{ item.access_granted|date:"d M, Y" }}</span>
+                    </div>
+                    {% if item.payment %}
+                    <div class="meta-row">
+                        <i class="fa fa-credit-card"></i>
+                        <span>Order ID: {{ item.payment.razorpay_order_id|truncatechars:20 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="meta-row">
+                        <i class="fa fa-language"></i>
+                        <span>{{ item.course.language }}</span>
+                    </div>
+                </div>
+                {% if item.course.is_free %}
+                    <div class="price-paid" style="color: #10b981;">FREE</div>
+                {% else %}
+                    <div class="price-paid">₹{{ item.course.current_price|floatformat:2 }}</div>
+                {% endif %}
+                {% if item.expires_at %}
+                <div class="expires-warning">
+                    <i class="fa fa-clock-o"></i> Expires: {{ item.expires_at|date:"d M, Y" }}
+                </div>
+                {% endif %}
+                <div class="purchase-actions">
+                    <a href="{% url 'live_class_detail' pk=item.course.id %}" class="btn-access">
+                        <i class="fa fa-play-circle"></i> Access Class
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if purchases.test_series %}
+    <h2 class="section-title"><i class="fa fa-file-text"></i> Test Series</h2>
+    <div class="purchase-grid">
+        {% for item in purchases.test_series %}
+        <div class="purchase-card">
+            {% if item.course.thumbnail %}
+                <img src="{{ item.course.thumbnail.url }}" alt="{{ item.course.title }}" class="purchase-thumbnail">
+            {% else %}
+                <div class="purchase-thumbnail" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+            {% endif %}
+            <div class="purchase-content">
+                <span class="purchase-type-badge badge-test">Test Series</span>
+                <h3 class="purchase-title">{{ item.course.title|default:"Test Series" }}</h3>
+                <div class="purchase-meta">
+                    <div class="meta-row">
+                        <i class="fa fa-calendar"></i>
+                        <span>Purchased: {{ item.access_granted|date:"d M, Y" }}</span>
+                    </div>
+                    {% if item.payment %}
+                    <div class="meta-row">
+                        <i class="fa fa-credit-card"></i>
+                        <span>Order ID: {{ item.payment.razorpay_order_id|truncatechars:20 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.course.is_free %}
+                    <div class="price-paid" style="color: #10b981;">FREE</div>
+                {% else %}
+                    <div class="price-paid">₹{{ item.course.price|floatformat:2 }}</div>
+                {% endif %}
+                {% if item.expires_at %}
+                <div class="expires-warning">
+                    <i class="fa fa-clock-o"></i> Expires: {{ item.expires_at|date:"d M, Y" }}
+                </div>
+                {% endif %}
+                <div class="purchase-actions">
+                    <a href="{% url 'front_exam_series_detail' pk=item.course.id %}" class="btn-access">
+                        <i class="fa fa-pencil"></i> Start Tests
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if purchases.elibrary_courses %}
+    <h2 class="section-title"><i class="fa fa-book"></i> E-Library</h2>
+    <div class="purchase-grid">
+        {% for item in purchases.elibrary_courses %}
+        <div class="purchase-card">
+            {% if item.course.cover_image %}
+                <img src="{{ item.course.cover_image.url }}" alt="{{ item.course.title }}" class="purchase-thumbnail">
+            {% else %}
+                <div class="purchase-thumbnail" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+            {% endif %}
+            <div class="purchase-content">
+                <span class="purchase-type-badge badge-elibrary">E-Library</span>
+                <h3 class="purchase-title">{{ item.course.title|default:"E-Library Course" }}</h3>
+                <div class="purchase-meta">
+                    <div class="meta-row">
+                        <i class="fa fa-calendar"></i>
+                        <span>Purchased: {{ item.access_granted|date:"d M, Y" }}</span>
+                    </div>
+                    {% if item.payment %}
+                    <div class="meta-row">
+                        <i class="fa fa-credit-card"></i>
+                        <span>Order ID: {{ item.payment.razorpay_order_id|truncatechars:20 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="price-paid">₹{{ item.course.current_price|floatformat:2 }}</div>
+                {% if item.expires_at %}
+                <div class="expires-warning">
+                    <i class="fa fa-clock-o"></i> Expires: {{ item.expires_at|date:"d M, Y" }}
+                </div>
+                {% endif %}
+                <div class="purchase-actions">
+                    <a href="{% url 'course_detail' pk=item.course.id %}" class="btn-access">
+                        <i class="fa fa-book"></i> Access Library
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if purchases.bundles %}
+    <h2 class="section-title"><i class="fa fa-gift"></i> Product Bundles</h2>
+    <div class="purchase-grid">
+        {% for item in purchases.bundles %}
+        <div class="purchase-card">
+            {% if item.course.thumbnail %}
+                <img src="{{ item.course.thumbnail.url }}" alt="{{ item.course.title }}" class="purchase-thumbnail">
+            {% elif item.course.banner_image %}
+                <img src="{{ item.course.banner_image.url }}" alt="{{ item.course.title }}" class="purchase-thumbnail">
+            {% else %}
+                <div class="purchase-thumbnail" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+            {% endif %}
+            <div class="purchase-content">
+                <span class="purchase-type-badge badge-bundle">Bundle</span>
+                <h3 class="purchase-title">{{ item.course.title|default:"Product Bundle" }}</h3>
+                <div class="purchase-meta">
+                    <div class="meta-row">
+                        <i class="fa fa-calendar"></i>
+                        <span>Purchased: {{ item.access_granted|date:"d M, Y" }}</span>
+                    </div>
+                    {% if item.payment %}
+                    <div class="meta-row">
+                        <i class="fa fa-credit-card"></i>
+                        <span>Order ID: {{ item.payment.razorpay_order_id|truncatechars:20 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="meta-row">
+                        <i class="fa fa-box"></i>
+                        <span>{{ item.course.total_products }} Products Included</span>
+                    </div>
+                </div>
+                {% if item.course.bundle_price == 0 %}
+                    <div class="price-paid" style="color: #10b981;">FREE</div>
+                {% else %}
+                    <div class="price-paid">₹{{ item.course.bundle_price|floatformat:2 }}</div>
+                {% endif %}
+                {% if item.expires_at %}
+                <div class="expires-warning">
+                    <i class="fa fa-clock-o"></i> Expires: {{ item.expires_at|date:"d M, Y" }}
+                </div>
+                {% endif %}
+                <div class="purchase-actions">
+                    <a href="{% url 'product_bundle_detail' slug=item.course.slug %}" class="btn-access">
+                        <i class="fa fa-gift"></i> View Bundle
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# ── Empty State: fires when none of the five sections have items ── #}
+    {% if not purchases.video_courses and not purchases.live_classes and not purchases.test_series and not purchases.elibrary_courses and not purchases.bundles %}
+    <div class="empty-state-wrapper">
+        <div class="empty-state-card">
+
+            <div class="empty-state-icon-wrap">
+                <i class="fa fa-shopping-bag"></i>
+            </div>
+
+            <h2>No Purchases Yet</h2>
+            <p>You haven't enrolled in any courses yet.<br>Start your learning journey today!</p>
+
+            <div class="empty-state-features">
+                <div class="feature-pill">
+                    <i class="fa fa-video-camera"></i> Video Courses
+                </div>
+                <div class="feature-pill">
+                    <i class="fa fa-television"></i> Live Classes
+                </div>
+                <div class="feature-pill">
+                    <i class="fa fa-file-text"></i> Test Series
+                </div>
+                <div class="feature-pill">
+                    <i class="fa fa-book"></i> E-Library
+                </div>
+            </div>
+
+            <a href="{% url 'home' %}" class="btn-browse-courses">
+                <i class="fa fa-search"></i> Explore Courses
+            </a>
+
+            <div class="empty-state-divider"></div>
+
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

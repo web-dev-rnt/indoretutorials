@@ -1,0 +1,262 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<div class="wrapper">
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{% url 'coupon_list' %}" class="btn">
+            <span>←</span>
+            <span>Back to Coupons</span>
+        </a>
+    </div>
+
+    <div class="h1">Edit Coupon</div>
+    <div class="small">Update discount coupon settings.</div>
+
+    <!-- Display Messages -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" id="couponForm">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="panel">
+            <legend>Basic Information</legend>
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="{{ form.code.id_for_label }}">Coupon Code</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                            <div class="errorlist">
+                                {% for error in form.code.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Use uppercase letters and numbers only</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="{{ form.status.id_for_label }}">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="errorlist">
+                                {% for error in form.status.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="errorlist">
+                                {% for error in form.description.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Optional description for this coupon</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discount Settings -->
+        <div class="panel">
+            <legend>Discount Settings</legend>
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="{{ form.discount_type.id_for_label }}">Discount Type</label>
+                        {{ form.discount_type }}
+                        {% if form.discount_type.errors %}
+                            <div class="errorlist">
+                                {% for error in form.discount_type.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="{{ form.discount_value.id_for_label }}">Discount Value</label>
+                        {{ form.discount_value }}
+                        {% if form.discount_value.errors %}
+                            <div class="errorlist">
+                                {% for error in form.discount_value.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Enter percentage (1-100) or fixed amount</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="{{ form.minimum_amount.id_for_label }}">Minimum Order Amount</label>
+                        {{ form.minimum_amount }}
+                        {% if form.minimum_amount.errors %}
+                            <div class="errorlist">
+                                {% for error in form.minimum_amount.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Minimum cart value required</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group" id="maxDiscountField">
+                        <label for="{{ form.maximum_discount.id_for_label }}">Maximum Discount (for percentage)</label>
+                        {{ form.maximum_discount }}
+                        {% if form.maximum_discount.errors %}
+                            <div class="errorlist">
+                                {% for error in form.maximum_discount.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Leave empty for no limit</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage & Validity -->
+        <div class="panel">
+            <legend>Usage & Validity</legend>
+            <div class="grid">
+                <div class="col-4">
+                    <div class="form-group">
+                        <label for="{{ form.usage_limit.id_for_label }}">Usage Limit</label>
+                        {{ form.usage_limit }}
+                        {% if form.usage_limit.errors %}
+                            <div class="errorlist">
+                                {% for error in form.usage_limit.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">How many times this coupon can be used</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group">
+                        <label for="{{ form.valid_from.id_for_label }}">Valid From</label>
+                        {{ form.valid_from }}
+                        {% if form.valid_from.errors %}
+                            <div class="errorlist">
+                                {% for error in form.valid_from.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group">
+                        <label for="{{ form.valid_to.id_for_label }}">Valid To</label>
+                        {{ form.valid_to }}
+                        {% if form.valid_to.errors %}
+                            <div class="errorlist">
+                                {% for error in form.valid_to.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Errors (Non-field errors) -->
+        {% if form.non_field_errors %}
+            <div class="panel" style="border-color: #dc2626; background: #fef2f2;">
+                <div class="errorlist">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="panel actions">
+            <button type="submit" class="btn btn-primary" id="saveCouponBtn">
+                <span class="btn-icon">💾</span>
+                <span class="btn-text">Update Coupon</span>
+            </button>
+            <a href="{% url 'coupon_list' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form submission with loading state
+    document.getElementById('couponForm').addEventListener('submit', function(e) {
+        const btn = document.getElementById('saveCouponBtn');
+        const icon = btn.querySelector('.btn-icon');
+        const text = btn.querySelector('.btn-text');
+        
+        btn.classList.add('btn-loading');
+        icon.innerHTML = '<div class="spinner"></div>';
+        text.textContent = 'Updating...';
+        btn.disabled = true;
+    });
+
+    // Handle discount type changes
+    const discountTypeField = document.getElementById('id_discount_type');
+    const discountValueField = document.getElementById('id_discount_value');
+    const maxDiscountField = document.getElementById('maxDiscountField');
+    
+    function updateDiscountFields() {
+        if (discountTypeField.value === 'percentage') {
+            discountValueField.setAttribute('max', '100');
+            discountValueField.setAttribute('placeholder', 'e.g. 20 (for 20%)');
+            maxDiscountField.style.display = 'block';
+        } else {
+            discountValueField.removeAttribute('max');
+            discountValueField.setAttribute('placeholder', 'e.g. 500 (for ₹500 off)');
+            maxDiscountField.style.display = 'none';
+        }
+    }
+    
+    // Initialize on page load
+    updateDiscountFields();
+    
+    // Update on change
+    discountTypeField.addEventListener('change', updateDiscountFields);
+    
+    // Real-time validation
+    const form = document.getElementById('couponForm');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            // Remove existing error styling
+            this.style.borderColor = '';
+            
+            // Basic validation
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.style.borderColor = '#dc2626';
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

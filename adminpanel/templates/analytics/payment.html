@@ -1,0 +1,489 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .payment-wrapper { max-width:100%; margin:0; padding:20px 30px; }
+    .ad-main { padding:0 !important; }
+
+    /* ── Analytics grid ── */
+    .analytics-grid-compact { display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-bottom:30px; }
+    .analytics-card-compact { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; box-shadow:0 2px 4px rgba(0,0,0,.04); display:flex; flex-direction:column; text-align:center; min-height:120px; transition:box-shadow .3s,transform .3s; }
+    .analytics-card-compact:hover { box-shadow:0 4px 8px rgba(0,0,0,.08); transform:translateY(-2px); }
+    .analytics-icon-compact { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 10px; }
+    .analytics-value-compact { font-size:24px; font-weight:800; margin:6px 0; line-height:1; }
+    .analytics-label-compact { color:var(--ad-muted); font-size:12px; font-weight:500; margin:0 0 4px; }
+    .analytics-subtext { font-size:11px; margin-top:4px; }
+
+    /* ── Filters ── */
+    .advanced-filters { padding:20px; background:var(--ad-panel-2); border-radius:8px; margin-bottom:20px; }
+    .filter-row-fixed { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; align-items:end; }
+    .filter-group { display:flex; flex-direction:column; }
+    .filter-group label { font-size:12px; font-weight:500; color:#374151; margin-bottom:6px; }
+    .ad-filter-input, .ad-filter-select { width:100%; padding:8px 12px; font-size:13px; border:1px solid var(--input-border); border-radius:6px; background:#fff; }
+    .filter-group.button-group { flex-direction:row; gap:8px; }
+    .filter-group.button-group .btn { flex:1; margin-top:22px; }
+
+    /* ── Table wrapper ── */
+    .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .ad-table { width:100%; border-collapse:collapse; }
+    .ad-table thead th { vertical-align:middle; text-align:left; padding:10px 12px; border-bottom:2px solid #e2e8f0; font-size:13px; white-space:nowrap; }
+    .ad-table tbody td { vertical-align:top; padding:12px; border-bottom:1px solid #f1f5f9; font-size:13px; }
+    .ad-table tbody tr:last-child td { border-bottom:none; }
+
+    /* ── Mobile cards — hidden by default, shown at ≤768px ── */
+    .mobile-card-list,
+    .mobile-type-list,
+    .mobile-recent-list { display:none; }
+
+    .mobile-payment-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .mpc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; }
+    .mpc-order { font-family:monospace; font-size:12px; color:#6366f1; font-weight:600; word-break:break-all; flex:1; }
+    .mpc-amount { font-size:16px; font-weight:800; color:#1f2937; white-space:nowrap; }
+    .mpc-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #f1f5f9; font-size:13px; gap:8px; }
+    .mpc-row:last-child { border-bottom:none; }
+    .mpc-label { color:#6b7280; font-weight:500; white-space:nowrap; min-width:90px; }
+    .mpc-value { color:#1f2937; text-align:right; word-break:break-word; }
+
+    .mobile-type-card { display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; margin-bottom:8px; font-size:13px; }
+    .mobile-type-meta { text-align:right; color:#374151; }
+    .mobile-type-meta span { display:block; font-size:12px; color:#6b7280; }
+
+    /* ── Breakpoints ── */
+    @media (max-width:1400px) { .analytics-grid-compact { grid-template-columns:repeat(3,1fr); } }
+    @media (max-width:1200px) { .filter-row-fixed { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:1024px) { .analytics-grid-compact { grid-template-columns:repeat(2,1fr); } }
+
+    @media (max-width:768px) {
+        .payment-wrapper { padding:14px 12px; }
+        .analytics-grid-compact { grid-template-columns:repeat(2,1fr); gap:10px; }
+        .analytics-card-compact { padding:12px; min-height:100px; }
+        .analytics-value-compact { font-size:20px; }
+        .filter-row-fixed { grid-template-columns:1fr; }
+        .filter-group.button-group { flex-direction:row; }
+        .filter-group.button-group .btn { margin-top:0; }
+
+        /* Hide desktop tables, show mobile cards */
+        .ad-table, .desktop-type-table, .desktop-recent-table { display:none; }
+        .mobile-card-list, .mobile-type-list, .mobile-recent-list { display:block; }
+    }
+
+    @media (max-width: 480px) {
+        .analytics-grid-compact { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+
+<div class="payment-wrapper">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-credit-card"></i> Payment Analytics</h1>
+            <p class="page-subtitle">Track and manage all payment transactions</p>
+        </div>
+    </div>
+
+    <!-- Compact Statistics Cards -->
+    <div class="analytics-grid-compact">
+        <div class="analytics-card-compact">
+            <div class="analytics-icon-compact icon-total">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <p class="analytics-label-compact">Total Payments</p>
+            <div class="analytics-value-compact">{{ total_payments }}</div>
+            <small class="analytics-subtext" style="color: #10b981;">+{{ today_payments }} today</small>
+        </div>
+
+        <div class="analytics-card-compact">
+            <div class="analytics-icon-compact icon-active">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <p class="analytics-label-compact">Successful</p>
+            <div class="analytics-value-compact">{{ successful_payments }}</div>
+            <small class="analytics-subtext" style="color: #10b981;">
+                {% if total_payments > 0 %}
+                    {% widthratio successful_payments total_payments 100 %}% rate
+                {% else %}
+                    0% rate
+                {% endif %}
+            </small>
+        </div>
+
+        <div class="analytics-card-compact">
+            <div class="analytics-icon-compact" style="background: #fee2e2; color: #dc2626;">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <p class="analytics-label-compact">Failed</p>
+            <div class="analytics-value-compact">{{ failed_payments }}</div>
+            <small class="analytics-subtext" style="color: #dc2626;">{{ pending_payments }} pending</small>
+        </div>
+
+        <div class="analytics-card-compact">
+            <div class="analytics-icon-compact icon-discount">
+                <i class="fas fa-rupee-sign"></i>
+            </div>
+            <p class="analytics-label-compact">Total Revenue</p>
+            <div class="analytics-value-compact" style="font-size: 20px;">₹{{ total_revenue|floatformat:0 }}</div>
+            <small class="analytics-subtext" style="color: #10b981;">+₹{{ today_revenue|floatformat:0 }} today</small>
+        </div>
+
+        <div class="analytics-card-compact">
+            <div class="analytics-icon-compact icon-usage">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <p class="analytics-label-compact">This Month</p>
+            <div class="analytics-value-compact" style="font-size: 20px;">₹{{ this_month_revenue|floatformat:0 }}</div>
+            <small class="analytics-subtext" style="color: #6b7280;">Revenue</small>
+        </div>
+
+        <div class="analytics-card-compact">
+            <div class="analytics-icon-compact" style="background: #e0f2fe; color: #0284c7;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <p class="analytics-label-compact">Last 30 Days</p>
+            <div class="analytics-value-compact" style="font-size: 20px;">₹{{ last_30_days_revenue|floatformat:0 }}</div>
+            <small class="analytics-subtext" style="color: #6b7280;">Revenue</small>
+        </div>
+    </div>
+
+    <!-- Revenue by Course Type -->
+    {% if course_type_stats %}
+    <div class="panel">
+        <div class="panel-title">
+            <i class="fas fa-chart-pie"></i> Revenue by Course Type
+        </div>
+        <div class="table-container">
+
+            <!-- Desktop table -->
+            <table class="analytics-table desktop-type-table">
+                <thead>
+                    <tr>
+                        <th>Course Type</th>
+                        <th>Transactions</th>
+                        <th>Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in course_type_stats %}
+                    <tr>
+                        <td>
+                            <span class="type-badge" style="background: #e0e7ff; color: #4f46e5;">
+                                {{ stat.type }}
+                            </span>
+                        </td>
+                        <td>{{ stat.count }}</td>
+                        <td><span class="coupon-code">₹{{ stat.revenue|floatformat:2 }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Mobile cards -->
+            <div class="mobile-type-list">
+                {% for stat in course_type_stats %}
+                <div class="mobile-type-card">
+                    <span class="type-badge">{{ stat.type }}</span>
+                    <div class="mobile-type-meta">
+                        <strong>₹{{ stat.revenue|floatformat:2 }}</strong>
+                        <span>{{ stat.count }} transactions</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="advanced-filters">
+        <form method="GET" class="filter-form">
+            <div class="filter-row-fixed">
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input class="ad-filter-input" type="text" name="search"
+                           placeholder="Order ID, Email, Course..." value="{{ search_query }}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select class="ad-filter-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="Success" {% if status_filter == 'Success' %}selected{% endif %}>Success</option>
+                        <option value="Failed"  {% if status_filter == 'Failed'  %}selected{% endif %}>Failed</option>
+                        <option value="Created" {% if status_filter == 'Created' %}selected{% endif %}>Pending</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Course Type</label>
+                    <select class="ad-filter-select" name="course_type">
+                        <option value="">All Types</option>
+                        <option value="video_course"  {% if course_type_filter == 'video_course'  %}selected{% endif %}>Video Course</option>
+                        <option value="live_class"    {% if course_type_filter == 'live_class'    %}selected{% endif %}>Live Class</option>
+                        <option value="test_series"   {% if course_type_filter == 'test_series'   %}selected{% endif %}>Test Series</option>
+                        <option value="elibrary"      {% if course_type_filter == 'elibrary'      %}selected{% endif %}>E-Library</option>
+                        <option value="bundle"        {% if course_type_filter == 'bundle'        %}selected{% endif %}>Bundle</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input class="ad-filter-input" type="date" name="date_from" value="{{ date_from }}">
+                </div>
+
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input class="ad-filter-input" type="date" name="date_to" value="{{ date_to }}">
+                </div>
+
+                <div class="filter-group button-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <a href="{% url 'paymentdashboard' %}" class="btn">
+                        <i class="fas fa-redo"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Payment Transactions -->
+    <div class="panel">
+        <div class="panel-title">
+            <i class="fas fa-list"></i> Payment Transactions ({{ total_payments }})
+        </div>
+
+        <!-- Desktop table -->
+        <div class="table-wrapper">
+            <table class="ad-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Payment ID</th>
+                        <th>User Details</th>
+                        <th>Course Details</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr class="user-row">
+                        <td>
+                            <div style="font-family:monospace;font-size:13px;color:#6366f1;font-weight:600;">
+                                {{ payment.razorpay_order_id }}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-family:monospace;font-size:13px;color:#10b981;font-weight:600;">
+                                {{ payment.razorpay_payment_id }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                                <span class="user-name">{{ payment.user_name }}</span>
+                                <span style="font-size:12px;color:#6b7280;">{{ payment.user_email }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="max-width:250px;">
+                                <div style="font-weight:500;color:#1f2937;margin-bottom:4px;">{{ payment.course_name }}</div>
+                                <span class="type-badge" style="background:#e0e7ff;color:#4f46e5;">{{ payment.course_type }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="coupon-code" style="font-size:15px;">₹{{ payment.amount|floatformat:2 }}</span>
+                        </td>
+                        <td>
+                            {% if payment.status == 'Success' %}
+                                <span class="status-badge status-active"><i class="fas fa-check-circle"></i> Success</span>
+                            {% elif payment.status == 'Failed' %}
+                                <span class="status-badge status-inactive"><i class="fas fa-times-circle"></i> Failed</span>
+                            {% else %}
+                                <span class="status-badge" style="background:#fef3c7;color:#92400e;"><i class="fas fa-clock"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="date-cell">
+                                <span class="date-primary">{{ payment.created_at|date:"d M, Y" }}</span>
+                                <span class="date-secondary">{{ payment.created_at|time:"h:i A" }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-receipt" style="font-size:64px;opacity:0.5;color:#9ca3af;"></i>
+                                </div>
+                                <div class="empty-title">No payments found</div>
+                                <div class="empty-text">Try adjusting your filters</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile cards (portrait layout) -->
+        <div class="mobile-card-list">
+            {% for payment in payments %}
+            <div class="mobile-payment-card">
+                <div class="mpc-header">
+                    <div class="mpc-order">{{ payment.razorpay_order_id }}</div>
+                    <div class="mpc-amount">₹{{ payment.amount|floatformat:2 }}</div>
+                </div>
+
+                <div class="mpc-row">
+                    <span class="mpc-label">Payment ID</span>
+                    <span class="mpc-value" style="font-family:monospace;color:#10b981;font-size:12px;">
+                        {{ payment.razorpay_payment_id }}
+                    </span>
+                </div>
+                <div class="mpc-row">
+                    <span class="mpc-label">User</span>
+                    <span class="mpc-value">
+                        {{ payment.user_name }}<br>
+                        <span style="font-size:11px;color:#6b7280;">{{ payment.user_email }}</span>
+                    </span>
+                </div>
+                <div class="mpc-row">
+                    <span class="mpc-label">Course</span>
+                    <span class="mpc-value">
+                        {{ payment.course_name }}<br>
+                        <span class="type-badge" style="background:#e0e7ff;color:#4f46e5;font-size:11px;">
+                            {{ payment.course_type }}
+                        </span>
+                    </span>
+                </div>
+                <div class="mpc-row">
+                    <span class="mpc-label">Status</span>
+                    <span class="mpc-value">
+                        {% if payment.status == 'Success' %}
+                            <span class="status-badge status-active"><i class="fas fa-check-circle"></i> Success</span>
+                        {% elif payment.status == 'Failed' %}
+                            <span class="status-badge status-inactive"><i class="fas fa-times-circle"></i> Failed</span>
+                        {% else %}
+                            <span class="status-badge" style="background:#fef3c7;color:#92400e;">
+                                <i class="fas fa-clock"></i> Pending
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="mpc-row">
+                    <span class="mpc-label">Date</span>
+                    <span class="mpc-value">
+                        {{ payment.created_at|date:"d M, Y" }}
+                        <span style="color:#6b7280;font-size:11px;">{{ payment.created_at|time:"h:i A" }}</span>
+                    </span>
+                </div>
+
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px 20px;color:#9ca3af;">
+                <i class="fas fa-receipt" style="font-size:48px;opacity:0.5;display:block;margin-bottom:12px;"></i>
+                No payments found. Try adjusting your filters.
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-wrapper">
+            <div class="pagination-info">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+            </div>
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if course_type_filter %}&course_type={{ course_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="page-btn">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if course_type_filter %}&course_type={{ course_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="page-btn">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                {% endif %}
+                <span class="page-btn page-current">{{ page_obj.number }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if course_type_filter %}&course_type={{ course_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="page-btn">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if course_type_filter %}&course_type={{ course_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="page-btn">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Successful Payments -->
+    {% if recent_successful %}
+    <div class="panel">
+        <div class="panel-title">
+            <i class="fas fa-check-circle"></i> Recent Successful Payments
+        </div>
+        <div class="table-wrapper">
+
+            <!-- Desktop table -->
+            <table class="analytics-table desktop-recent-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>User</th>
+                        <th>Course</th>
+                        <th>Amount</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in recent_successful %}
+                    <tr>
+                        <td>
+                            <span style="font-family:monospace;font-size:13px;color:#6366f1;font-weight:600;">
+                                {{ payment.order_id }}
+                            </span>
+                        </td>
+                        <td>{{ payment.user }}</td>
+                        <td>{{ payment.course }}</td>
+                        <td><span class="coupon-code">₹{{ payment.amount|floatformat:2 }}</span></td>
+                        <td>{{ payment.date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Mobile cards -->
+            <div class="mobile-recent-list">
+                {% for payment in recent_successful %}
+                <div class="mobile-payment-card">
+                    <div class="mpc-header">
+                        <div class="mpc-order">{{ payment.order_id }}</div>
+                        <div class="mpc-amount">₹{{ payment.amount|floatformat:2 }}</div>
+                    </div>
+                    <div class="mpc-row">
+                        <span class="mpc-label">User</span>
+                        <span class="mpc-value">{{ payment.user }}</span>
+                    </div>
+                    <div class="mpc-row">
+                        <span class="mpc-label">Course</span>
+                        <span class="mpc-value">{{ payment.course }}</span>
+                    </div>
+                    <div class="mpc-row">
+                        <span class="mpc-label">Date</span>
+                        <span class="mpc-value">{{ payment.date }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script></script>
+{% endblock content %}

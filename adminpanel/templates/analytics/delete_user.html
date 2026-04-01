@@ -1,0 +1,222 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+<main>
+    <div class="page-header">
+        <div class="header-content">
+            <h1 style="color: var(--ad-danger); display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-trash-alt" style="color: var(--ad-danger);"></i>
+                Delete User Account
+            </h1>
+            <p class="page-subtitle">Permanently remove user account and all associated data</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'signupdashboard' %}" class="ad-btn ad-btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+        </div>
+    </div>
+    
+    <div class="wrapper" style="max-width: 800px; width: 100%; margin: 0 auto; padding: 16px;">
+        <div class="panel" style="border: 2px solid var(--ad-danger); background: #fef2f2;">
+            <div class="panel-title" style="color: var(--ad-danger); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #fca5a5; padding-bottom: 16px; margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle" style="color: var(--ad-danger);"></i>
+                Confirm User Deletion
+            </div>
+            
+            <!-- Danger Zone Alert -->
+            <div style="background: #fee2e2; border: 2px dashed #fca5a5; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px; position: relative;">
+                <div style="font-size: 48px; margin-bottom: 16px; animation: pulse 2s infinite;">🚨</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--ad-danger); margin-bottom: 8px;">DANGER ZONE</div>
+                <div style="color: var(--ad-muted); font-size: 14px;">This action will permanently delete the user account</div>
+            </div>
+            
+            <!-- Warning Message -->
+            <div class="message error" style="border: 2px solid #fecaca; position: relative; padding-top: 32px;">
+                <div style="position: absolute; top: -12px; left: 20px; background: #fef2f2; padding: 0 8px; font-size: 20px;">⚠️</div>
+                <p><strong>You are about to permanently delete this user account.</strong></p>
+                
+                <!-- User Information -->
+                <div style="background: var(--ad-panel-2); border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 4px solid var(--ad-danger);">
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--ad-border);">
+                        <span style="font-weight: 600; color: var(--ad-muted); font-size: 14px;">Full Name:</span>
+                        <span style="font-weight: 700; color: var(--ad-text); font-size: 14px;">{{ user_obj.get_full_name|default:"Not provided" }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--ad-border);">
+                        <span style="font-weight: 600; color: var(--ad-muted); font-size: 14px;">Email Address:</span>
+                        <span style="font-weight: 700; color: var(--ad-text); font-size: 14px;">{{ user_obj.email }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--ad-border);">
+                        <span style="font-weight: 600; color: var(--ad-muted); font-size: 14px;">User ID:</span>
+                        <span style="font-weight: 700; color: var(--ad-text); font-size: 14px;">#{{ user_obj.id }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--ad-border);">
+                        <span style="font-weight: 600; color: var(--ad-muted); font-size: 14px;">Account Status:</span>
+                        <span style="font-weight: 700; color: var(--ad-text); font-size: 14px;">
+                            {% if user_obj.is_active %}
+                                <i class="fas fa-check-circle" style="color: var(--ad-success);"></i> Active
+                            {% else %}
+                                <i class="fas fa-times-circle" style="color: var(--ad-danger);"></i> Inactive
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                        <span style="font-weight: 600; color: var(--ad-muted); font-size: 14px;">Join Date:</span>
+                        <span style="font-weight: 700; color: var(--ad-text); font-size: 14px;">{{ user_obj.date_joined|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 0; font-weight: 600; color: var(--ad-danger); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-exclamation-triangle"></i> This action cannot be undone! All user data will be permanently lost.
+                </p>
+            </div>
+            
+            <!-- Form Actions -->
+            <form method="POST" onsubmit="return confirmDeletion()">
+                {% csrf_token %}
+                <div class="actions" style="justify-content: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--ad-border); gap: 16px;">
+                    <button type="submit" class="btn btn-danger" id="deleteBtn" style="min-width: 200px; padding: 14px 24px; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-trash-alt"></i> Delete User Permanently
+                    </button>
+                    <a href="{% url 'signupdashboard' %}" class="btn" style="min-width: 160px; padding: 14px 24px; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-times"></i> Cancel Operation
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<style>
+/* Full width main container */
+main {
+    width: 100%;
+    min-height: 100vh;
+    padding: 24px;
+    background: var(--ad-bg);
+    box-sizing: border-box;
+}
+
+/* Page header styling */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    padding: 24px 0;
+    border-bottom: 2px solid var(--ad-border);
+    max-width: 100%;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.page-subtitle {
+    color: var(--ad-muted);
+    margin: 4px 0 0 0;
+    font-size: 16px;
+}
+
+/* Animation for pulse effect */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* Card animation */
+.panel {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced button hover effects */
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    main {
+        padding: 16px;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 16px 0;
+    }
+    
+    .actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .wrapper {
+        max-width: 100% !important;
+        padding: 8px !important;
+    }
+    
+    .panel {
+        padding: 20px 16px;
+    }
+    
+    .header-content h1 {
+        font-size: 24px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .panel {
+        padding: 16px 12px;
+    }
+}
+</style>
+
+<script>
+function confirmDeletion() {
+    const userEmail = "{{ user_obj.email }}";
+    const confirmation = prompt(`To confirm deletion, please type the user's email address:\n\n${userEmail}`);
+    
+    if (confirmation === userEmail) {
+        const deleteBtn = document.getElementById('deleteBtn');
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting User...';
+        deleteBtn.disabled = true;
+        return true;
+    } else {
+        alert('Email confirmation did not match. Deletion cancelled.');
+        return false;
+    }
+}
+</script>
+{% endblock %}

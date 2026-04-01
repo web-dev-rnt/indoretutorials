@@ -1,0 +1,485 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Results - {{ query }}{% endblock %}
+
+{% block content %}
+<style>
+    .search-results-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    
+    .search-header {
+        margin-bottom: 30px;
+    }
+    
+    .search-header h1 {
+        font-size: 28px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .search-info {
+        color: #666;
+        font-size: 16px;
+    }
+    
+    .search-query {
+        color: #c7212f;
+        font-weight: 600;
+    }
+    
+    .results-section {
+        margin-bottom: 50px;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e5e5e5;
+    }
+    
+    .section-header h2 {
+        font-size: 22px;
+        color: #333;
+        margin: 0;
+    }
+    
+    .section-count {
+        background: #c7212f;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+    }
+    
+    .course-card {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .course-card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        text-decoration: none;
+    }
+    
+    .course-thumbnail {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: block;
+    }
+    
+    /* Placeholder for images that haven't loaded */
+    .course-thumbnail[data-src] {
+        background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+        position: relative;
+    }
+    
+    .course-thumbnail[data-src]::after {
+        content: '📚';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 48px;
+        opacity: 0.3;
+    }
+    
+    .course-content {
+        padding: 16px;
+    }
+    
+    .course-type-badge {
+        display: inline-block;
+        background: #e8f0fe;
+        color: #1967d2;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .course-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .course-meta {
+        display: flex;
+        gap: 12px;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .course-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .course-price {
+        font-size: 18px;
+        color: #c7212f;
+        font-weight: 700;
+    }
+    
+    .bundle-price-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .original-price {
+        text-decoration: line-through;
+        font-size: 14px;
+        color: #999;
+        font-weight: 500;
+    }
+    
+    .discount-badge {
+        background: #4caf50;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .no-results i {
+        font-size: 64px;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .no-results h3 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .no-results p {
+        color: #666;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .back-home-btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #c7212f;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+    
+    .back-home-btn:hover {
+        background: #a01b27;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .course-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        
+        .search-header h1 {
+            font-size: 22px;
+        }
+        
+        .search-results-container {
+            margin: 20px auto;
+        }
+    }
+</style>
+
+<div class="search-results-container">
+    <div class="search-header">
+        <h1>Search Results</h1>
+        {% if query %}
+            <p class="search-info">
+                Found <strong>{{ total_results }}</strong> result{% if total_results != 1 %}s{% endif %} for 
+                <span class="search-query">"{{ query }}"</span>
+            </p>
+        {% else %}
+            <p class="search-info">Please enter a search query</p>
+        {% endif %}
+    </div>
+
+    {% if total_results > 0 %}
+        <!-- Categories Section -->
+        {% if categories %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Categories</h2>
+                <span class="section-count">{{ categories.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for category in categories %}
+                <a href="{% url 'category_detail' category.slug %}" class="course-card">
+                    <div class="course-thumbnail" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-folder-open" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                    </div>
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #fef3e8; color: #f57c00;">Category</span>
+                        <h3 class="course-title">{{ category.name }}</h3>
+                        <div class="course-meta">
+                            <span><i class="fa fa-graduation-cap"></i> Exam Category</span>
+                        </div>
+                        <div class="course-price" style="font-size: 14px; color: #666; font-weight: 500;">
+                            Browse {{ category.name }} Courses
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Product Bundles Section -->
+        {% if product_bundles %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Product Bundles</h2>
+                <span class="section-count">{{ product_bundles|length }}</span>
+            </div>
+            <div class="course-grid">
+                {% for bundle in product_bundles %}
+                <a href="{% url 'product_bundle_detail' bundle.slug %}" class="course-card">
+                    {% if bundle.thumbnail %}
+                        <img src="{{ bundle.thumbnail.url }}" 
+                             alt="{{ bundle.title }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #f57c00 0%, #ff9800 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-cube\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-cube" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #fff3e0; color: #f57c00;">
+                            <i class="fa fa-cube"></i> Bundle
+                        </span>
+                        <h3 class="course-title">{{ bundle.title }}</h3>
+                        <div class="course-meta">
+                            <span><i class="fa fa-graduation-cap"></i> {{ bundle.total_courses }} Course{% if bundle.total_courses != 1 %}s{% endif %}</span>
+                            <span><i class="fa fa-tag"></i> {{ bundle.discount_percent|floatformat:0 }}% OFF</span>
+                        </div>
+                        <div class="bundle-price-wrapper">
+                            <div class="course-price">₹{{ bundle.bundle_price }}</div>
+                            <span class="original-price">₹{{ bundle.original_price }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Video Courses Section -->
+        {% if video_courses %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Video Courses</h2>
+                <span class="section-count">{{ video_courses.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for course in video_courses %}
+                <a href="{% url 'video_course_detail' course.pk %}" class="course-card">
+                    {% if course.thumbnail %}
+                        <img src="{{ course.thumbnail.url }}" 
+                             alt="{{ course.name }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #1967d2 0%, #4285f4 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-play-circle\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #1967d2 0%, #4285f4 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-play-circle" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge">Video Course</span>
+                        <h3 class="course-title">{{ course.name }}</h3>
+                        <div class="course-meta">
+                            <span><i class="fa fa-book"></i> {{ course.category.name|default:"General" }}</span>
+                            {% if course.total_hours %}
+                            <span><i class="fa fa-clock-o"></i> {{ course.total_hours }}h</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">₹{{ course.selling_price }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Live Classes Section -->
+        {% if live_courses %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Live Classes</h2>
+                <span class="section-count">{{ live_courses.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for course in live_courses %}
+                <a href="{% url 'live_class_detail' course.pk %}" class="course-card">
+                    {% if course.banner_image_desktop %}
+                        <img src="{{ course.banner_image_desktop.url }}" 
+                             alt="{{ course.name }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #f57c00 0%, #ff9800 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-video-camera\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-video-camera" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #fef3e8; color: #f57c00;">Live Class</span>
+                        <h3 class="course-title">{{ course.name }}</h3>
+                        <div class="course-meta">
+                            <span><i class="fa fa-book"></i> {{ course.category_name }}</span>
+                            {% if course.language %}
+                            <span><i class="fa fa-language"></i> {{ course.language }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">₹{{ course.current_price }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Test Series Section -->
+        {% if test_series %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>Test Series</h2>
+                <span class="section-count">{{ test_series.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for series in test_series %}
+                <a href="{% url 'front_exam_series_detail' series.pk %}" class="course-card">
+                    {% if series.thumbnail %}
+                        <img src="{{ series.thumbnail.url }}" 
+                             alt="{{ series.title }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #2e7d32 0%, #4caf50 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-file-text-o\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-file-text-o" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #e8f5e9; color: #2e7d32;">Test Series</span>
+                        <h3 class="course-title">{{ series.title }}</h3>
+                        <div class="course-meta">
+                            <span><i class="fa fa-book"></i> {{ series.category.name|default:"General" }}</span>
+                            {% if series.total_tests %}
+                            <span><i class="fa fa-file-text-o"></i> {{ series.total_tests }} Test{% if series.total_tests != 1 %}s{% endif %}</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">
+                            {% if series.is_free %}Free{% else %}₹{{ series.price }}{% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- E-Library Section -->
+        {% if elibrary_courses %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2>E-Library</h2>
+                <span class="section-count">{{ elibrary_courses.count }}</span>
+            </div>
+            <div class="course-grid">
+                {% for course in elibrary_courses %}
+                <a href="{% url 'elibrary_course_detail' course.pk %}" class="course-card">
+                    {% if course.cover_image %}
+                        <img src="{{ course.cover_image.url }}" 
+                             alt="{{ course.title }}" 
+                             class="course-thumbnail"
+                             loading="lazy"
+                             onerror="this.style.background='linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='<i class=\'fa fa-book\' style=\'font-size:64px;color:white;opacity:0.9\'></i>'; this.onerror=null;">
+                    {% else %}
+                        <div class="course-thumbnail" style="background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-book" style="font-size: 64px; color: white; opacity: 0.9;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="course-content">
+                        <span class="course-type-badge" style="background: #f3e5f5; color: #7b1fa2;">E-Library</span>
+                        <h3 class="course-title">{{ course.title }}</h3>
+                        <div class="course-meta">
+                            <span><i class="fa fa-book"></i> {{ course.category.name|default:"General" }}</span>
+                            {% if course.total_pdfs %}
+                            <span><i class="fa fa-file-pdf-o"></i> {{ course.total_pdfs }} PDF{% if course.total_pdfs != 1 %}s{% endif %}</span>
+                            {% endif %}
+                        </div>
+                        <div class="course-price">₹{{ course.current_price }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- No Results Found -->
+        <div class="no-results">
+            <i class="fa fa-search"></i>
+            <h3>No Results Found</h3>
+            <p>We couldn't find any courses matching "{{ query }}"</p>
+            <p style="margin-bottom: 20px;">Try different keywords or browse our categories</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

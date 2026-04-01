@@ -1,0 +1,561 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+{% include 'message.html' %}
+<main>
+  <div class="wrapper">
+    <!-- Authentication Check -->
+    {% if not user.is_authenticated %}
+      <div class="auth-prompt">
+        <div class="auth-card">
+          <h2>🔒 Authentication Required</h2>
+          <p>Please sign in to join this live class session as a moderator.</p>
+          <div class="session-preview">
+            <h4>{{ session.class_name }}</h4>
+            <p><strong>Subject:</strong> {{ session.subject|default:"General Session" }}</p>
+            <p><strong>Duration:</strong> {{ session.duration_minutes }} minutes</p>
+          </div>
+          
+          <!-- Admin Login -->
+          <a href="{% url 'admin:login' %}?next={{ request.get_full_path }}" class="btn btn-primary" style="padding: 12px 24px; font-size: 16px; min-width: 250px; margin-bottom: 15px; text-decoration: none; display: inline-block;">
+            🔑 Admin Login
+          </a>
+          
+          <!-- Guest Access Option -->
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <p style="margin: 20px 0 10px 0; color: #666;">or</p>
+            <button onclick="joinAsGuest()" class="btn" style="background: transparent; color: #6c757d; border: 1px solid #6c757d; padding: 12px 24px; font-size: 16px; min-width: 250px;">
+              🎯 Join as Guest
+            </button>
+            <small style="display: block; color: #6c757d; font-size: 12px; margin-top: 8px;">Limited access without moderation privileges</small>
+          </div>
+          
+          <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+            <small style="color: #999; font-size: 12px;">Secure live class session</small>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Guest Name Modal -->
+      <div id="guest-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 400px; width: 90%; text-align: center;">
+          <h4>Enter Your Name</h4>
+          <input type="text" id="guest-name" placeholder="Your Name" maxlength="50" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 16px; box-sizing: border-box;">
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="closeGuestModal()" class="btn">Cancel</button>
+            <button onclick="joinWithGuestName()" class="btn btn-primary">Join Meeting</button>
+          </div>
+        </div>
+      </div>
+      
+    {% else %}
+      <!-- Session Header - Single Row Layout -->
+      <div class="panel" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(102,126,234,0.2); border: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+          <!-- Left Section: Session Info -->
+          <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; flex: 1;">
+            <h1 style="font-size: 18px; font-weight: 700; margin: 0; color: white; white-space: nowrap;">{{ session.class_name }}</h1>
+            
+            <div style="display: flex; align-items: center; gap: 15px; font-size: 13px; color: rgba(255,255,255,0.95); flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <strong style="color: white; font-weight: 600;">Subject:</strong> {{ session.subject|default:"General" }}
+              </div>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <strong style="color: white; font-weight: 600;">Duration:</strong> {{ session.duration_minutes }}m
+              </div>
+              {% if session.enable_auto_recording and is_moderator %}
+                <div class="status-badge" style="background: #dc3545; color: white; animation: pulse-glow 2s infinite; font-size: 11px; padding: 4px 8px;">🔴 Recording</div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Right Section: User Info & Actions -->
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="type-badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: 12px;">{{ display_name }}</div>
+              {% if is_moderator %}
+                <div class="status-badge status-active" style="font-size: 11px;">Moderator</div>
+              {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+              <button onclick="toggleFullscreen()" class="btn" id="fullscreen-btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 12px; font-size: 12px; white-space: nowrap;">
+                📺 Fullscreen
+              </button>
+              <button onclick="leaveMeeting()" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;">
+                🚪 Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Connection Status -->
+      <div id="connection-status-container"></div>
+      
+      <!-- Jitsi Container -->
+      <div id="jitsi-container" class="panel" style="width: 100%; height: 80vh; background: #1a1a1a; overflow: hidden; padding: 0; border: 2px solid #dee2e6;">
+        <!-- Jitsi will load here -->
+      </div>
+      
+      <!-- Meeting Controls -->
+      <div class="panel" style="margin-top: 15px; background: var(--ad-panel-2);">
+        <div class="row-actions" style="justify-content: center; flex-wrap: wrap; gap: 12px;">
+          <button onclick="toggleAudio()" class="btn" id="audio-btn" style="min-width: 130px;">🎤 Toggle Audio</button>
+          <button onclick="toggleVideo()" class="btn" id="video-btn" style="min-width: 130px;">📹 Toggle Video</button>
+          <button onclick="toggleChat()" class="btn" id="chat-btn" style="min-width: 130px;">💬 Chat</button>
+          {% if is_moderator %}
+            <button onclick="shareScreen()" class="btn" style="min-width: 130px;">🖥️ Share Screen</button>
+            <button onclick="muteAll()" class="btn btn-danger" style="min-width: 130px;">🔇 Mute All</button>
+          {% endif %}
+          <button onclick="showParticipants()" class="btn" style="min-width: 130px;">👥 Participants</button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</main>
+
+<!-- Load Jitsi API -->
+<script src="https://{{ jitsi_domain }}/external_api.js"></script>
+
+<script>
+// Global variables
+let jitsiAPI = null;
+let isFullscreen = false;
+let connectionAttempts = 0;
+const maxRetries = 3;
+
+{% if user.is_authenticated %}
+// Authenticated user - load meeting directly
+document.addEventListener('DOMContentLoaded', function() {
+  showConnectionMessage('Initializing video conference...', 'info');
+  initializeJitsi('{{ display_name|escapejs }}', '{{ user_email|escapejs }}', {{ is_moderator|yesno:"true,false" }});
+});
+{% endif %}
+
+// Show connection message using message.html style
+function showConnectionMessage(message, type = 'info') {
+  const container = document.getElementById('connection-status-container');
+  if (!container) return;
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${type === 'error' ? 'error' : type === 'success' ? 'success' : 'info'}`;
+  messageDiv.style.marginBottom = '15px';
+  messageDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#ffc107'}; animation: pulse 2s infinite;"></span>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  container.innerHTML = '';
+  container.appendChild(messageDiv);
+  
+  if (type === 'success' || type === 'error') {
+    setTimeout(() => {
+      messageDiv.style.opacity = '0';
+      messageDiv.style.transition = 'opacity 0.3s';
+      setTimeout(() => messageDiv.remove(), 300);
+    }, type === 'success' ? 2000 : 5000);
+  }
+}
+
+// Guest join functions
+function joinAsGuest() {
+  document.getElementById('guest-modal').style.display = 'flex';
+  document.getElementById('guest-name').focus();
+}
+
+function closeGuestModal() {
+  document.getElementById('guest-modal').style.display = 'none';
+  document.getElementById('guest-name').value = '';
+}
+
+function joinWithGuestName() {
+  const name = document.getElementById('guest-name').value.trim();
+  if (!name) {
+    showNotification('Please enter your name', 'error');
+    return;
+  }
+  
+  closeGuestModal();
+  showConnectionMessage('Joining as guest...', 'info');
+  initializeJitsi(name, '', false);
+}
+
+// Jitsi initialization function
+function initializeJitsi(displayName, email, isModerator) {
+  if (!window.JitsiMeetExternalAPI) { 
+    console.error('Jitsi API not loaded from {{ jitsi_domain }}');
+    showConnectionMessage('Failed to load video conference API', 'error');
+    
+    if (connectionAttempts < maxRetries) {
+      connectionAttempts++;
+      setTimeout(() => {
+        showConnectionMessage(`Retrying connection (${connectionAttempts}/${maxRetries})...`, 'info');
+        const script = document.createElement('script');
+        script.src = 'https://{{ jitsi_domain }}/external_api.js';
+        script.onload = () => initializeJitsi(displayName, email, isModerator);
+        document.head.appendChild(script);
+      }, 2000);
+    } else {
+      showNotification('Unable to connect to video conference. Please refresh the page.', 'error');
+    }
+    return; 
+  }
+  
+  const config = {
+    roomName: "{{ room_name }}",
+    parentNode: document.getElementById('jitsi-container'),
+    userInfo: { 
+      displayName: displayName,
+      email: email || ''
+    },
+    configOverwrite: {
+      enableLobby: false,
+      prejoinPageEnabled: false,
+      enableWelcomePage: false,
+      enableClosePage: false,
+      startWithAudioMuted: !isModerator,
+      startWithVideoMuted: true,
+      enableEmailInStats: false,
+      enableDisplayNameInStats: false,
+      enableCallIntegration: false,
+      requireDisplayName: true,
+    },
+    interfaceConfigOverwrite: {
+      SHOW_JITSI_WATERMARK: false,
+      SHOW_WATERMARK_FOR_GUESTS: false,
+      SHOW_BRAND_WATERMARK: false,
+      BRAND_WATERMARK_LINK: '',
+      JITSI_WATERMARK_LINK: '',
+      HIDE_DEEP_LINKING_LOGO: true,
+      SHOW_POWERED_BY: false,
+      PROVIDER_NAME: '',
+      APP_NAME: 'Live Class',
+      DEFAULT_REMOTE_DISPLAY_NAME: 'Student',
+      SHOW_CHROME_EXTENSION_BANNER: false,
+      MOBILE_APP_PROMO: false,
+      SHOW_PROMOTIONAL_CLOSE_PAGE: false,
+      HIDE_INVITE_MORE_HEADER: true,
+      DISPLAY_WELCOME_FOOTER: false,
+      SHOW_DEEP_LINKING_IMAGE: false,
+      SUPPORT_URL: '',
+      HELP_CENTRE_URL: '',
+      PRIVACY_POLICY_URL: '',
+      TERMS_SERVICE_URL: '',
+      TOOLBAR_BUTTONS: [
+        'microphone', 'camera', 'desktop', 'chat', 
+        'participants-pane', 'raisehand', 'tileview',
+        isModerator ? 'security' : null,
+        isModerator ? 'invite' : null,
+        isModerator ? 'mute-everyone' : null,
+        'settings', 'hangup'
+      ].filter(Boolean),
+      DEFAULT_BACKGROUND: '#1a1a1a',
+      DISABLE_VIDEO_BACKGROUND: false,
+      VERTICAL_FILMSTRIP: true,
+      SHOW_JITSI_WATERMARK_FOR_GUESTS: false,
+      LANG_DETECTION: false,
+      RECENT_LIST_ENABLED: false,
+    }
+  };
+
+  try {
+    jitsiAPI = new JitsiMeetExternalAPI("{{ jitsi_domain }}", config);
+    
+    // Event listeners
+    jitsiAPI.addEventListeners({
+      readyToClose: function() {
+        console.log('Meeting ended by user');
+        showNotification('Meeting ended', 'info');
+        setTimeout(() => {
+          window.location.href = '{% url "liveclass" %}';
+        }, 2000);
+      },
+      
+      participantJoined: function(participant) {
+        console.log('Participant joined:', participant.displayName);
+        showNotification(`${participant.displayName} joined`, 'success');
+      },
+      
+      participantLeft: function(participant) {
+        console.log('Participant left:', participant.displayName);
+        showNotification(`${participant.displayName} left`, 'info');
+      },
+      
+      videoConferenceJoined: function(participant) {
+        console.log('You joined the meeting:', participant.displayName);
+        showConnectionMessage('Connected successfully!', 'success');
+        showNotification('Successfully joined the meeting!', 'success');
+      },
+      
+      videoConferenceLeft: function() {
+        console.log('You left the meeting');
+        showConnectionMessage('Disconnected from meeting', 'error');
+        setTimeout(() => {
+          window.location.href = '{% url "liveclass" %}';
+        }, 1000);
+      },
+      
+      audioMuteStatusChanged: function(data) {
+        updateAudioButton(!data.muted);
+      },
+      
+      videoMuteStatusChanged: function(data) {
+        updateVideoButton(!data.muted);
+      },
+      
+      connectionFailed: function() {
+        showConnectionMessage('Connection failed. Retrying...', 'error');
+        showNotification('Connection issues detected. Please check your internet connection.', 'error');
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error initializing Jitsi:', error);
+    showConnectionMessage('Failed to initialize video conference', 'error');
+    showNotification('Failed to initialize video conference. Please try refreshing.', 'error');
+  }
+}
+
+// Control functions
+function toggleAudio() {
+  if (jitsiAPI) {
+    jitsiAPI.executeCommand('toggleAudio');
+  }
+}
+
+function toggleVideo() {
+  if (jitsiAPI) {
+    jitsiAPI.executeCommand('toggleVideo');
+  }
+}
+
+function toggleChat() {
+  if (jitsiAPI) {
+    jitsiAPI.executeCommand('toggleChat');
+  }
+}
+
+function shareScreen() {
+  if (jitsiAPI) {
+    jitsiAPI.executeCommand('toggleShareScreen');
+  }
+}
+
+function muteAll() {
+  if (jitsiAPI) {
+    jitsiAPI.executeCommand('muteEveryone');
+    showNotification('All participants muted', 'info');
+  }
+}
+
+function showParticipants() {
+  if (jitsiAPI) {
+    jitsiAPI.executeCommand('toggleParticipantsPane');
+  }
+}
+
+function leaveMeeting() {
+  if (confirm('Are you sure you want to leave the meeting?')) {
+    if (jitsiAPI) {
+      jitsiAPI.executeCommand('hangup');
+    } else {
+      window.location.href = '{% url "liveclass" %}';
+    }
+  }
+}
+
+function toggleFullscreen() {
+  const container = document.getElementById('jitsi-container');
+  const btn = document.getElementById('fullscreen-btn');
+  
+  if (!container || !btn) return;
+  
+  if (!isFullscreen) {
+    if (container.requestFullscreen) {
+      container.requestFullscreen();
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    } else if (container.msRequestFullscreen) {
+      container.msRequestFullscreen();
+    }
+    
+    container.style.height = '100vh';
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100vw';
+    container.style.zIndex = '9999';
+    
+    btn.textContent = '🔙 Exit Fullscreen';
+    isFullscreen = true;
+    
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+    
+    container.style.height = '80vh';
+    container.style.position = 'static';
+    container.style.width = '100%';
+    container.style.zIndex = 'auto';
+    
+    btn.textContent = '📺 Fullscreen';
+    isFullscreen = false;
+  }
+}
+
+// Update button states
+function updateAudioButton(enabled) {
+  const btn = document.getElementById('audio-btn');
+  if (btn) {
+    btn.innerHTML = enabled ? '🎤 Audio On' : '🔇 Audio Off';
+    btn.className = enabled ? 'btn btn-success' : 'btn btn-danger';
+  }
+}
+
+function updateVideoButton(enabled) {
+  const btn = document.getElementById('video-btn');
+  if (btn) {
+    btn.innerHTML = enabled ? '📹 Video On' : '📹 Video Off';
+    btn.className = enabled ? 'btn btn-success' : 'btn btn-danger';
+  }
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `message ${type === 'error' ? 'error' : 'success'}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10002;
+    max-width: 300px;
+    opacity: 0.95;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease-in;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s';
+    setTimeout(() => notification.remove(), 300);
+  }, 4000);
+}
+
+// Handle page unload
+window.addEventListener('beforeunload', function() {
+  if (jitsiAPI) {
+    jitsiAPI.dispose();
+  }
+});
+
+// Handle fullscreen change events
+document.addEventListener('fullscreenchange', function() {
+  if (!document.fullscreenElement) {
+    const container = document.getElementById('jitsi-container');
+    const btn = document.getElementById('fullscreen-btn');
+    if (container && btn) {
+      container.style.height = '80vh';
+      container.style.position = 'static';
+      container.style.width = '100%';
+      container.style.zIndex = 'auto';
+      btn.textContent = '📺 Fullscreen';
+      isFullscreen = false;
+    }
+  }
+});
+
+// Handle guest name input Enter key
+document.addEventListener('DOMContentLoaded', function() {
+  const guestInput = document.getElementById('guest-name');
+  if (guestInput) {
+    guestInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        joinWithGuestName();
+      }
+    });
+  }
+});
+</script>
+
+<style>
+/* Additional CSS for elements not in consolidated CSS */
+.auth-prompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: var(--ad-card-shadow);
+  text-align: center;
+  max-width: 450px;
+  width: 100%;
+  border: 1px solid var(--ad-border);
+}
+
+.session-preview {
+  background: var(--ad-panel-2);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border-left: 4px solid var(--ad-accent);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(220,53,69,0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 0.95; }
+}
+
+/* Hide Jitsi branding */
+#jitsi-container .watermark,
+#jitsi-container .leftwatermark,
+#jitsi-container .rightwatermark,
+#jitsi-container .poweredby,
+#jitsi-container [class*="watermark"],
+#jitsi-container [class*="branding"],
+#jitsi-container [class*="logo"],
+#jitsi-container [class*="brand"],
+#jitsi-container .footer,
+#jitsi-container [data-testid*="watermark"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .panel > div > div:first-child {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+}
+</style>
+{% endblock %}

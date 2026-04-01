@@ -1,0 +1,376 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-user-list { display: none; }
+
+    .mobile-user-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .muc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+
+    .muc-name { font-weight: 600; font-size: 14px; color: #1f2937; }
+    .muc-id   { font-size: 11px; color: #9ca3af; white-space: nowrap; }
+
+    .muc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .muc-row:last-child { border-bottom: none; }
+    .muc-label { color: #6b7280; font-weight: 500; white-space: nowrap; min-width: 90px; }
+    .muc-value { color: #1f2937; text-align: right; word-break: break-all; }
+
+    .muc-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .muc-actions .action-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        color: var(--admin-text);
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+
+    .muc-actions .text-danger { color: #dc2626; border-color: #fecaca; }
+
+    /* ── Filter row wraps on mobile ── */
+    .filter-row { flex-wrap: wrap; }
+
+    @media (max-width: 768px) {
+        .desktop-user-table { display: none; }
+        .mobile-user-list   { display: block; }
+
+        .filter-row { gap: 8px; }
+        .admin-filter-input,
+        .admin-filter-select { width: 100%; }
+
+        .pagination-wrapper { flex-direction: column; align-items: center; gap: 8px; }
+        .pagination { flex-wrap: wrap; justify-content: center; }
+    }
+</style>
+
+<main>
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Signup Analytics</h1>
+      <p class="page-subtitle">Track and manage user registrations and analytics</p>
+    </div>
+  </div>
+  {% include "message.html" %}
+
+  <!-- KPI Cards -->
+  <section class="admin-kpis">
+    <div class="admin-kpi">
+      <div class="admin-kpi-ico"><i class="fas fa-users" style="color:#007bff;"></i></div>
+      <div>
+        <div class="admin-kpi-label">Total Users</div>
+        <div class="admin-kpi-value">{{ total_users }}</div>
+        <div class="admin-kpi-change">+{{ total_growth }}% this month</div>
+      </div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi-ico"><i class="fas fa-chart-line" style="color:#28a745;"></i></div>
+      <div>
+        <div class="admin-kpi-label">This Month</div>
+        <div class="admin-kpi-value">{{ this_month_signups }}</div>
+        <div class="admin-kpi-change">{{ monthly_change }}% vs last month</div>
+      </div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi-ico"><i class="fas fa-user-tie" style="color:#ffc107;"></i></div>
+      <div>
+        <div class="admin-kpi-label">Staff Users</div>
+        <div class="admin-kpi-value">{{ staff_users }}</div>
+        <div class="admin-kpi-change">{{ staff_percentage }}% of total</div>
+      </div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi-ico"><i class="fas fa-check-circle" style="color:#28a745;"></i></div>
+      <div>
+        <div class="admin-kpi-label">Active Users</div>
+        <div class="admin-kpi-value">{{ active_users }}</div>
+        <div class="admin-kpi-change">{{ active_percentage }}% active</div>
+      </div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi-ico"><i class="fas fa-times-circle" style="color:#dc3545;"></i></div>
+      <div>
+        <div class="admin-kpi-label">Inactive Users</div>
+        <div class="admin-kpi-value">{{ inactive_users }}</div>
+        <div class="admin-kpi-change">{{ inactive_percentage }}% inactive</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- User Management -->
+  <section class="admin-card">
+    <div class="admin-card-hd">
+      <h3><i class="fas fa-users" style="color:#007bff;"></i> User Management</h3>
+    </div>
+
+    <!-- Filters -->
+    <div class="advanced-filters">
+      <form method="GET" class="filter-form">
+        <div class="filter-row">
+          <div class="filter-group">
+            <input class="admin-filter-input" type="text" name="search" placeholder="Search users…" value="{{ request.GET.search }}">
+          </div>
+          <div class="filter-group">
+            <select class="admin-filter-select" name="status" onchange="this.form.submit()">
+              <option value="">All Status</option>
+              <option value="active"   {% if request.GET.status == 'active'   %}selected{% endif %}>Active</option>
+              <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select class="admin-filter-select" name="user_type" onchange="this.form.submit()">
+              <option value="">All Types</option>
+              <option value="staff"     {% if request.GET.user_type == 'staff'     %}selected{% endif %}>Staff</option>
+              <option value="superuser" {% if request.GET.user_type == 'superuser' %}selected{% endif %}>Superuser</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select class="admin-filter-select" name="date_range" onchange="this.form.submit()">
+              <option value="">All Time</option>
+              <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>Today</option>
+              <option value="week"  {% if request.GET.date_range == 'week'  %}selected{% endif %}>This Week</option>
+              <option value="month" {% if request.GET.date_range == 'month' %}selected{% endif %}>This Month</option>
+              <option value="year"  {% if request.GET.date_range == 'year'  %}selected{% endif %}>This Year</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <button type="submit" class="admin-btn admin-btn-primary"><i class="fas fa-search"></i> Search</button>
+            <a href="{% url 'signupdashboard' %}" class="admin-btn admin-btn-secondary"><i class="fas fa-sync"></i> Clear</a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="admin-card-bd">
+
+      <!-- Desktop table -->
+      <div class="table-wrapper desktop-user-table">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=id&order={% if request.GET.sort == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">User ID{% if request.GET.sort == 'id' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=name&order={% if request.GET.sort == 'name' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Name{% if request.GET.sort == 'name' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=email&order={% if request.GET.sort == 'email' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Email{% if request.GET.sort == 'email' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th>Contact</th>
+              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=date_joined&order={% if request.GET.sort == 'date_joined' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Signup Date{% if request.GET.sort == 'date_joined' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th>Last Login</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr class="user-row" data-user-id="{{ user.id }}">
+              <td class="user-id">{{ user.id|stringformat:"04d" }}</td>
+              <td>
+                <div class="user-info">
+                  <div class="user-name">{{ user.get_full_name|default:user.first_name|truncatechars:25 }}</div>
+                  {% if user.is_superuser %}<span class="badge badge-super">SUPER</span>
+                  {% elif user.is_staff %}<span class="badge badge-staff">STAFF</span>{% endif %}
+                </div>
+              </td>
+              <td>
+                <div class="email-cell">
+                  {{ user.email|truncatechars:30 }}
+                  <button class="copy-btn" onclick="copyToClipboard('{{ user.email }}')" title="Copy email"><i class="fas fa-copy"></i></button>
+                </div>
+              </td>
+              <td>
+                {% if user.contact_number %}
+                  <div class="contact-cell">
+                    {{ user.contact_number }}
+                    <button class="copy-btn" onclick="copyToClipboard('{{ user.contact_number }}')" title="Copy phone"><i class="fas fa-copy"></i></button>
+                  </div>
+                {% else %}<span class="text-muted">—</span>{% endif %}
+              </td>
+              <td><div class="date-cell"><div class="date-primary">{{ user.date_joined|date:"M d, Y" }}</div></div></td>
+              <td>
+                {% if user.last_login %}<div class="date-cell"><div class="date-primary">{{ user.last_login|date:"M d, Y" }}</div></div>
+                {% else %}<span class="text-muted">Never</span>{% endif %}
+              </td>
+              <td>
+                {% if user.is_active %}<span class="status-badge status-active"><i class="fas fa-check-circle"></i> Active</span>
+                {% else %}<span class="status-badge status-inactive"><i class="fas fa-times-circle"></i> Inactive</span>{% endif %}
+              </td>
+              <td>
+                {% if user.is_superuser %}<span class="type-badge type-super"><i class="fas fa-crown"></i> Superuser</span>
+                {% elif user.is_staff %}<span class="type-badge type-staff"><i class="fas fa-user-tie"></i> Staff</span>
+                {% else %}<span class="type-badge type-regular"><i class="fas fa-user"></i> Regular</span>{% endif %}
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <a href="{% url 'edit_user' user.id %}" class="action-btn action-edit" title="Edit"><i class="fas fa-edit"></i></a>
+                  <a href="{% url 'toggle_user_status' user.id %}" class="action-btn {% if user.is_active %}action-deactivate{% else %}action-activate{% endif %}" title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %}">
+                    {% if user.is_active %}<i class="fas fa-ban"></i>{% else %}<i class="fas fa-check"></i>{% endif %}
+                  </a>
+                  <a href="{% url 'reset_user_password' user.id %}" class="action-btn" title="Reset Password"><i class="fas fa-sync"></i></a>
+                  <a href="{% url 'delete_user' user.id %}" class="action-btn text-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this user?')"><i class="fas fa-trash"></i></a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="text-center empty-state">
+                <div class="empty-icon"><i class="fas fa-users" style="font-size:48px;color:#ccc;"></i></div>
+                <div class="empty-title">No users found</div>
+                <div class="empty-text">Try adjusting your search criteria</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="mobile-user-list">
+        {% for user in users %}
+        <div class="mobile-user-card">
+
+          <div class="muc-header">
+            <div>
+              <div class="muc-name">{{ user.get_full_name|default:user.first_name|truncatechars:25 }}</div>
+              <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">
+                {% if user.is_superuser %}<span class="badge badge-super">SUPER</span>
+                {% elif user.is_staff %}<span class="badge badge-staff">STAFF</span>{% endif %}
+                {% if user.is_active %}<span class="status-badge status-active" style="font-size:11px;padding:2px 6px;"><i class="fas fa-check-circle"></i> Active</span>
+                {% else %}<span class="status-badge status-inactive" style="font-size:11px;padding:2px 6px;"><i class="fas fa-times-circle"></i> Inactive</span>{% endif %}
+              </div>
+            </div>
+            <div class="muc-id">#{{ user.id|stringformat:"04d" }}</div>
+          </div>
+
+          <div class="muc-row">
+            <span class="muc-label">Email</span>
+            <span class="muc-value" style="display:flex;align-items:center;gap:6px;">
+              <span>{{ user.email|truncatechars:28 }}</span>
+              <button class="copy-btn" onclick="copyToClipboard('{{ user.email }}')" title="Copy"><i class="fas fa-copy"></i></button>
+            </span>
+          </div>
+          <div class="muc-row">
+            <span class="muc-label">Contact</span>
+            <span class="muc-value">
+              {% if user.contact_number %}
+                {{ user.contact_number }}
+                <button class="copy-btn" onclick="copyToClipboard('{{ user.contact_number }}')" title="Copy"><i class="fas fa-copy"></i></button>
+              {% else %}<span style="color:#9ca3af;">—</span>{% endif %}
+            </span>
+          </div>
+          <div class="muc-row">
+            <span class="muc-label">Type</span>
+            <span class="muc-value">
+              {% if user.is_superuser %}<span class="type-badge type-super"><i class="fas fa-crown"></i> Superuser</span>
+              {% elif user.is_staff %}<span class="type-badge type-staff"><i class="fas fa-user-tie"></i> Staff</span>
+              {% else %}<span class="type-badge type-regular"><i class="fas fa-user"></i> Regular</span>{% endif %}
+            </span>
+          </div>
+          <div class="muc-row">
+            <span class="muc-label">Signed Up</span>
+            <span class="muc-value">{{ user.date_joined|date:"M d, Y" }}</span>
+          </div>
+          <div class="muc-row">
+            <span class="muc-label">Last Login</span>
+            <span class="muc-value">{% if user.last_login %}{{ user.last_login|date:"M d, Y" }}{% else %}<span style="color:#9ca3af;">Never</span>{% endif %}</span>
+          </div>
+
+          <div class="muc-actions">
+            <a href="{% url 'edit_user' user.id %}" class="action-btn action-edit" title="Edit"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'toggle_user_status' user.id %}" class="action-btn {% if user.is_active %}action-deactivate{% else %}action-activate{% endif %}" title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %}">
+              {% if user.is_active %}<i class="fas fa-ban"></i>{% else %}<i class="fas fa-check"></i>{% endif %}
+            </a>
+            <a href="{% url 'reset_user_password' user.id %}" class="action-btn" title="Reset Password"><i class="fas fa-sync"></i></a>
+            <a href="{% url 'delete_user' user.id %}" class="action-btn text-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this user?')"><i class="fas fa-trash"></i></a>
+          </div>
+
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:40px;color:#9ca3af;">
+          <i class="fas fa-users" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+          No users found. Try adjusting your search criteria.
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination-wrapper">
+      <div class="pagination-info">
+        Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} users
+      </div>
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="?page=1{{ request.GET|urlencode }}" class="page-btn"><i class="fas fa-fast-backward"></i> First</a>
+          <a href="?page={{ page_obj.previous_page_number }}{{ request.GET|urlencode }}" class="page-btn"><i class="fas fa-chevron-left"></i> Prev</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}<span class="page-btn page-current">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{{ request.GET|urlencode }}" class="page-btn">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{{ request.GET|urlencode }}" class="page-btn">Next <i class="fas fa-chevron-right"></i></a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{{ request.GET|urlencode }}" class="page-btn">Last <i class="fas fa-fast-forward"></i></a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</main>
+
+<script>
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--admin-success);color:white;padding:12px 20px;border-radius:6px;z-index:10000;animation:slideIn .3s ease;';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+const _s = document.createElement('style');
+_s.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+document.head.appendChild(_s);
+</script>
+{% endblock content %}

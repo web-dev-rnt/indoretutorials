@@ -1,0 +1,232 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Edit Test - {{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+{% include 'message.html' %}
+  <!-- Breadcrumb -->
+  <div style="margin-bottom: 20px; padding: 8px 0; border-bottom: 1px solid #e9ecf3;">
+    <a href="{% url 'test_series_manage' %}" style="color: #6366f1; text-decoration: none;">📚 Test Series</a> 
+    <span style="color: #6b7280;"> / </span>
+    <a href="{% url 'test_series_detail' pk=test.test_series.pk %}" style="color: #6366f1; text-decoration: none;">{{ test.test_series.title }}</a>
+    <span style="color: #6b7280;"> / </span>
+    <span style="color: #374151; font-weight: 600;">{{ test.title }}</span>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <h1 class="h1">Edit Test: {{ test.title }}</h1>
+      <p class="small">Series: {{ test.test_series.title }}</p>
+    </div>
+    
+    <!-- Test Stats -->
+    <div style="display: flex; gap: 15px;">
+      <div style="text-align: center; padding: 10px; background: #eff6ff; border-radius: 8px;">
+        <div style="font-size: 20px; font-weight: 800; color: #2563eb;">{{ test.question_count }}</div>
+        <div style="font-size: 12px; color: #6b7280;">Questions</div>
+      </div>
+      <div style="text-align: center; padding: 10px; background: #f0fdf4; border-radius: 8px;">
+        <div style="font-size: 20px; font-weight: 800; color: #16a34a;">{{ test.total_marks }}</div>
+        <div style="font-size: 12px; color: #6b7280;">Total Marks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <a href="{% url 'test_series_detail' pk=test.test_series.pk %}" class="btn">← Back to Test Series</a>
+    <a href="{% url 'question_create' test_pk=test.pk %}" class="btn btn-primary">➕ Add Question</a>
+    {% if test.question_count > 0 %}
+      <a href="#questions-section" class="btn" style="background: #8b5cf6; color: white;">📋 Jump to Questions</a>
+    {% endif %}
+  </div>
+
+  <!-- FORM SECTION -->
+  <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_test">
+
+    <div class="panel">
+      <div class="panel-title">Test Configuration</div>
+
+      <div class="grid">
+        <p class="col-8">
+          <label for="title">Test Title *</label>
+          <input type="text" id="title" name="title" value="{{ test.title }}" required>
+          {% if form.title.errors %}
+            <span class="text-danger">{{ form.title.errors|join:", " }}</span>
+          {% endif %}
+        </p>
+
+        <p class="col-4">
+          <label for="duration_minutes">Duration (Minutes) *</label>
+          <input type="number" id="duration_minutes" name="duration_minutes" value="{{ test.duration_minutes }}" required min="1">
+          {% if form.duration_minutes.errors %}
+            <span class="text-danger">{{ form.duration_minutes.errors|join:", " }}</span>
+          {% endif %}
+        </p>
+
+        <p class="col-12">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" rows="3">{{ test.description }}</textarea>
+          {% if form.description.errors %}
+            <span class="text-danger">{{ form.description.errors|join:", " }}</span>
+          {% endif %}
+        </p>
+
+        <p class="col-3">
+          <label for="max_attempts">Max Attempts</label>
+          <input type="number" id="max_attempts" name="max_attempts" value="{{ test.max_attempts }}" min="1">
+          {% if form.max_attempts.errors %}
+            <span class="text-danger">{{ form.max_attempts.errors|join:", " }}</span>
+          {% endif %}
+        </p>
+
+        <p class="col-3">
+          <label>
+            <input type="checkbox" name="shuffle_questions" {% if test.shuffle_questions %}checked{% endif %}>
+            Shuffle Questions
+          </label>
+        </p>
+
+        <p class="col-3">
+          <label>
+            <input type="checkbox" name="show_result_immediately" {% if test.show_result_immediately %}checked{% endif %}>
+            Show Result Immediately
+          </label>
+        </p>
+
+        <p class="col-3">
+          <label>
+            <input type="checkbox" name="allow_review" {% if test.allow_review %}checked{% endif %}>
+            Allow Review
+          </label>
+        </p>
+
+        <p class="col-6">
+          <label for="start_time">Start Time (Optional)</label>
+          <input type="datetime-local" id="start_time" name="start_time"
+                 value="{% if test.start_time %}{{ test.start_time|date:'Y-m-d\\TH:i' }}{% endif %}">
+          {% if form.start_time.errors %}
+            <span class="text-danger">{{ form.start_time.errors|join:", " }}</span>
+          {% endif %}
+        </p>
+
+        <p class="col-6">
+          <label for="end_time">End Time (Optional)</label>
+          <input type="datetime-local" id="end_time" name="end_time"
+                 value="{% if test.end_time %}{{ test.end_time|date:'Y-m-d\\TH:i' }}{% endif %}">
+          {% if form.end_time.errors %}
+            <span class="text-danger">{{ form.end_time.errors|join:", " }}</span>
+          {% endif %}
+        </p>
+
+        <p class="col-12">
+          <label>
+            <input type="checkbox" name="is_active" {% if test.is_active %}checked{% endif %}>
+            Test is Active
+          </label>
+        </p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">Update Test</button>
+    </div>
+  </form>
+
+  <!-- QUESTIONS SECTION -->
+  <div class="panel" id="questions-section">
+    <div class="ad-card-hd">
+      <h3>Questions ({{ test.question_count }})</h3>
+      <div>
+        <a href="{% url 'question_create' test_pk=test.pk %}" class="btn btn-primary">Add Question</a>
+      </div>
+    </div>
+
+    {% if test.question_count > 0 %}
+      <div style="padding: 16px; background: #f8fafc; border-bottom: 1px solid #e9ecf3;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #374151;">Question Statistics</h4>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; color: #6b7280;">Difficulty:</span>
+            {% if test.difficulty_stats.easy %}
+              <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">Easy: {{ test.difficulty_stats.easy }}</span>
+            {% endif %}
+            {% if test.difficulty_stats.medium %}
+              <span style="background: #f59e0b; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">Medium: {{ test.difficulty_stats.medium }}</span>
+            {% endif %}
+            {% if test.difficulty_stats.hard %}
+              <span style="background: #dc2626; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">Hard: {{ test.difficulty_stats.hard }}</span>
+            {% endif %}
+          </div>
+          
+          {% if test.subject_stats %}
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #6b7280;">Subjects:</span>
+              {% for subject, count in test.subject_stats.items %}
+                <span style="background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">{{ subject }}: {{ count }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="ad-card-bd">
+      {% if questions %}
+        <table class="ad-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Question</th>
+              <th>Type</th>
+              <th>Subject</th>
+              <th>Difficulty</th>
+              <th>Marks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for question in questions %}
+              <tr>
+                <td>
+                  <span style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 50%; font-size: 12px; font-weight: 600;">{{ question.order }}</span>
+                </td>
+                <td>{{ question.question_text|truncatechars:80 }}</td>
+                <td>
+                  <span style="background: #6366f1; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">
+                    {{ question.get_question_type_display }}
+                  </span>
+                </td>
+                <td>{{ question.subject.name|default:"-" }}</td>
+                <td>
+                  <span style="background: {% if question.difficulty == 'easy' %}#10b981{% elif question.difficulty == 'medium' %}#f59e0b{% else %}#dc2626{% endif %}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">
+                    {{ question.get_difficulty_display }}
+                  </span>
+                </td>
+                <td>
+                  <span style="font-weight: 600; color: #059669;">{{ question.marks }}</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <a href="#" class="btn" style="padding: 4px 8px; font-size: 12px;">Edit</a>
+                    <a href="#" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="return confirm('Delete this question?')">Delete</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div style="text-align: center; padding: 40px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">❓</div>
+          <h3 style="color: #374151; margin: 0 0 8px 0;">No Questions Added Yet</h3>
+          <p style="color: #6b7280; margin: 0 0 20px 0;">Start building your test by adding the first question.</p>
+          <a href="{% url 'question_create' test_pk=test.pk %}" class="btn btn-primary">Add First Question</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

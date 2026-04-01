@@ -1,0 +1,262 @@
+{% for cta in cta_sections %}
+<div class="cta-section">
+    <div class="cta-content">
+        <h2 class="cta-title">{{ cta.title }}</h2>
+        {% if cta.button_link %}
+            <a href="{{ cta.button_link }}" class="cta-btn" target="_blank">{{ cta.button_text }}</a>
+        {% else %}
+            <button class="cta-btn" type="button">{{ cta.button_text }}</button>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
+
+.cta-section {
+    background: #ffffff;
+    padding: 0px 20px 55px 20px;
+    text-align: center;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cta-content {
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cta-title {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 32px;
+    line-height: 1.25;
+    letter-spacing: -0.8px;
+    margin-top: 0;
+    text-rendering: optimizeLegibility;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.cta-btn {
+    background: #e74c3c;
+    color: #ffffff;
+    border: none;
+    padding: 16px 42px;
+    border-radius: 50px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 4px 14px rgba(231, 76, 60, 0.35);
+    letter-spacing: 0.3px;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.cta-btn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    color: #ffffff;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.45);
+}
+
+.cta-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(231, 76, 60, 0.35);
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+    .cta-section {
+        padding: 0px 20px 50px 20px;
+    }
+    
+    .cta-title {
+        font-size: 25px;
+        margin-bottom: 30px;
+        letter-spacing: -0.7px;
+    }
+    
+    .cta-btn {
+        padding: 15px 40px;
+        font-size: 17px;
+    }
+}
+
+/* Small Tablet / Large Mobile */
+@media (max-width: 768px) {
+    .cta-section {
+        padding: 0px 18px 45px 18px;
+    }
+    
+    .cta-title {
+        font-size: 15px !important;
+        margin-bottom: 26px;
+        letter-spacing: -0.6px;
+        line-height: 1.3;
+    }
+    
+    .cta-btn {
+        padding: 14px 36px;
+        font-size: 16px;
+        box-shadow: 0 3px 12px rgba(231, 76, 60, 0.3);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .cta-section {
+        padding: 0px 15px 40px 15px;
+    }
+    
+    .cta-content {
+        max-width: 100%;
+    }
+    
+    .cta-title {
+        font-size: 15px !important;
+        margin-bottom: 22px;
+        line-height: 1.35;
+        letter-spacing: -0.4px;
+        padding: 0 10px;
+    }
+    
+    .cta-btn {
+        padding: 13px 32px;
+        font-size: 15px;
+        border-radius: 40px;
+        width: auto;
+        max-width: 90%;
+    }
+    
+    /* Disable hover effects on mobile */
+    .cta-btn:hover {
+        transform: none;
+    }
+    
+    /* Add touch feedback */
+    .cta-btn:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Very Small Mobile */
+@media (max-width: 375px) {
+    .cta-section {
+        padding: 0px 12px 35px 12px;
+    }
+    
+    .cta-title {
+        font-size: 18px !important;
+        margin-bottom: 20px;
+        line-height: 1.4;
+        letter-spacing: -0.3px;
+        padding: 0 5px;
+    }
+    
+    .cta-btn {
+        padding: 12px 28px;
+        font-size: 14px;
+        letter-spacing: 0.2px;
+    }
+}
+
+/* Ultra Small Mobile */
+@media (max-width: 320px) {
+    .cta-section {
+        padding: 0px 10px 30px 10px;
+    }
+    
+    .cta-title {
+        font-size: 16px !important;
+        margin-bottom: 18px;
+        line-height: 1.4;
+        letter-spacing: -0.2px;
+    }
+    
+    .cta-btn {
+        padding: 11px 24px;
+        font-size: 13px;
+        border-radius: 35px;
+    }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .cta-section {
+        padding: 0px 20px 35px 20px;
+    }
+    
+    .cta-title {
+        font-size: 22px !important;
+        margin-bottom: 20px;
+    }
+    
+    .cta-btn {
+        padding: 12px 32px;
+        font-size: 15px;
+    }
+}
+
+/* Force override any inherited styles */
+@media screen and (max-width: 768px) {
+    .cta-section .cta-title {
+        font-size: 24px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .cta-section .cta-title {
+        font-size: 20px !important;
+    }
+}
+
+@media screen and (max-width: 375px) {
+    .cta-section .cta-title {
+        font-size: 18px !important;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .cta-btn {
+        transition: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .cta-btn {
+        border: 2px solid currentColor;
+    }
+    
+    .cta-title {
+        color: #000;
+    }
+}
+
+/* Print styles */
+@media print {
+    .cta-section {
+        padding: 10px;
+        background: white;
+    }
+    
+    .cta-btn {
+        box-shadow: none;
+        border: 1px solid #e74c3c;
+    }
+}
+</style>

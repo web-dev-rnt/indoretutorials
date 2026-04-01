@@ -1,0 +1,97 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}Create Category{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    <div class="nav-buttons">
+        <a href="{% url 'manage_categories' %}" class="btn">
+            <span>←</span> Back to Categories
+        </a>
+    </div>
+
+    <h1 class="h1">Create New Category</h1>
+    <p class="small">Add a new category to organize your courses</p>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="panel">
+        <h3 class="panel-title">Category Details</h3>
+        
+        <form method="post" onsubmit="showLoading(this)">
+            {% csrf_token %}
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="name">Category Name *</label>
+                        <input type="text" id="name" name="name" required maxlength="120" 
+                               placeholder="e.g., Web Development, Data Science"
+                               oninput="generateSlugPreview(this.value)">
+                        <div class="help-text">This will be the display name for your category</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>URL Preview</label>
+                        <div style="padding: 10px 12px; background: #f8fafc; border: 2px solid #e5e7eb; border-radius: 8px; color: #6b7280; font-family: monospace;">
+                            <span id="slug-preview">Enter name to see URL</span>
+                        </div>
+                        <div class="help-text">This is how the URL will look</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="4" 
+                                  placeholder="Brief description of this category (optional)"></textarea>
+                        <div class="help-text">Help users understand what courses belong in this category</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">
+                    <span class="spinner" style="display: none;"></span>
+                    <span class="btn-text">Create Category</span>
+                </button>
+                <a href="{% url 'manage_categories' %}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function generateSlugPreview(name) {
+    const slugPreview = document.getElementById('slug-preview');
+    if (name.trim()) {
+        const slug = name.toLowerCase()
+                        .replace(/[^a-z0-9 -]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .trim();
+        slugPreview.textContent = `/category/${slug}/`;
+    } else {
+        slugPreview.textContent = 'Enter name to see URL';
+    }
+}
+
+function showLoading(form) {
+    const btn = form.querySelector('button[type="submit"]');
+    const spinner = btn.querySelector('.spinner');
+    const text = btn.querySelector('.btn-text');
+    
+    spinner.style.display = 'inline-block';
+    text.textContent = 'Creating...';
+    btn.classList.add('btn-loading');
+}
+</script>
+{% endblock %}

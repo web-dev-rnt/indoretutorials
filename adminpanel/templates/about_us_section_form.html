@@ -1,0 +1,281 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}{{ action }} About Us Section{% endblock %}
+
+{% block content %}
+
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>{{ action }} About Us Section</h1>
+        <a href="{% url 'about_us_edit' %}" class="ad-btn ad-btn-secondary">← Back to About Us Management</a>
+    </div>
+
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>About Us Details</h2>
+        </div>
+        <div class="ad-card-body">
+            <form method="post" enctype="multipart/form-data" class="ad-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3>🏢 Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.heading.id_for_label }}">Page Heading:</label>
+                            {{ form.heading }}
+                            {% if form.heading.errors %}
+                                <div class="form-error">{{ form.heading.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.company_name.id_for_label }}">Company Name:</label>
+                            {{ form.company_name }}
+                            {% if form.company_name.errors %}
+                                <div class="form-error">{{ form.company_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.logo.id_for_label }}">Company Logo:</label>
+                        {{ form.logo }}
+                        {% if about_us and about_us.logo %}
+                            <div class="current-logo">
+                                <img src="{{ about_us.logo.url }}" alt="Current logo" style="width: 60px; height: 60px; object-fit: contain; margin-top: 10px;">
+                            </div>
+                        {% endif %}
+                        {% if form.logo.errors %}
+                            <div class="form-error">{{ form.logo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}">Description:</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="form-error">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📞 Contact Information</h3>
+                    <div class="form-group">
+                        <label for="{{ form.address.id_for_label }}">Address:</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="form-error">{{ form.address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">Email:</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="form-error">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.phone.id_for_label }}">Phone:</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="form-error">{{ form.phone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.phone_hours.id_for_label }}">Phone Hours:</label>
+                        {{ form.phone_hours }}
+                        {% if form.phone_hours.errors %}
+                            <div class="form-error">{{ form.phone_hours.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📱 Social Media Links</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.facebook_url.id_for_label }}">Facebook URL:</label>
+                            {{ form.facebook_url }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.twitter_url.id_for_label }}">Twitter URL:</label>
+                            {{ form.twitter_url }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.linkedin_url.id_for_label }}">LinkedIn URL:</label>
+                            {{ form.linkedin_url }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.instagram_url.id_for_label }}">Instagram URL:</label>
+                            {{ form.instagram_url }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.telegram_url.id_for_label }}">Telegram URL:</label>
+                        {{ form.telegram_url }}
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🗺️ Map Settings</h3>
+                    <div class="form-group">
+                        <label for="{{ form.map_embed_url.id_for_label }}">Google Maps Embed URL:</label>
+                        {{ form.map_embed_url }}
+                        <small class="form-help">Get this from Google Maps → Share → Embed</small>
+                        {% if form.map_embed_url.errors %}
+                            <div class="form-error">{{ form.map_embed_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            {{ form.is_active }} Active (Show About Us section)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="ad-btn ad-btn-primary">{{ action }} About Us Section</button>
+                    <a href="{% url 'about_us_edit' %}" class="ad-btn ad-btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.ad-form {
+    max-width: 100%;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.form-section h3 {
+    color: #c7212f;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #c7212f;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-group {
+    flex: 1;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: #c7212f;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(199, 33, 47, 0.1);
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.form-help {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.form-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+{% comment %} 
+.ad-btn {
+    padding: 12px 24px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.ad-btn-primary {
+    background: #c7212f;
+    color: white;
+}
+
+.ad-btn-primary:hover {
+    background: #a01c26;
+}
+
+.ad-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.ad-btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+    text-decoration: none;
+} {% endcomment %}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-section {
+        padding: 20px 15px;
+    }
+}
+</style>
+{% endblock %}

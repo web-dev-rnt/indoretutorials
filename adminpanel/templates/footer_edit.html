@@ -1,0 +1,282 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Footer Management{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>🦶 Footer Management</h1>
+        <p>Manage your website footer content</p>
+        <a href="{% url 'footer_settings_edit' %}" class="ad-btn ad-btn-primary">
+            <span>⚙️</span> Edit Footer Settings
+        </a>
+    </div>
+
+    <!-- Footer Settings Preview -->
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>👁️ Footer Settings Preview</h2>
+        </div>
+        <div class="ad-card-body">
+            {% if footer_settings %}
+                <div class="footer-preview">
+                    <div class="preview-logo">
+                        {% if footer_settings.logo %}
+                            <img src="{{ footer_settings.logo.url }}" alt="Footer Logo" style="max-width: 150px;">
+                        {% else %}
+                            <p>No logo uploaded</p>
+                        {% endif %}
+                    </div>
+                    <p><strong>Email:</strong> {{ footer_settings.email }}</p>
+                    <p><strong>Copyright:</strong> {{ footer_settings.copyright_text }}</p>
+                </div>
+            {% else %}
+                <p class="ad-empty-state">No footer settings configured. <a href="{% url 'footer_settings_edit' %}">Configure now</a></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer Links Section -->
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>🔗 Footer Links</h2>
+            <a href="{% url 'footer_link_create' %}" class="ad-btn ad-btn-primary">
+                <span>➕</span> Add Link
+            </a>
+        </div>
+        <div class="ad-card-body">
+            {% if footer_links %}
+                <div class="ad-table-container">
+                    <table class="ad-table">
+                        <thead>
+                            <tr>
+                                <th>Section</th>
+                                <th>Title</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Order</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for link in footer_links %}
+                                <tr {% if not link.is_active %}class="ad-inactive"{% endif %}>
+                                    <td><span class="section-badge">{{ link.get_section_display }}</span></td>
+                                    <td><strong>{{ link.title }}</strong></td>
+                                    <td>{{ link.url|truncatechars:30 }}</td>
+                                    <td>
+                                        {% if link.is_active %}
+                                            <span class="ad-status ad-active">Active</span>
+                                        {% else %}
+                                            <span class="ad-status ad-inactive">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ link.order }}</td>
+                                    <td class="ad-actions">
+                                        <div class="action-buttons">
+                                            <a href="{% url 'footer_link_edit' link.pk %}" 
+                                               class="action-btn edit-btn" title="Edit Link">
+                                                <span class="btn-icon">✏️</span><span class="btn-text">Edit</span>
+                                            </a>
+                                            <a href="{% url 'footer_link_toggle_status' link.pk %}" 
+                                               class="action-btn {% if link.is_active %}hide-btn{% else %}show-btn{% endif %}" 
+                                               title="{% if link.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                                <span class="btn-icon">{% if link.is_active %}⏸️{% else %}▶️{% endif %}</span>
+                                                <span class="btn-text">{% if link.is_active %}Hide{% else %}Show{% endif %}</span>
+                                            </a>
+                                            <a href="{% url 'footer_link_delete' link.pk %}" 
+                                               onclick="return confirm('Are you sure?')" 
+                                               class="action-btn delete-btn" title="Delete Link">
+                                                <span class="btn-icon">🗑️</span><span class="btn-text">Delete</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="ad-empty-state">
+                    <h3>No footer links created yet</h3>
+                    <a href="{% url 'footer_link_create' %}" class="ad-btn ad-btn-primary">Add First Link</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer Legal Links Section -->
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>⚖️ Legal Links</h2>
+            <a href="{% url 'footer_legal_create' %}" class="ad-btn ad-btn-primary">
+                <span>➕</span> Add Legal Link
+            </a>
+        </div>
+        <div class="ad-card-body">
+            {% if footer_legal_links %}
+                <div class="ad-table-container">
+                    <table class="ad-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Order</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for legal in footer_legal_links %}
+                                <tr {% if not legal.is_active %}class="ad-inactive"{% endif %}>
+                                    <td><strong>{{ legal.title }}</strong></td>
+                                    <td>{{ legal.url|truncatechars:30 }}</td>
+                                    <td>
+                                        {% if legal.is_active %}
+                                            <span class="ad-status ad-active">Active</span>
+                                        {% else %}
+                                            <span class="ad-status ad-inactive">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ legal.order }}</td>
+                                    <td class="ad-actions">
+                                        <div class="action-buttons">
+                                            <a href="{% url 'footer_legal_edit' legal.pk %}" 
+                                               class="action-btn edit-btn" title="Edit Legal Link">
+                                                <span class="btn-icon">✏️</span><span class="btn-text">Edit</span>
+                                            </a>
+                                            <a href="{% url 'footer_legal_toggle_status' legal.pk %}" 
+                                               class="action-btn {% if legal.is_active %}hide-btn{% else %}show-btn{% endif %}" 
+                                               title="{% if legal.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                                <span class="btn-icon">{% if legal.is_active %}⏸️{% else %}▶️{% endif %}</span>
+                                                <span class="btn-text">{% if legal.is_active %}Hide{% else %}Show{% endif %}</span>
+                                            </a>
+                                            <a href="{% url 'footer_legal_delete' legal.pk %}" 
+                                               onclick="return confirm('Are you sure?')" 
+                                               class="action-btn delete-btn" title="Delete Legal Link">
+                                                <span class="btn-icon">🗑️</span><span class="btn-text">Delete</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="ad-empty-state">
+                    <h3>No legal links created yet</h3>
+                    <a href="{% url 'footer_legal_create' %}" class="ad-btn ad-btn-primary">Add First Legal Link</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.footer-preview {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.preview-logo {
+    margin-bottom: 15px;
+}
+
+.section-badge {
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Copy action button styles from other management pages */
+.ad-actions {
+    white-space: nowrap;
+    min-width: 200px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background: #e3f2fd;
+    color: #1976d2;
+    border-color: #bbdefb;
+}
+
+.edit-btn:hover {
+    background: #bbdefb;
+    color: #0d47a1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2);
+}
+
+.hide-btn {
+    background: #fff3e0;
+    color: #f57c00;
+    border-color: #ffcc02;
+}
+
+.hide-btn:hover {
+    background: #ffcc02;
+    color: #e65100;
+    transform: translateY(-1px);
+}
+
+.show-btn {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border-color: #81c784;
+}
+
+.show-btn:hover {
+    background: #81c784;
+    color: #1b5e20;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    background: #ffebee;
+    color: #d32f2f;
+    border-color: #ffcdd2;
+}
+
+.delete-btn:hover {
+    background: #ffcdd2;
+    color: #b71c1c;
+    transform: translateY(-1px);
+}
+
+.ad-status.ad-active {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.ad-status.ad-inactive {
+    color: #dc3545;
+    font-weight: 500;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,286 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}
+    {{ action }} 
+    {% if type == 'why_choose' %}Why Choose Us Item{% else %}Service Item{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>{{ action }} {% if type == 'why_choose' %}💡 Why Choose Us Item{% else %}🎓 Service Item{% endif %}</h1>
+        <a href="{% url 'about_us_edit' %}" class="ad-btn ad-btn-secondary">← Back to About Us Management</a>
+    </div>
+
+    <div class="ad-form-container">
+        <div class="ad-card">
+            <div class="ad-card-header">
+                <h2>{% if type == 'why_choose' %}Why Choose Us{% else %}Service{% endif %} Details</h2>
+            </div>
+            <div class="ad-card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="ad-form-grid">
+                        <div class="ad-form-group">
+                            <label for="{{ form.icon_class.id_for_label }}">FontAwesome Icon Class *</label>
+                            {{ form.icon_class }}
+                            <small class="ad-help-text">e.g., "fa fa-user-circle", "fa fa-video-camera"</small>
+                            {% if form.icon_class.errors %}
+                                <div class="ad-error">{{ form.icon_class.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="ad-form-group">
+                            <label for="{{ form.order.id_for_label }}">Display Order</label>
+                            {{ form.order }}
+                            <small class="ad-help-text">Lower numbers appear first</small>
+                            {% if form.order.errors %}
+                                <div class="ad-error">{{ form.order.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if type == 'why_choose' %}
+                            <div class="ad-form-group ad-full-width">
+                                <label for="{{ form.title.id_for_label }}">Title *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="ad-error">{{ form.title.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="ad-form-group ad-full-width">
+                                <label for="{{ form.description.id_for_label }}">Description *</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="ad-error">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="ad-form-group ad-full-width">
+                                <label for="{{ form.service_name.id_for_label }}">Service Name *</label>
+                                {{ form.service_name }}
+                                {% if form.service_name.errors %}
+                                    <div class="ad-error">{{ form.service_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="ad-form-group ad-full-width">
+                                <label for="{{ form.service_description.id_for_label }}">Service Description *</label>
+                                {{ form.service_description }}
+                                {% if form.service_description.errors %}
+                                    <div class="ad-error">{{ form.service_description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="ad-form-group ad-full-width">
+                            <label class="ad-checkbox-label">
+                                {{ form.is_active }}
+                                <span>Active (Show on website)</span>
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="ad-error">{{ form.is_active.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="ad-form-actions">
+                        <button type="submit" class="ad-btn ad-btn-primary">{{ action }} {% if type == 'why_choose' %}Item{% else %}Service{% endif %}</button>
+                        <a href="{% url 'about_us_edit' %}" class="ad-btn ad-btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="ad-card">
+            <div class="ad-card-header">
+                <h3>🔍 Preview</h3>
+            </div>
+            <div class="ad-card-body">
+                <div class="item-preview">
+                    <div class="preview-icon">
+                        <i id="preview-icon-class" class="{% if type == 'why_choose' %}{% if item.icon_class %}{{ item.icon_class }}{% else %}fa fa-user-circle{% endif %}{% else %}{% if item.icon_class %}{{ item.icon_class }}{% else %}fa fa-video-camera{% endif %}{% endif %}"></i>
+                    </div>
+                    <div class="preview-content">
+                        {% if type == 'why_choose' %}
+                            <div class="preview-title" id="preview-title">
+                                {% if item.title %}{{ item.title }}{% else %}Trusted by 4+ crore learners{% endif %}
+                            </div>
+                            <div class="preview-description" id="preview-description">
+                                {% if item.description %}{{ item.description }}{% else %}Sample description text{% endif %}
+                            </div>
+                        {% else %}
+                            <div class="preview-service-name" id="preview-service-name">
+                                {% if item.service_name %}{{ item.service_name }}{% else %}Live & Interactive Classes{% endif %}
+                            </div>
+                            <div class="preview-service-description" id="preview-service-description">
+                                {% if item.service_description %}{{ item.service_description }}{% else %}Sample service description{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ad-form-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.ad-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.ad-form-group.ad-full-width {
+    grid-column: 1 / -1;
+}
+
+.ad-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.ad-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.ad-help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.ad-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.ad-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Preview Styles */
+.item-preview {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.preview-icon {
+    font-size: 24px;
+    color: #007bff;
+    flex-shrink: 0;
+}
+
+.preview-content {
+    flex: 1;
+}
+
+.preview-title,
+.preview-service-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.preview-description,
+.preview-service-description {
+    color: #6c757d;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .ad-form-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .ad-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .item-preview {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+// Live preview updates
+document.addEventListener('DOMContentLoaded', function() {
+    const iconInput = document.querySelector('#id_icon_class');
+    const previewIcon = document.querySelector('#preview-icon-class');
+    
+    {% if type == 'why_choose' %}
+        const titleInput = document.querySelector('#id_title');
+        const descriptionInput = document.querySelector('#id_description');
+        const previewTitle = document.querySelector('#preview-title');
+        const previewDescription = document.querySelector('#preview-description');
+        
+        function updatePreview() {
+            if (iconInput && previewIcon) {
+                previewIcon.className = iconInput.value || 'fa fa-user-circle';
+            }
+            if (titleInput && previewTitle) {
+                previewTitle.textContent = titleInput.value || 'Trusted by 4+ crore learners';
+            }
+            if (descriptionInput && previewDescription) {
+                previewDescription.textContent = descriptionInput.value || 'Sample description text';
+            }
+        }
+        
+        if (titleInput) titleInput.addEventListener('input', updatePreview);
+        if (descriptionInput) descriptionInput.addEventListener('input', updatePreview);
+    {% else %}
+        const serviceNameInput = document.querySelector('#id_service_name');
+        const serviceDescInput = document.querySelector('#id_service_description');
+        const previewServiceName = document.querySelector('#preview-service-name');
+        const previewServiceDesc = document.querySelector('#preview-service-description');
+        
+        function updatePreview() {
+            if (iconInput && previewIcon) {
+                previewIcon.className = iconInput.value || 'fa fa-video-camera';
+            }
+            if (serviceNameInput && previewServiceName) {
+                previewServiceName.textContent = serviceNameInput.value || 'Live & Interactive Classes';
+            }
+            if (serviceDescInput && previewServiceDesc) {
+                previewServiceDesc.textContent = serviceDescInput.value || 'Sample service description';
+            }
+        }
+        
+        if (serviceNameInput) serviceNameInput.addEventListener('input', updatePreview);
+        if (serviceDescInput) serviceDescInput.addEventListener('input', updatePreview);
+    {% endif %}
+    
+    if (iconInput) iconInput.addEventListener('input', updatePreview);
+    
+    // Initial update
+    updatePreview();
+});
+</script>
+{% endblock %}

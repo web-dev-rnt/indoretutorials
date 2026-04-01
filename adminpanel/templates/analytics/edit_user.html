@@ -1,0 +1,448 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<main>
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Edit User</h1>
+      <p class="page-subtitle">Manage user information and permissions</p>
+    </div>
+    <div class="header-actions">
+      <a href="{% url 'signupdashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Users
+      </a>
+      {% if user_obj.is_active %}
+        <button type="button" class="btn btn-danger" onclick="deactivateUser()">
+          <i class="fas fa-ban"></i> Deactivate User
+        </button>
+      {% else %}
+        <button type="button" class="btn btn-success" onclick="activateUser()">
+          <i class="fas fa-check"></i> Activate User
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- User Status Alert -->
+  {% if not user_obj.is_active %}
+  <div class="message error" style="display: flex; align-items: flex-start; gap: 12px;">
+    <span style="font-size: 20px;"><i class="fas fa-exclamation-triangle"></i></span>
+    <div>
+      <strong>User Deactivated</strong>
+      <p style="margin: 4px 0 0 0;">This user account is currently deactivated and cannot access the system.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="wrapper">
+    <form method="POST" class="edit-user-form">
+      {% csrf_token %}
+      
+      <!-- Basic Information Section -->
+      <section class="panel">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-lock" style="color: var(--ad-primary);"></i>
+          Authentication
+        </div>
+        <div class="grid">
+          <div class="col-6">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" 
+                   value="{{ user_obj.email }}" required>
+            <small class="help-text">Primary login credential</small>
+          </div>
+          <div class="col-6">
+            <label for="password">Password</label>
+            <div style="position: relative;">
+              <input type="password" id="password" name="password" 
+                     placeholder="Leave blank to keep current password">
+              <button type="button" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px;" onclick="togglePassword()">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <small class="help-text">Raw passwords are not stored, leave blank to keep current</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- Personal Information Section -->
+      <section class="panel">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-user" style="color: var(--ad-primary);"></i>
+          Personal Information
+        </div>
+        <div class="grid">
+          <div class="col-4">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" 
+                   value="{{ user_obj.first_name }}">
+          </div>
+          <div class="col-4">
+            <label for="middle_name">Middle Name</label>
+            <input type="text" id="middle_name" name="middle_name" 
+                   value="{{ user_obj.middle_name|default:'' }}">
+          </div>
+          <div class="col-4">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" 
+                   value="{{ user_obj.last_name }}">
+          </div>
+          <div class="col-4">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" 
+                   value="{{ user_obj.age|default:'' }}" min="1" max="120">
+          </div>
+          <div class="col-4">
+            <label for="contact_number">Contact Number</label>
+            <input type="text" id="contact_number" name="contact_number" 
+                   value="{{ user_obj.contact_number|default:'' }}">
+          </div>
+          <div class="col-4">
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender">
+              <option value="">---------</option>
+              {% for value, label in gender_choices %}
+                <option value="{{ value }}" {% if user_obj.gender == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Important Dates Section -->
+      <section class="panel">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-calendar" style="color: var(--ad-primary);"></i>
+          Important Dates
+        </div>
+        <div class="grid">
+          <div class="col-6">
+            <label>Last Login</label>
+            <div style="padding: 10px 12px; background: var(--ad-panel-2); border-radius: 6px; font-size: 14px;">
+              {% if user_obj.last_login %}
+                {{ user_obj.last_login|date:"M d, Y, H:i" }}
+              {% else %}
+                <span style="color: var(--ad-muted);">Never</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-6">
+            <label>Date Joined</label>
+            <div style="padding: 10px 12px; background: var(--ad-panel-2); border-radius: 6px; font-size: 14px;">
+              {{ user_obj.date_joined|date:"M d, Y, H:i" }}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Buttons -->
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+        <a href="{% url 'signupdashboard' %}" class="btn btn-secondary">
+          Cancel
+        </a>
+        <button type="button" class="btn" style="background: var(--ad-warning); color: white; border-color: var(--ad-warning);" onclick="resetPassword()">
+          <i class="fas fa-redo"></i> Reset Password
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<!-- Deactivate Modal -->
+<div id="deactivateModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-exclamation-triangle"></i> Deactivate User</h3>
+      <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to deactivate <strong>{{ user_obj.get_full_name|default:user_obj.email }}</strong>?</p>
+      <p style="color: var(--ad-danger); font-weight: 500;">This user will no longer be able to access the system.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="confirmDeactivate()">Deactivate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activate Modal -->
+<div id="activateModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-check"></i> Activate User</h3>
+      <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to activate <strong>{{ user_obj.get_full_name|default:user_obj.email }}</strong>?</p>
+      <p style="color: var(--ad-success); font-weight: 500;">This user will be able to access the system again.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-success" onclick="confirmActivate()">Activate</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Full width main container */
+main {
+  width: 100%;
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--ad-bg);
+  box-sizing: border-box;
+}
+
+/* Page header styling */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding: 24px 0;
+  border-bottom: 2px solid var(--ad-border);
+  max-width: 100%;
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  color: var(--ad-muted);
+  margin: 4px 0 0 0;
+  font-size: 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Form styling */
+.edit-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: var(--ad-panel);
+  margin: 15% auto;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  padding: 20px 24px 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--ad-muted);
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  padding: 0 24px 20px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  main {
+    padding: 16px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px 0;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .actions {
+    flex-wrap: wrap;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .col-4, .col-6 {
+    grid-column: span 1;
+  }
+  
+  .header-content h1 {
+    font-size: 24px;
+  }
+  
+  .page-subtitle {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 0;
+  }
+  
+  .panel {
+    padding: 16px;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+
+<script>
+function togglePassword() {
+  const passwordField = document.getElementById('password');
+  const toggleBtn = document.querySelector('.fa-eye, .fa-eye-slash');
+  
+  if (passwordField.type === 'password') {
+    passwordField.type = 'text';
+    toggleBtn.className = 'fas fa-eye-slash';
+  } else {
+    passwordField.type = 'password';
+    toggleBtn.className = 'fas fa-eye';
+  }
+}
+
+function deactivateUser() {
+  document.getElementById('deactivateModal').style.display = 'block';
+}
+
+function activateUser() {
+  document.getElementById('activateModal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('deactivateModal').style.display = 'none';
+  document.getElementById('activateModal').style.display = 'none';
+}
+
+function confirmDeactivate() {
+  fetch(`/admin/toggle-user-status/{{ user_obj.id }}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({activate: false})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Error: ' + data.error);
+    }
+  });
+}
+
+function confirmActivate() {
+  fetch(`/admin/toggle-user-status/{{ user_obj.id }}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({activate: true})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Error: ' + data.error);
+    }
+  });
+}
+
+function resetPassword() {
+  if (confirm('Send password reset email to {{ user_obj.email }}?')) {
+    fetch(`/admin/reset-user-password/{{ user_obj.id }}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Password reset email sent successfully!');
+      } else {
+        alert('Error: ' + data.error);
+      }
+    });
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const deactivateModal = document.getElementById('deactivateModal');
+  const activateModal = document.getElementById('activateModal');
+  
+  if (event.target === deactivateModal) {
+    deactivateModal.style.display = 'none';
+  }
+  if (event.target === activateModal) {
+    activateModal.style.display = 'none';
+  }
+}
+</script>
+{% endblock content %}

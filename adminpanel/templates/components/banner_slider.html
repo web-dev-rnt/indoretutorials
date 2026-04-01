@@ -1,0 +1,288 @@
+<!-- templates/components/banner_slider.html -->
+{% if banners %}
+<div class="banner-slider-container" id="banner-slider">
+    {% for banner in banners %}
+        <div class="banner-slide {% if forloop.first %}active{% endif %}">
+            {% if banner.link_url %}
+                <a href="{{ banner.link_url }}" target="_blank">
+                    <img src="{{ banner.image.url }}" alt="{{ banner.alt_text }}">
+                </a>
+            {% else %}
+                <img src="{{ banner.image.url }}" alt="{{ banner.alt_text }}">
+            {% endif %}
+        </div>
+    {% endfor %}
+    
+    {% if banners.count > 1 %}
+        <a class="banner-prev">&#10094;</a>
+        <a class="banner-next">&#10095;</a>
+        <div class="banner-dots"></div>
+    {% endif %}
+</div>
+
+
+<style>
+.banner-slider-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #f0f0f0;
+    height: 200px;
+    display: block;
+    line-height: 0;
+}
+
+.banner-slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+}
+
+.banner-slide.active {
+    display: block;
+}
+
+.banner-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+    vertical-align: top;
+    font-size: 0;
+    line-height: 0;
+}
+
+.banner-slide a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.banner-prev, .banner-next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    margin-top: -20px;
+    padding: 12px 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    user-select: none;
+    transition: all 0.3s ease;
+    z-index: 20;
+    text-align: center;
+}
+
+.banner-next {
+    right: 15px;
+    border-radius: 5px 0 0 5px;
+}
+
+.banner-prev {
+    left: 15px;
+    border-radius: 0 5px 5px 0;
+}
+
+.banner-prev:hover, .banner-next:hover {
+    background: rgba(0,0,0,0.9);
+    transform: scale(1.05);
+}
+
+/* New Dots Styling */
+.banner-dots {
+    position: absolute;
+    bottom: 17px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 14;
+}
+
+.banner-dot {
+    cursor: pointer;
+    width: 12px;
+    height: 12px;
+    background: #e0e0ec;
+    border-radius: 50%;
+    border: none;
+    transition: background 0.22s;
+    outline: none;
+    padding: 0;
+}
+
+.banner-dot.active {
+    background: #c7212f;
+}
+
+.banner-dot:hover {
+    background: #c7212f;
+}
+
+/* Ensure no spacing after the banner container */
+.banner-slider-container::after {
+    content: "";
+    display: block;
+    clear: both;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.banner-slider-container + * {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .banner-slider-container {
+        height: 150px;
+    }
+    
+    .banner-prev, .banner-next {
+        padding: 10px 14px;
+        font-size: 16px;
+        margin-top: -18px;
+    }
+    
+    .banner-dots {
+        bottom: 12px;
+        gap: 6px;
+    }
+    
+    .banner-dot {
+        height: 10px;
+        width: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .banner-slider-container {
+        height: 120px;
+    }
+    
+    .banner-prev, .banner-next {
+        padding: 8px 12px;
+        font-size: 14px;
+        margin-top: -15px;
+    }
+    
+    .banner-dots {
+        bottom: 10px;
+        gap: 5px;
+    }
+    
+    .banner-dot {
+        height: 8px;
+        width: 8px;
+    }
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .banner-slider-container {
+        height: 250px;
+    }
+}
+
+/* Tablet landscape */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .banner-slider-container {
+        height: 180px;
+    }
+}
+</style>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('banner-slider');
+    if (!container) return;
+    
+    let slideIndex = 0;
+    const slides = container.querySelectorAll('.banner-slide');
+    const totalSlides = slides.length;
+    
+    if (totalSlides <= 1) return;
+    
+    // Create fresh dots
+    const dotsContainer = container.querySelector('.banner-dots');
+    if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('span');
+            dot.className = 'banner-dot';
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', function() {
+                currentSlide(i);
+            });
+            dotsContainer.appendChild(dot);
+        }
+    }
+    
+    const dots = container.querySelectorAll('.banner-dot');
+    
+    function showSlide(n) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        slideIndex = (n + totalSlides) % totalSlides;
+        
+        slides[slideIndex].classList.add('active');
+        dots[slideIndex].classList.add('active');
+    }
+    
+    function nextSlide() {
+        showSlide(slideIndex + 1);
+    }
+    
+    function prevSlide() {
+        showSlide(slideIndex - 1);
+    }
+    
+    function currentSlide(n) {
+        showSlide(n);
+    }
+    
+    // Navigation buttons
+    const nextBtn = container.querySelector('.banner-next');
+    const prevBtn = container.querySelector('.banner-prev');
+    
+    if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+    if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+    
+    // Auto-slide every 5 seconds
+    let autoSlideInterval = setInterval(nextSlide, 5000);
+    
+    // Pause on hover
+    container.addEventListener('mouseenter', function() {
+        clearInterval(autoSlideInterval);
+    });
+    
+    container.addEventListener('mouseleave', function() {
+        autoSlideInterval = setInterval(nextSlide, 5000);
+    });
+});
+</script>
+{% endif %}

@@ -1,0 +1,701 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ course.name }} - Live Class Detail</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root{
+            --ad-primary:#c7212f;
+            --ad-primary-600:#ad1830;
+            --ad-muted:#707793;
+            --border:#e9ecf3;
+            --panel:#ffffff;
+            --bg:#fafbff;
+            --text:#162033;
+            --accent:#2d65f2;
+            --live-accent:#8246ef;
+            --free-accent:#10b981;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+        }
+        /* Header */
+        .course-header {
+            background: linear-gradient(120deg, {% if course.is_free %}var(--free-accent), #059669{% else %}var(--live-accent), #6d28d9{% endif %});
+            color: #fff;
+            padding: 28px 16px;
+        }
+        .course-header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display:flex;
+            align-items:flex-start;
+            gap:18px;
+        }
+        .course-header .thumb {
+            width: 360px;
+            max-width: 40vw;
+            aspect-ratio: 16/9;
+            background:#000;
+            border-radius: 12px;
+            overflow:hidden;
+            flex-shrink:0;
+            position: relative;
+        }
+        .course-header .thumb img {
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            display:block;
+        }
+        {% if course.is_free %}
+        .course-header .thumb::after {
+            content: 'FREE COURSE';
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--free-accent);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        {% endif %}
+        .course-header .details {
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            min-width:0;
+        }
+        .course-header h1 {
+            margin: 0;
+            font-size: 26px;
+            line-height:1.25;
+        }
+        .meta {
+            font-size: 14px;
+            opacity:.95;
+        }
+        .badges { display:flex; gap:8px; flex-wrap:wrap; }
+        .badge {
+            display:inline-block;
+            padding:4px 10px;
+            border-radius:999px;
+            font-size:12px;
+            color:#fff;
+        }
+        .badge-live { background: #10b981; }
+        .badge-free-course { background: #059669; font-weight: 700; }
+        .badge-upcoming { background: #f59e0b; }
+        .badge-category { background: var(--accent); }
+
+        .price-actions {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top: 6px;
+        }
+        .price { font-size:24px; font-weight:800; }
+        .price .now { color:#fff; }
+        .price .free-text {
+            color: #fff;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 20px;
+        }
+        .price .old {
+            text-decoration: line-through; color: rgba(255,255,255,.85); font-weight:600; margin-left:6px; font-size:14px;
+        }
+        .buy-btn, .add-btn {
+            background:#fff;
+            color: {% if course.is_free %}var(--free-accent){% else %}var(--live-accent){% endif %};
+            border:none; border-radius:10px;
+            padding:10px 16px; font-weight:700; cursor:pointer;
+            transition: all 0.3s ease;
+        }
+        .buy-btn:hover, .add-btn:hover { 
+            filter:brightness(.95);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .buy-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .add-btn { background: rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.4); }
+
+        /* Main container */
+        .course-container {
+            max-width: 1200px;
+            margin: 20px auto 40px;
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border:1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(16,24,40,0.05);
+            padding: 16px;
+        }
+        .panel h2 { margin: 0 0 10px; font-size:18px; }
+        .muted { color: var(--ad-muted); }
+
+        /* Sessions Schedule */
+        .sessions-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .session-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        .session-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .session-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            color: var(--text);
+        }
+        .session-subject {
+            color: var(--ad-muted);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .session-datetime {
+            color: {% if course.is_free %}var(--free-accent){% else %}var(--live-accent){% endif %};
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .session-duration {
+            color: var(--ad-muted);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .session-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .status-upcoming { background: #fef3c7; color: #92400e; }
+        .status-live { background: #d1fae5; color: #065f46; }
+        .status-completed { background: #e5e7eb; color: #6b7280; }
+        .status-free { background: #dbeafe; color: #1e40af; }
+
+        /* Back button */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: {% if course.is_free %}var(--free-accent){% else %}var(--live-accent){% endif %};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover {
+            background: {% if course.is_free %}#059669{% else %}#6d28d9{% endif %};
+            transform: translateX(-2px);
+        }
+
+        /* Schedule info */
+        .schedule-info {
+            background: linear-gradient(135deg, {% if course.is_free %}#d1fae5, #a7f3d0{% else %}#f0f9ff, #e0f2fe{% endif %});
+            border: 1px solid {% if course.is_free %}#6ee7b7{% else %}#7dd3fc{% endif %};
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .schedule-info h3 {
+            margin: 0 0 8px 0;
+            color: {% if course.is_free %}var(--free-accent){% else %}var(--live-accent){% endif %};
+        }
+
+        .desc { color:#2b3448; line-height:1.6; }
+
+        .free-course-highlight {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 2px solid var(--free-accent);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            text-align: center;
+        }
+        .free-course-highlight h3 {
+            margin: 0 0 8px 0;
+            color: var(--free-accent);
+            font-size: 20px;
+        }
+        .free-course-highlight p {
+            margin: 0;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        /* Toast styles */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            font-weight: 500;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        .toast.warning {
+            background: #f59e0b;
+        }
+        .toast.fade-out {
+            animation: slideOut 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        @media (max-width: 980px){
+            .course-header .container { flex-direction:column; }
+            .course-header .thumb { width:100%; max-width:none; }
+            .course-container { grid-template-columns: 1fr; }
+            .session-header { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Back button -->
+<a href="javascript:history.back()" class="back-btn">← Back</a>
+
+<!-- Header with course details -->
+<section class="course-header">
+    <div class="container">
+        <div class="thumb">
+            <img src="{% if course.banner_image_desktop %}{{ course.banner_image_desktop.url }}{% else %}{% static 'img/default-live-course.jpg' %}{% endif %}" alt="{{ course.name }}">
+        </div>
+        <div class="details">
+            <h1>{{ course.name }}</h1>
+            <div class="meta">🔴 Live Class · Language: {{ course.language }} · {{ total_sessions }} Session{{ total_sessions|pluralize }} · {{ course.start_date|date:"d M Y" }} - {{ course.end_date|date:"d M Y" }}</div>
+            <div class="badges">
+                {% if course.is_free %}
+                    <span class="badge badge-free-course">✨ 100% FREE</span>
+                {% endif %}
+                {% if course.category %}
+                    <span class="badge badge-category">{{ course.category.name }}</span>
+                {% endif %}
+                {% if next_sessions %}
+                    <span class="badge badge-live">{{ next_sessions|length }} Upcoming Session{{ next_sessions|length|pluralize }}</span>
+                {% else %}
+                    <span class="badge badge-upcoming">No Upcoming Sessions</span>
+                {% endif %}
+                {% if free_sessions %}
+                    <span class="badge status-free">{{ free_sessions }} Free Session{{ free_sessions|pluralize }}</span>
+                {% endif %}
+            </div>
+            <div class="price-actions">
+                <div class="price">
+                    {% if course.is_free %}
+                        <span class="free-text">FREE</span>
+                    {% else %}
+                        <span class="now">₹{{ course.current_price }}</span>
+                        {% if course.original_price != course.current_price %}
+                            <span class="old">₹{{ course.original_price }}</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {% if user.is_authenticated %}
+                    {% if is_purchased %}
+                        <button class="buy-btn" style="background: linear-gradient(135deg, #3b82f6, #2563eb); pointer-events: none;">
+                            <i class="fa fa-check"></i> Already Enrolled
+                        </button>
+                    {% else %}
+                        <button class="buy-btn" id="enrollBtn" onclick="handleEnrollClick(event)">
+                            {% if course.is_free %}
+                                Enroll Free
+                            {% else %}
+                                Enroll Now
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}" class="buy-btn" style="text-decoration: none;">
+                        Login to Enroll
+                    </a>
+                {% endif %}
+                <button class="add-btn" onclick="addToWishlist(event)">
+                    <i class="fa fa-heart"></i> Wishlist
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main content -->
+<section class="course-container">
+    <!-- Left: About & Sessions -->
+    <div class="panel">
+        {% if course.is_free %}
+        <div class="free-course-highlight">
+            <h3>🎉 This is a FREE Course!</h3>
+            <p>No payment required. Enroll now and start learning!</p>
+        </div>
+        {% endif %}
+
+        <div class="schedule-info">
+            <h3>📅 Batch Schedule</h3>
+            <p><strong>Start Date:</strong> {{ course.start_date|date:"l, d M Y" }}</p>
+            <p><strong>End Date:</strong> {{ course.end_date|date:"l, d M Y" }}</p>
+            <p><strong>Language:</strong> {{ course.language }}</p>
+            {% if course.category %}
+                <p><strong>Category:</strong> {{ course.category.name }}</p>
+            {% endif %}
+            {% if course.is_free %}
+                <p><strong>Price:</strong> <span style="color: var(--free-accent); font-weight: 700; font-size: 18px;">FREE</span></p>
+            {% else %}
+                <p><strong>Price:</strong> ₹{{ course.current_price }}{% if course.original_price != course.current_price %} <span style="text-decoration: line-through; color: #999;">₹{{ course.original_price }}</span>{% endif %}</p>
+            {% endif %}
+        </div>
+
+        <h2>About This Live Class</h2>
+        <p class="desc">
+            {% if course.about %}
+                {{ course.about|linebreaks }}
+            {% else %}
+                This comprehensive live class will guide you through interactive learning sessions with our expert educators. Join live sessions, ask questions in real-time, and learn with fellow students.
+            {% endif %}
+        </p>
+
+        <h2 style="margin-top:16px;">Class Sessions</h2>
+        <p class="muted" style="margin-top:0;">
+            {% if next_sessions %}
+                {{ next_sessions|length }} upcoming session{{ next_sessions|length|pluralize }} out of {{ total_sessions }} total
+            {% else %}
+                {{ total_sessions }} total session{{ total_sessions|pluralize }} - no upcoming sessions
+            {% endif %}
+        </p>
+        
+        {% if next_sessions %}
+            <h3>Upcoming Sessions</h3>
+            <div class="sessions-grid">
+                {% for session in next_sessions %}
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <h4>{{ session.class_name }}</h4>
+                                {% if session.subject %}
+                                    <div class="session-subject">Subject: {{ session.subject }}</div>
+                                {% endif %}
+                                <div class="session-datetime">
+                                    {{ session.scheduled_datetime|date:"l, d M Y" }} at {{ session.scheduled_datetime|time:"g:i A" }}
+                                </div>
+                                <div class="session-duration">
+                                    Duration: {{ session.duration_minutes }} minutes · Max: {{ session.max_participants }} participants
+                                </div>
+                            </div>
+                            <div>
+                                {% if session.is_free or course.is_free %}
+                                    <div class="session-status status-free">Free</div>
+                                {% else %}
+                                    <div class="session-status status-upcoming">Premium</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if all_sessions %}
+            <h3 style="margin-top:24px;">All Sessions Schedule</h3>
+            <div class="sessions-grid">
+                {% for session in all_sessions %}
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <h4>{{ session.class_name }}</h4>
+                                {% if session.subject %}
+                                    <div class="session-subject">Subject: {{ session.subject }}</div>
+                                {% endif %}
+                                <div class="session-datetime">
+                                    {{ session.scheduled_datetime|date:"l, d M Y" }} at {{ session.scheduled_datetime|time:"g:i A" }}
+                                </div>
+                                <div class="session-duration">
+                                    {{ session.duration_minutes }} min · Max: {{ session.max_participants }} participants
+                                    {% if session.enable_auto_recording %} · 📹 Recorded{% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                {% if session.is_free or course.is_free %}
+                                    <div class="session-status status-free">Free</div>
+                                {% elif session.scheduled_datetime > now %}
+                                    <div class="session-status status-upcoming">Upcoming</div>
+                                {% else %}
+                                    <div class="session-status status-completed">Completed</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="muted">No sessions scheduled for this course yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Right: Course Details -->
+    <aside class="panel">
+        <h2>Course Information</h2>
+        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <p><strong>📚 Course:</strong> {{ course.name }}</p>
+            <p><strong>🗣️ Language:</strong> {{ course.language }}</p>
+            <p><strong>📅 Duration:</strong> {{ course.start_date|date:"d M" }} - {{ course.end_date|date:"d M Y" }}</p>
+            <p><strong>🎥 Sessions:</strong> {{ total_sessions }} total session{{ total_sessions|pluralize }}</p>
+            {% if course.is_free %}
+                <p><strong>💰 Price:</strong> <span style="color: var(--free-accent); font-weight: 700; font-size: 18px;">FREE</span></p>
+            {% else %}
+                <p><strong>💰 Price:</strong> ₹{{ course.current_price }}{% if course.original_price != course.current_price %} <span style="text-decoration: line-through; color: #999; font-size: 14px;">₹{{ course.original_price }}</span>{% endif %}</p>
+            {% endif %}
+            {% if free_sessions %}
+                <p><strong>🆓 Free Sessions:</strong> {{ free_sessions }} session{{ free_sessions|pluralize }}</p>
+            {% endif %}
+            {% if course.category %}
+                <p><strong>📂 Category:</strong> {{ course.category.name }}</p>
+            {% endif %}
+        </div>
+
+        <h2>What's Included</h2>
+        <ul style="padding-left:18px; line-height:1.6; margin:0;">
+            <li>{{ total_sessions }} live interactive session{{ total_sessions|pluralize }}</li>
+            <li>Real-time doubt clearing & Q&A</li>
+            {% if course.is_free %}
+                <li>100% free access - no payment required</li>
+            {% endif %}
+            {% if free_sessions %}
+                <li>{{ free_sessions }} free preview session{{ free_sessions|pluralize }}</li>
+            {% endif %}
+            <li>Session recordings (where enabled)</li>
+            <li>Study materials and resources</li>
+            <li>Interactive assignments</li>
+            <li>Certificate of completion</li>
+            <li>Access to recorded sessions</li>
+        </ul>
+
+        <h2 style="margin-top:14px;">Live Class Features</h2>
+        <div style="background: linear-gradient(135deg, {% if course.is_free %}#d1fae5, #a7f3d0{% else %}#f0f9ff, #e0f2fe{% endif %}); padding: 12px; border-radius: 8px; font-size: 14px;">
+            <p>✅ <strong>Interactive Learning:</strong> Ask questions in real-time</p>
+            <p>✅ <strong>Expert Instructors:</strong> Learn from industry professionals</p>
+            <p>✅ <strong>Flexible Schedule:</strong> {{ course.start_date|date:"M Y" }} to {{ course.end_date|date:"M Y" }}</p>
+            <p>✅ <strong>Community Learning:</strong> Connect with fellow students</p>
+            <p>✅ <strong>Recorded Sessions:</strong> Review classes anytime (where enabled)</p>
+            {% if course.is_free %}
+                <p>✅ <strong>No Cost:</strong> Completely free - no hidden charges</p>
+            {% endif %}
+        </div>
+    </aside>
+</section>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+// Get CSRF token
+function getCsrf() {
+  const name = 'csrftoken';
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// Handle enroll button click
+function handleEnrollClick(event) {
+  event.preventDefault();
+  initiatePayment('live_class', {{ course.id }}, event);
+}
+
+// Unified payment initiation - CORRECTED
+function initiatePayment(courseType, courseId, event) {
+  const btn = document.getElementById('enrollBtn') || event?.target;
+  const isFree = {% if course.is_free %}true{% else %}false{% endif %};
+  
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (isFree ? 'Enrolling...' : 'Processing...');
+  }
+
+
+
+  // FIRST: Call create-payment-order endpoint
+  fetch(`/payment/create/${courseType}/${courseId}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCsrf(),
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (!data.success) {
+      showToast('Error: ' + (data.error || 'Something went wrong'), 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = isFree ? 'Enroll Free' : 'Enroll Now';
+      }
+      return;
+    }
+
+    // Handle free courses
+    if (data.is_free) {
+      showToast('✓ Free course access granted! Redirecting...', 'success');
+      setTimeout(() => window.location.reload(), 1500);
+      return;
+    }
+
+    // Handle paid courses - open Razorpay
+    const options = {
+      key: data.razorpay_merchant_key,
+      amount: data.amount,
+      currency: data.currency,
+      order_id: data.razorpay_order_id,
+      name: 'Live Class Enrollment',
+      description: data.course_name,
+      prefill: {
+        name: data.user_name || '',
+        email: data.user_email || '',
+        contact: data.user_phone || ''
+      },
+      handler: handlePaymentSuccess,
+      modal: {
+        ondismiss: function() {
+          showToast('Payment cancelled', 'warning');
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Enroll Now';
+          }
+        }
+      },
+      theme: {
+        color: '#667eea'
+      }
+    };
+
+    try {
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error('Razorpay error:', error);
+      showToast('Error opening payment gateway', 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'Enroll Now';
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showToast('Network error - please try again', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = isFree ? 'Enroll Free' : 'Enroll Now';
+    }
+  });
+}
+
+// Handle successful payment - SECOND: Call payment_handler
+function handlePaymentSuccess(response) {
+  fetch("{% url 'payment_handler' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCsrf(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      'razorpay_payment_id': response.razorpay_payment_id,
+      'razorpay_order_id': response.razorpay_order_id,
+      'razorpay_signature': response.razorpay_signature
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('✓ Payment successful! Access granted!', 'success');
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      showToast('Payment verification failed: ' + (data.error || 'Unknown error'), 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showToast('Error processing payment', 'error');
+  });
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Add to wishlist (placeholder)
+function addToWishlist(event) {
+  event.preventDefault();
+  showToast('Added to wishlist!', 'success');
+}
+</script>
+
+</body>
+</html>

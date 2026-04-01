@@ -1,0 +1,364 @@
+{% load static %}
+
+<!-- Test Series Section - Only show if there are active test series -->
+{% if test_series %}
+<div class="course-section">
+  <div class="section-header">
+    <h2 class="main-heading">Explore Our Test Series</h2>
+    <p style="align-items: center;" class="">Evaluate your preparation and boost confidence with comprehensive mock tests designed by experts</p>
+  </div>
+  
+  <div class="scroll-row-outer">
+    <button class="slide-arrow2 left" onclick="smoothScroll('testseries-carousel', 'left')" aria-label="Previous">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+    <button class="slide-arrow2 right" onclick="smoothScroll('testseries-carousel', 'right')" aria-label="Next">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+    
+    <div class="scroll-row" id="testseries-carousel">
+      {% for series in test_series %}
+        <a href="{% url 'front_exam_series_detail' pk=series.pk %}" 
+           class="course-card {% if series.is_purchased %}ts-purchased-card{% endif %}" 
+           style="text-decoration: none; color: inherit;">
+          
+          <!-- Purchase Badge -->
+          {% if series.is_purchased %}
+            <div class="ts-enrolled-badge">
+              <i class="fa fa-check-circle"></i> Enrolled
+            </div>
+          {% endif %}
+          
+          <div class="course-img"
+               style="background-image:url('{% if series.thumbnail %}{{ series.thumbnail.url }}{% else %}https://images.pexels.com/photos/4145197/pexels-photo-4145197.jpeg?auto=compress&w=400&h=150&fit=crop{% endif %}');">
+            <!-- Free/Paid Badge -->
+            {% if series.is_free %}
+              <div class="ts-price-label ts-free-label">FREE</div>
+            {% else %}
+              <div class="ts-price-label ts-paid-label">{{ series.price_display }}</div>
+            {% endif %}
+          </div>
+          
+          <div class="course-body">
+            <div class="course-title">{{ series.title }}</div>
+            
+            <div class="course-instructor">
+              {{ series.total_tests }} Total Test{{ series.total_tests|pluralize }} | 
+              <span style="color:#21b56c; font-weight: 600;">{{ series.free_tests }} Free</span>
+            </div>
+
+            <div class="course-rating">
+              <i class="fa fa-tag"></i> {{ series.category.name }}
+            </div>
+            
+            <div class="test-series-info">
+              <div class="info-item">
+                <i class="fa fa-question-circle"></i> {{ series.total_questions }} Question{{ series.total_questions|pluralize }}
+              </div>
+              <div class="info-item">
+                <i class="fa fa-star"></i> {{ series.total_marks }} Mark{{ series.total_marks|pluralize }}
+              </div>
+              <div class="info-item">
+                <i class="fa fa-signal"></i> {{ series.get_difficulty_display }} Level
+              </div>
+              {% if series.estimated_duration %}
+                <div class="info-item">
+                  <i class="fa fa-clock-o"></i> {{ series.estimated_duration }}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="course-labels">
+              {% if series.is_purchased %}
+                <button class="view-test-btn ts-purchased-btn">
+                  <i class="fa fa-play-circle"></i> Continue Tests
+                </button>
+              {% else %}
+                <button class="view-test-btn">
+                  {% if series.is_free %}
+                    <i class="fa fa-gift"></i> Start Free
+                  {% else %}
+                    <i class="fa fa-eye"></i> View Test Series
+                  {% endif %}
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Smooth scrolling functionality (same as video courses)
+function smoothScroll(carouselId, direction) {
+  const carousel = document.getElementById(carouselId);
+  if (!carousel) return;
+  
+  const cardWidth = carousel.querySelector('.course-card')?.offsetWidth;
+  if (!cardWidth) return;
+  
+  const gap = 18;
+  const scrollAmount = (cardWidth + gap) * 2;
+  const scrollLeft = direction === 'left' ? -scrollAmount : scrollAmount;
+  
+  carousel.scrollBy({
+    left: scrollLeft,
+    behavior: 'smooth'
+  });
+}
+
+// Auto-hide arrows based on scroll position
+document.addEventListener('DOMContentLoaded', function() {
+  const carousel = document.getElementById('testseries-carousel');
+  if (!carousel) return;
+  
+  const leftArrow = carousel.parentElement.querySelector('.slide-arrow2.left');
+  const rightArrow = carousel.parentElement.querySelector('.slide-arrow2.right');
+  
+  function updateArrows() {
+    if (!leftArrow || !rightArrow) return;
+    
+    const isAtStart = carousel.scrollLeft <= 10;
+    const isAtEnd = carousel.scrollLeft >= carousel.scrollWidth - carousel.clientWidth - 10;
+    
+    leftArrow.style.opacity = isAtStart ? '0.3' : '0.87';
+    leftArrow.style.cursor = isAtStart ? 'default' : 'pointer';
+    
+    rightArrow.style.opacity = isAtEnd ? '0.3' : '0.87';
+    rightArrow.style.cursor = isAtEnd ? 'default' : 'pointer';
+  }
+  
+  carousel.addEventListener('scroll', updateArrows);
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
+});
+</script>
+
+<style>
+/* Section Header Styles */
+.section-header {
+  text-align: center;
+  margin-bottom: 35px;
+  padding: 0 20px;
+}
+
+.main-heading {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.section-description {
+  font-size: 16px;
+  color: #666;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Test Series Purchase Badge (Enrolled) - Renamed to avoid conflicts */
+.ts-enrolled-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.ts-purchased-card {
+  border: 2px solid #10b981 !important;
+}
+
+.ts-purchased-card .course-img::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(16, 185, 129, 0.1);
+  pointer-events: none;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Test Series Price Label on Image - Renamed to avoid conflicts */
+.ts-price-label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.ts-free-label {
+  background: rgba(16, 185, 129, 0.95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ts-paid-label {
+  background: rgba(220, 38, 38, 0.95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Test Series Specific Styles */
+.test-series-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  z-index: 2;
+}
+
+.course-header-logo {
+  margin-bottom: 10px;
+}
+
+.course-header-logo img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.test-series-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.test-series-info .info-item {
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.test-series-info .info-item i {
+  color: #999;
+  font-size: 12px;
+}
+
+.view-test-btn {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.view-test-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.view-test-btn.ts-purchased-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.view-test-btn.ts-purchased-btn:hover {
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Course Card Styles (shared) */
+.course-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.course-img {
+  transition: transform 0.3s ease;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+}
+
+.course-card:hover .course-img {
+  transform: scale(1.05);
+}
+
+.slide-arrow2 {
+  transition: all 0.3s ease;
+}
+
+.slide-arrow2:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.slide-arrow2:hover {
+  opacity: 1 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-heading {
+    font-size: 26px;
+  }
+  
+  .section-description {
+    font-size: 14px;
+  }
+  
+  .test-series-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .ts-enrolled-badge {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+  
+  .ts-price-label {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+}
+</style>
+{% endif %}

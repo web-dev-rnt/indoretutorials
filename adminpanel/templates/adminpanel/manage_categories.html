@@ -1,0 +1,268 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}Manage Categories{% endblock %}
+
+{% block content %}
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-category-list { display: none; }
+
+    .mobile-category-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .mcat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+
+    .mcat-id {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .mcat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .mcat-row:last-child { border-bottom: none; }
+
+    .mcat-label {
+        color: #6b7280;
+        font-weight: 500;
+        white-space: nowrap;
+        min-width: 90px;
+    }
+
+    .mcat-value {
+        color: #1f2937;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .mcat-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .mcat-actions .btn { flex: 1; text-align: center; font-size: 13px; }
+
+    @media (max-width: 768px) {
+        .desktop-category-table { display: none; }
+        .mobile-category-list   { display: block; }
+    }
+</style>
+
+<div class="wrapper">
+    <div class="nav-buttons">
+        <a href="{% url 'admindashboard' %}" class="btn">
+            <span>←</span> Back to Dashboard
+        </a>
+        <a href="{% url 'create_category' %}" class="btn btn-primary">
+            <span>+</span> Add New Category
+        </a>
+    </div>
+
+    <h1 class="h1">Manage Categories</h1>
+    <p class="small">Organize and control your course categories</p>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Analytics Cards -->
+    <div class="analytics-grid">
+        <div class="analytics-card">
+            <div class="analytics-icon icon-total">📂</div>
+            <div class="analytics-value">{{ total_categories }}</div>
+            <div class="analytics-label">Total Categories</div>
+        </div>
+        <div class="analytics-card">
+            <div class="analytics-icon icon-active">✅</div>
+            <div class="analytics-value">{{ total_categories }}</div>
+            <div class="analytics-label">Active Categories</div>
+        </div>
+        <div class="analytics-card">
+            <div class="analytics-icon icon-usage">🎓</div>
+            <div class="analytics-value">0</div>
+            <div class="analytics-label">Courses</div>
+        </div>
+        <div class="analytics-card">
+            <div class="analytics-icon icon-discount">📈</div>
+            <div class="analytics-value">{{ categories.paginator.num_pages|default:1 }}</div>
+            <div class="analytics-label">Pages</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="admin-card-hd">
+            <h3 class="panel-title">Category Management</h3>
+            <div class="admin-filters">
+                <input type="text" class="admin-filter-input" placeholder="Search categories..." id="categorySearch">
+                <button class="admin-filter-btn" onclick="searchCategories()">Search</button>
+            </div>
+        </div>
+
+        {% if categories %}
+
+            <!-- Desktop table -->
+            <div class="admin-card-bd desktop-category-table">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Category Name</th>
+                            <th>Slug</th>
+                            <th>Description</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td><strong>{{ category.id }}</strong></td>
+                            <td><div class="coupon-code">{{ category.name }}</div></td>
+                            <td>
+                                <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-size:12px;">
+                                    {{ category.slug }}
+                                </code>
+                            </td>
+                            <td>
+                                {% if category.description %}
+                                    {{ category.description|truncatewords:8 }}
+                                {% else %}
+                                    <span style="color:var(--admin-muted);font-style:italic;">No description</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="font-size:13px;">{{ category.created_at|date:"M d, Y" }}</div>
+                                <div style="font-size:11px;color:var(--admin-muted);">{{ category.created_at|date:"g:i A" }}</div>
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    <a href="{% url 'edit_category' category.id %}" class="btn btn-primary">Edit</a>
+                                    <a href="{% url 'delete_category' category.id %}" class="btn btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile cards -->
+            <div class="mobile-category-list">
+                {% for category in categories %}
+                <div class="mobile-category-card">
+                    <div class="mcat-header">
+                        <span class="coupon-code">{{ category.name }}</span>
+                        <span class="mcat-id">#{{ category.id }}</span>
+                    </div>
+                    <div class="mcat-row">
+                        <span class="mcat-label">Slug</span>
+                        <span class="mcat-value">
+                            <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">
+                                {{ category.slug }}
+                            </code>
+                        </span>
+                    </div>
+                    <div class="mcat-row">
+                        <span class="mcat-label">Description</span>
+                        <span class="mcat-value">
+                            {% if category.description %}
+                                {{ category.description|truncatewords:8 }}
+                            {% else %}
+                                <span style="color:#9ca3af;font-style:italic;">No description</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="mcat-row">
+                        <span class="mcat-label">Created</span>
+                        <span class="mcat-value">{{ category.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="mcat-actions">
+                        <a href="{% url 'edit_category' category.id %}" class="btn btn-primary">Edit</a>
+                        <a href="{% url 'delete_category' category.id %}" class="btn btn-danger">Delete</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if categories.has_other_pages %}
+                <div style="display:flex;justify-content:center;margin-top:20px;gap:8px;flex-wrap:wrap;">
+                    {% if categories.has_previous %}
+                        <a href="?page=1" class="btn">First</a>
+                        <a href="?page={{ categories.previous_page_number }}" class="btn">Previous</a>
+                    {% endif %}
+                    {% for num in categories.paginator.page_range %}
+                        {% if categories.number == num %}
+                            <span class="btn btn-primary">{{ num }}</span>
+                        {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+                            <a href="?page={{ num }}" class="btn">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if categories.has_next %}
+                        <a href="?page={{ categories.next_page_number }}" class="btn">Next</a>
+                        <a href="?page={{ categories.paginator.num_pages }}" class="btn">Last</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <h3>No Categories Found</h3>
+                <p>Start by creating your first category to organize your courses.</p>
+                <div style="margin-top:20px;">
+                    <a href="{% url 'create_category' %}" class="btn btn-primary">Create Your First Category</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function searchCategories() {
+    const term = document.getElementById('categorySearch').value.toLowerCase();
+
+    // Desktop rows
+    document.querySelectorAll('.admin-table tbody tr').forEach(row => {
+        const name = row.cells[1].textContent.toLowerCase();
+        const desc = row.cells[3].textContent.toLowerCase();
+        row.style.display = (name.includes(term) || desc.includes(term)) ? '' : 'none';
+    });
+
+    // Mobile cards
+    document.querySelectorAll('.mobile-category-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(term) ? '' : 'none';
+    });
+}
+
+document.getElementById('categorySearch').addEventListener('keyup', searchCategories);
+</script>
+{% endblock %}

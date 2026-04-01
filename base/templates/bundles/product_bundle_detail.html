@@ -1,0 +1,1320 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ bundle.title }} - Product Bundle</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1a1a2e;
+            line-height: 1.5;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* Simple Back Button */
+        .back-button {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            background: #ffffff;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .back-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .back-button i {
+            font-size: 16px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            padding: 70px 20px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-left h1 {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .category-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .hero-description {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .stat-item i {
+            font-size: 18px;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .stat-item strong {
+            display: block;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .stat-item span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Glass Card Pricing */
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.3);
+        }
+
+        .discount-badge {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .free-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .price-container {
+            margin: 12px 0;
+        }
+
+        .old-price {
+            text-decoration: line-through;
+            color: #9ca3af;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+
+        .new-price {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .free-price {
+            font-size: 32px;
+            font-weight: 800;
+            color: #10b981;
+        }
+
+        .savings-text {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .cta-button {
+            width: 100%;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+        }
+
+        .cta-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .cta-button.purchased {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .cta-button.free {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .cta-button i {
+            font-size: 16px;
+        }
+
+        /* Access Expiry Alert */
+        .access-expiry-alert {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .access-expiry-alert i {
+            color: #ff6b6b;
+            font-size: 18px;
+        }
+
+        .hero-image {
+            position: relative;
+        }
+
+        .hero-image img {
+            width: 100%;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            transition: transform 0.4s ease;
+        }
+
+        .hero-image:hover img {
+            transform: scale(1.03) rotate(1deg);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #fff;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            z-index: 3000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .toast.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .toast.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Main Content Section */
+        .main-content {
+            background: #f8fafc;
+            padding: 50px 20px;
+            min-height: 100vh;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .description-text {
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(3px);
+        }
+
+        .feature-item i {
+            color: #10b981;
+            font-size: 16px;
+            margin-top: 2px;
+        }
+
+        .feature-item span {
+            color: #374151;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Product Cards */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 3px 16px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            height: 140px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+        }
+
+        .product-body {
+            padding: 16px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-description {
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .product-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .product-link {
+            padding: 8px 16px;
+            background: #f3f4f6;
+            color: #1a1a2e;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .product-link:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            margin-bottom: 18px;
+        }
+
+        .info-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 18px;
+        }
+
+        .info-list {
+            list-style: none;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            align-items: flex-start;
+        }
+
+        .info-item i {
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 2px;
+        }
+
+        .info-content strong {
+            display: block;
+            color: #1a1a2e;
+            font-weight: 600;
+            margin-bottom: 3px;
+            font-size: 13px;
+        }
+
+        .info-content p {
+            color: #6b7280;
+            font-size: 12px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+            margin: 18px 0;
+        }
+
+        .includes-list {
+            list-style: none;
+        }
+
+        .includes-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: #374151;
+            font-size: 13px;
+        }
+
+        .includes-item i {
+            color: #10b981;
+            font-size: 14px;
+        }
+
+        .sidebar-pricing {
+            text-align: center;
+            margin: 18px 0;
+        }
+
+        .sidebar-label {
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-price {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-price.free {
+            color: #10b981;
+            background: none;
+            -webkit-text-fill-color: #10b981;
+        }
+
+        .sidebar-old-price {
+            text-decoration: line-through;
+            color: #9ca3af;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        /* Color Variants */
+        .badge-video { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .badge-live { background: linear-gradient(135deg, #10b981, #059669); }
+        .badge-test { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .badge-library { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-left h1 {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .back-button {
+                padding: 8px 16px;
+                top: 12px;
+                left: 12px;
+                font-size: 13px;
+            }
+
+            .back-button i {
+                font-size: 14px;
+            }
+
+            .hero-section {
+                padding: 60px 15px 30px;
+            }
+
+            .hero-left h1 {
+                font-size: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .glass-card, .info-card {
+                padding: 20px;
+            }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            .new-price, .free-price {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Simple Back Button -->
+    <button onclick="history.back()" class="back-button" title="Go Back">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back</span>
+    </button>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-left">
+                    {% if bundle.category %}
+                    <span class="category-badge">{{ bundle.category.name }}</span>
+                    {% endif %}
+                    
+                    <h1>{{ bundle.title }}</h1>
+                    
+                    <p class="hero-description">{{ bundle.short_description }}</p>
+                    
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <i class="fas fa-box-open"></i>
+                            <strong>{{ bundle.total_products }}</strong>
+                            <span>Products</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-users"></i>
+                            <strong>{{ bundle.total_purchases }}</strong>
+                            <span>Enrolled</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="far fa-clock"></i>
+                            <strong>{{ bundle.validity_days }}</strong>
+                            <span>Days Access</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-eye"></i>
+                            <strong>{{ bundle.total_views }}</strong>
+                            <span>Views</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Pricing Card -->
+                    <div class="pricing-card">
+                        {% if bundle.is_free %}
+                            <span class="free-badge"><i class="fas fa-gift"></i> 100% FREE</span>
+                        {% else %}
+                            <span class="discount-badge">{{ discount_percent|floatformat:0 }}% OFF</span>
+                        {% endif %}
+                        
+                        <div class="price-container">
+                            {% if not bundle.is_free %}
+                                <span class="old-price">{{ original_price_display }}</span>
+                            {% endif %}
+                            {% if bundle.is_free %}
+                                <span class="free-price">FREE</span>
+                            {% else %}
+                                <span class="new-price">{{ price_display }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if not bundle.is_free %}
+                        <p class="savings-text">
+                            <i class="fas fa-tag"></i> You save ₹{{ savings|floatformat:2 }}!
+                        </p>
+                        {% endif %}
+                        
+                        {% if user.is_authenticated %}
+                            {% if user_has_bundle %}
+                                <button class="cta-button purchased" disabled>
+                                    <i class="fas fa-check-circle"></i> Already Purchased
+                                </button>
+                            {% elif is_available %}
+                                {% if bundle.is_free %}
+                                    <button class="cta-button free" id="enrollBtn" onclick="enrollFreeBundle()">
+                                        <i class="fas fa-gift"></i> Enroll Free
+                                    </button>
+                                {% else %}
+                                    <button class="cta-button" id="buyNowBtn" onclick="initiatePayment()">
+                                        <i class="fas fa-shopping-cart"></i> Buy This Bundle Now
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <button class="cta-button" disabled>
+                                    <i class="fas fa-lock"></i> Not Available
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="cta-button" style="text-decoration: none; color: white;">
+                                <i class="fas fa-lock"></i> Login to {% if bundle.is_free %}Enroll{% else %}Buy{% endif %}
+                            </a>
+                        {% endif %}
+
+                        <!-- Access Expiry Alert -->
+                        {% if user_has_bundle and access_expires_at %}
+                            <div class="access-expiry-alert">
+                                <i class="fa fa-clock"></i>
+                                <div>
+                                    <strong>Access Expires:</strong> {{ access_expires_at|date:"d M Y H:i" }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="hero-image">
+                    {% if bundle.banner_image %}
+                    <img src="{{ bundle.banner_image.url }}" alt="{{ bundle.title }}">
+                    {% elif bundle.thumbnail %}
+                    <img src="{{ bundle.thumbnail.url }}" alt="{{ bundle.title }}">
+                    {% else %}
+                    <img src="{% static 'img/default-bundle.jpg' %}" alt="{{ bundle.title }}">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="main-content">
+        <div class="container">
+            <div class="content-grid">
+                <!-- Left Column -->
+                <div class="left-column">
+                    <!-- Description -->
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            About This Bundle
+                        </h3>
+                        <p class="description-text">{{ bundle.description }}</p>
+                    </div>
+                    
+                    <!-- Features -->
+                    {% if features_list %}
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fas fa-star"></i>
+                            What You'll Get
+                        </h3>
+                        <div class="features-grid">
+                            {% for feature in features_list %}
+                            <div class="feature-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{{ feature }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Video Courses -->
+                    {% if video_courses %}
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fas fa-video"></i>
+                            Video Courses ({{ video_courses.count }})
+                        </h3>
+                        <div class="products-grid">
+                            {% for course in video_courses %}
+                            <div class="product-card">
+                                {% if course.thumbnail %}
+                                <div class="product-image" style="background-image: url('{{ course.thumbnail.url }}');"></div>
+                                {% else %}
+                                <div class="product-image" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                                {% endif %}
+                                <div class="product-body">
+                                    <h4 class="product-title">{{ course.name }}</h4>
+                                    <p class="product-description">{{ course.description|truncatewords:15 }}</p>
+                                    <div class="product-footer">
+                                        <span class="product-badge badge-video">Video Course</span>
+                                        <a href="{% url 'video_course_detail' course.id %}" class="product-link">View Course →</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Live Classes -->
+                    {% if live_classes %}
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            Live Classes ({{ live_classes.count }})
+                        </h3>
+                        <div class="products-grid">
+                            {% for live_class in live_classes %}
+                            <div class="product-card">
+                                {% if live_class.thumbnail %}
+                                <div class="product-image" style="background-image: url('{{ live_class.thumbnail.url }}');"></div>
+                                {% else %}
+                                <div class="product-image" style="background: linear-gradient(135deg, #10b981, #059669);"></div>
+                                {% endif %}
+                                <div class="product-body">
+                                    <h4 class="product-title">{{ live_class.name }}</h4>
+                                    <p class="product-description">{{ live_class.about|truncatewords:15 }}</p>
+                                    <div class="product-footer">
+                                        <span class="product-badge badge-live">Live Class</span>
+                                        <a href="{% url 'live_class_detail' live_class.id %}" class="product-link">View Class →</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Test Series -->
+                    {% if test_series_list %}
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fas fa-tasks"></i>
+                            Test Series ({{ test_series_list.count }})
+                        </h3>
+                        <div class="products-grid">
+                            {% for series in test_series_list %}
+                            <div class="product-card">
+                                <div class="product-image" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+                                <div class="product-body">
+                                    <h4 class="product-title">{{ series.title }}</h4>
+                                    <p class="product-description">{{ series.description|truncatewords:15 }}</p>
+                                    <div class="product-footer">
+                                        <span class="product-badge badge-test">{{ series.total_tests }} Tests</span>
+                                        <a href="{% url 'front_exam_series_detail' series.id %}" class="product-link">View Tests →</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- E-Library Courses -->
+                    {% if elibrary_courses %}
+                    <div class="glass-card">
+                        <h3 class="section-title">
+                            <i class="fas fa-book"></i>
+                            E-Library Resources ({{ elibrary_courses.count }})
+                        </h3>
+                        <div class="products-grid">
+                            {% for elibrary in elibrary_courses %}
+                            <div class="product-card">
+                                {% if elibrary.cover_image %}
+                                <div class="product-image" style="background-image: url('{{ elibrary.cover_image.url }}');"></div>
+                                {% else %}
+                                <div class="product-image" style="background: linear-gradient(135deg, #3b82f6, #2563eb);"></div>
+                                {% endif %}
+                                <div class="product-body">
+                                    <h4 class="product-title">{{ elibrary.title }}</h4>
+                                    <p class="product-description">{{ elibrary.description|truncatewords:15 }}</p>
+                                    <div class="product-footer">
+                                        <span class="product-badge badge-library">{{ elibrary.total_pdfs }} PDFs</span>
+                                        <a href="{% url 'course_detail' elibrary.id %}" class="product-link">View Library →</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Right Sidebar -->
+                <div class="sidebar">
+                    <!-- Bundle Info -->
+                    <div class="info-card">
+                        <h5 class="info-title">Bundle Information</h5>
+                        
+                        <ul class="info-list">
+                            <li class="info-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div class="info-content">
+                                    <strong>Validity</strong>
+                                    <p>{{ bundle.validity_days }} days from purchase</p>
+                                </div>
+                            </li>
+                            <li class="info-item">
+                                <i class="fas fa-box"></i>
+                                <div class="info-content">
+                                    <strong>Total Products</strong>
+                                    <p>{{ bundle.total_products }} learning resources</p>
+                                </div>
+                            </li>
+                            <li class="info-item">
+                                <i class="fas fa-users"></i>
+                                <div class="info-content">
+                                    <strong>Students Enrolled</strong>
+                                    <p>{{ bundle.total_purchases }} learners</p>
+                                </div>
+                            </li>
+                            {% if bundle.rating > 0 %}
+                            <li class="info-item">
+                                <i class="fas fa-star"></i>
+                                <div class="info-content">
+                                    <strong>Rating</strong>
+                                    <p>{{ bundle.rating }} ({{ bundle.rating_count }} reviews)</p>
+                                </div>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        
+                        <div class="divider"></div>
+                        
+                        <h6 class="info-title">What's Included</h6>
+                        <ul class="includes-list">
+                            {% if video_courses %}
+                            <li class="includes-item">
+                                <i class="fas fa-check"></i>
+                                {{ video_courses.count }} Video Course{{ video_courses.count|pluralize }}
+                            </li>
+                            {% endif %}
+                            {% if live_classes %}
+                            <li class="includes-item">
+                                <i class="fas fa-check"></i>
+                                {{ live_classes.count }} Live Class{{ live_classes.count|pluralize:"es" }}
+                            </li>
+                            {% endif %}
+                            {% if test_series_list %}
+                            <li class="includes-item">
+                                <i class="fas fa-check"></i>
+                                {{ test_series_list.count }} Test Series
+                            </li>
+                            {% endif %}
+                            {% if elibrary_courses %}
+                            <li class="includes-item">
+                                <i class="fas fa-check"></i>
+                                {{ elibrary_courses.count }} E-Library Course{{ elibrary_courses.count|pluralize }}
+                            </li>
+                            {% endif %}
+                        </ul>
+                        
+                        <div class="divider"></div>
+                        
+                        <div class="sidebar-pricing">
+                            <p class="sidebar-label">Bundle Price</p>
+                            {% if bundle.is_free %}
+                                <h3 class="sidebar-price free">FREE</h3>
+                            {% else %}
+                                <h3 class="sidebar-price">{{ price_display }}</h3>
+                                <p class="sidebar-old-price">{{ original_price_display }}</p>
+                            {% endif %}
+                            
+                            {% if user.is_authenticated %}
+                                {% if user_has_bundle %}
+                                    <button class="cta-button purchased" disabled>
+                                        <i class="fas fa-check-circle"></i> Already Purchased
+                                    </button>
+                                {% elif is_available %}
+                                    {% if bundle.is_free %}
+                                        <button class="cta-button free" id="sidebarEnrollBtn" onclick="enrollFreeBundle()">
+                                            <i class="fas fa-gift"></i> Enroll Free
+                                        </button>
+                                    {% else %}
+                                        <button class="cta-button" id="sidebarBuyBtn" onclick="initiatePayment()">
+                                            <i class="fas fa-shopping-cart"></i> Buy This Bundle
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <button class="cta-button" disabled>
+                                        <i class="fas fa-lock"></i> Currently Unavailable
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <a href="{% url 'login' %}?next={{ request.path }}" class="cta-button" style="text-decoration: none; color: white;">
+                                    <i class="fas fa-lock"></i> Login to {% if bundle.is_free %}Enroll{% else %}Buy{% endif %}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // ===== FREE BUNDLE ENROLLMENT =====
+        function enrollFreeBundle() {
+            const enrollBtn = document.getElementById('enrollBtn');
+            const sidebarEnrollBtn = document.getElementById('sidebarEnrollBtn');
+            
+            if (enrollBtn) {
+                enrollBtn.disabled = true;
+                enrollBtn.innerHTML = '<span class="spinner"></span> Enrolling...';
+            }
+            if (sidebarEnrollBtn) {
+                sidebarEnrollBtn.disabled = true;
+                sidebarEnrollBtn.innerHTML = '<span class="spinner"></span> Enrolling...';
+            }
+            
+            fetch("{% url 'create_payment_order' course_type='bundle' course_id=bundle.id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.is_free) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+                    resetEnrollButtons();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Something went wrong. Please try again.', 'error');
+                resetEnrollButtons();
+            });
+        }
+
+        // ===== RAZORPAY PAYMENT FUNCTIONS =====
+        function initiatePayment() {
+            const buyBtn = document.getElementById('buyNowBtn');
+            const sidebarBuyBtn = document.getElementById('sidebarBuyBtn');
+            
+            if (buyBtn) {
+                buyBtn.disabled = true;
+                buyBtn.innerHTML = '<span class="spinner"></span> Processing...';
+            }
+            if (sidebarBuyBtn) {
+                sidebarBuyBtn.disabled = true;
+                sidebarBuyBtn.innerHTML = '<span class="spinner"></span> Processing...';
+            }
+            
+            fetch("{% url 'create_payment_order' course_type='bundle' course_id=bundle.id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    openRazorpayCheckout(data);
+                } else {
+                    showToast('Error creating payment order: ' + data.error, 'error');
+                    resetBuyButtons();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Something went wrong. Please try again.', 'error');
+                resetBuyButtons();
+            });
+        }
+
+        function openRazorpayCheckout(data) {
+            const options = {
+                key: data.razorpay_merchant_key,
+                amount: data.amount,
+                currency: data.currency,
+                name: "Edtech Platform",
+                description: data.course_name,
+                order_id: data.razorpay_order_id,
+                prefill: {
+                    name: data.user_name,
+                    email: data.user_email,
+                    contact: data.user_phone || ''
+                },
+                theme: {
+                    color: "#667eea"
+                },
+                handler: function(response) {
+                    handlePaymentSuccess(response);
+                },
+                modal: {
+                    ondismiss: function() {
+                        resetBuyButtons();
+                        showToast('Payment cancelled by user.', 'info');
+                    },
+                    escape: false
+                },
+                readonly: {
+                    contact: false,
+                    email: false
+                }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+
+        function handlePaymentSuccess(response) {
+            fetch("{% url 'payment_handler' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'razorpay_payment_id': response.razorpay_payment_id,
+                    'razorpay_order_id': response.razorpay_order_id,
+                    'razorpay_signature': response.razorpay_signature
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast('Payment verification failed: ' + data.error, 'error');
+                    resetBuyButtons();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error processing payment response.', 'error');
+                resetBuyButtons();
+            });
+        }
+
+        function resetBuyButtons() {
+            const buyBtn = document.getElementById('buyNowBtn');
+            const sidebarBuyBtn = document.getElementById('sidebarBuyBtn');
+            
+            if (buyBtn) {
+                buyBtn.disabled = false;
+                buyBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Buy This Bundle Now';
+            }
+            if (sidebarBuyBtn) {
+                sidebarBuyBtn.disabled = false;
+                sidebarBuyBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Buy This Bundle';
+            }
+        }
+
+        function resetEnrollButtons() {
+            const enrollBtn = document.getElementById('enrollBtn');
+            const sidebarEnrollBtn = document.getElementById('sidebarEnrollBtn');
+            
+            if (enrollBtn) {
+                enrollBtn.disabled = false;
+                enrollBtn.innerHTML = '<i class="fas fa-gift"></i> Enroll Free';
+            }
+            if (sidebarEnrollBtn) {
+                sidebarEnrollBtn.disabled = false;
+                sidebarEnrollBtn.innerHTML = '<i class="fas fa-gift"></i> Enroll Free';
+            }
+        }
+
+        // ===== TOAST NOTIFICATION =====
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

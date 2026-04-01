@@ -1,0 +1,361 @@
+{% load static %}
+<!-- Live Classes Section -->
+{% if live_classes %}
+<div class="course-section">
+  <div class="section-header">
+    <h2 class="main-heading">Join Live Interactive Classes</h2>
+    <p>Learn in real-time with expert educators and get your questions answered instantly</p>
+  </div>
+
+  <div class="scroll-row-outer">
+    <button class="slide-arrow2 left" onclick="smoothScroll('live-carousel', 'left')" aria-label="Previous">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+    <button class="slide-arrow2 right" onclick="smoothScroll('live-carousel', 'right')" aria-label="Next">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+
+    <div class="scroll-row" id="live-carousel">
+      {% for course in live_classes %}
+        <div class="course-card">
+
+          <!-- IMAGE BLOCK -->
+          <div class="lc-thumb"
+               style="background-image:url('{% if course.banner_image_desktop %}{{ course.banner_image_desktop.url }}{% else %}{% static 'img/default-live-course.jpg' %}{% endif %}');">
+            <div class="lc-live-badge"><span class="lc-dot"></span> LIVE</div>
+            {% if course.is_free %}<div class="lc-free-badge">FREE</div>{% endif %}
+            <div class="lc-thumb-overlay"></div>
+          </div>
+
+          <!-- BODY BLOCK -->
+          <div class="lc-body">
+            <a href="{% url 'live_class_detail' pk=course.pk %}" class="lc-link-wrap">
+
+              <!-- Title — always 2 lines reserved -->
+              <div class="lc-title">{{ course.name }}</div>
+
+              <!-- Language tag + date in one row -->
+              <div class="lc-meta-row">
+                <span class="lc-lang-pill"><i class="fa fa-language"></i> {{ course.language_display }}</span>
+                <span class="lc-date-pill"><i class="fa fa-calendar-o"></i> {{ course.start_date|date:"d M" }} – {{ course.end_date|date:"d M Y" }}</span>
+              </div>
+
+              <!-- Price -->
+              <div class="lc-pricing">
+                {% if course.is_free %}
+                  <span class="lc-price-free">FREE</span>
+                {% else %}
+                  <span class="lc-price-now">₹{{ course.current_price_display }}</span>
+                  {% if course.show_price_strike %}
+                    <span class="lc-price-old">₹{{ course.original_price_display }}</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+
+              <!-- Upcoming Session label -->
+              <div class="lc-session-label">
+                <i class="fa fa-circle lc-label-dot"></i> Upcoming Session
+              </div>
+
+              <!-- Session pill — fixed height block -->
+              <div class="lc-session-block">
+                {% if course.next_sessions %}
+                  {% with course.next_sessions.0 as s %}
+                  <div class="lc-session-pill">
+                    <i class="fa fa-clock-o"></i>
+                    <span class="lc-sdate">{{ s.scheduled_datetime|date:"D, d M" }}</span>
+                    <span class="lc-sdivider">·</span>
+                    <span class="lc-stime">{{ s.scheduled_datetime|time:"g:i a" }}</span>
+                  </div>
+                  {% endwith %}
+                {% else %}
+                  <div class="lc-session-pill lc-session-none">
+                    <i class="fa fa-calendar-times-o"></i> No upcoming sessions
+                  </div>
+                {% endif %}
+              </div>
+
+            </a>
+
+            <!-- CTA Button — always at bottom -->
+            <div class="lc-cta">
+              {% if course.is_purchased %}
+                <a href="{% url 'live_class_detail' pk=course.pk %}" class="lc-btn lc-btn-enrolled">
+                  <i class="fa fa-play-circle"></i> Access Course
+                </a>
+              {% elif user.is_authenticated %}
+                <a href="{% url 'live_class_detail' pk=course.pk %}" class="lc-btn {% if course.is_free %}lc-btn-free{% else %}lc-btn-enroll{% endif %}">
+                  {% if course.is_free %}
+                    <i class="fa fa-check-circle"></i> Enroll Free
+                  {% else %}
+                    <i class="fa fa-shopping-cart"></i> Enroll Now
+                  {% endif %}
+                </a>
+              {% elif user.is_authenticated %}
+                <a href="{% url 'login' %}" class="lc-btn lc-btn-enroll">
+                  <i class="fa fa-sign-in-alt"></i> Login to Enroll
+                </a>
+              {% endif %}
+            </div>
+
+          </div><!-- /lc-body -->
+        </div><!-- /course-card -->
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+function smoothScroll(carouselId, direction) {
+  const carousel = document.getElementById(carouselId);
+  if (!carousel) return;
+  const cardWidth = carousel.querySelector('.course-card')?.offsetWidth;
+  if (!cardWidth) return;
+  const scrollAmount = (cardWidth + 18) * 2;
+  carousel.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const carousel = document.getElementById('live-carousel');
+  if (!carousel) return;
+  const leftArrow = carousel.parentElement.querySelector('.slide-arrow2.left');
+  const rightArrow = carousel.parentElement.querySelector('.slide-arrow2.right');
+  function updateArrows() {
+    if (!leftArrow || !rightArrow) return;
+    const isAtStart = carousel.scrollLeft <= 10;
+    const isAtEnd = carousel.scrollLeft >= carousel.scrollWidth - carousel.clientWidth - 10;
+    leftArrow.style.opacity = isAtStart ? '0.3' : '0.87';
+    leftArrow.style.cursor = isAtStart ? 'default' : 'pointer';
+    rightArrow.style.opacity = isAtEnd ? '0.3' : '0.87';
+    rightArrow.style.cursor = isAtEnd ? 'default' : 'pointer';
+  }
+  carousel.addEventListener('scroll', updateArrows);
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
+});
+</script>
+
+
+<style>
+/* ─── Toast ─────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  padding: 16px 20px; background: #10b981; color: white;
+  border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  z-index: 9999; animation: slideIn .3s ease; font-weight: 500;
+}
+.toast.error   { background: #ef4444; }
+.toast.warning { background: #f59e0b; }
+.toast.fade-out{ animation: slideOut .3s ease; }
+@keyframes slideIn { from{transform:translateX(400px);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes slideOut{ from{transform:translateX(0);opacity:1} to{transform:translateX(400px);opacity:0} }
+
+/* ─── Section Header ────────────────────────────────── */
+.section-header { text-align: center; margin-bottom: 35px; padding: 0 20px; }
+.main-heading   { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; line-height: 1.3; }
+.section-description { font-size: 16px; color: #666; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+
+/* ─── Card Shell ────────────────────────────────────── */
+.course-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  border: 1px solid #efefef;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 28px rgba(0,0,0,.13);
+}
+
+/* ─── Thumbnail ─────────────────────────────────────── */
+.lc-thumb {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  background-color: #e5e7eb;
+  flex-shrink: 0;
+}
+.lc-thumb-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,.45) 100%);
+}
+.lc-live-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: #ff0844;
+  color: #fff;
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: .6px;
+  display: flex; align-items: center; gap: 5px;
+  box-shadow: 0 2px 8px rgba(255,8,68,.4);
+  z-index: 2;
+}
+.lc-dot {
+  width: 7px; height: 7px;
+  background: #fff; border-radius: 50%;
+  animation: blink 1.2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.lc-free-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: #10b981; color: #fff;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: .6px;
+  box-shadow: 0 2px 8px rgba(16,185,129,.4);
+  z-index: 2;
+}
+
+/* ─── Card Body ─────────────────────────────────────── */
+.lc-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 14px 16px 14px;
+}
+.lc-link-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Title — always 2 lines */
+.lc-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.35em;
+  height: 2.7em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 10px;
+}
+
+/* Meta row */
+.lc-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.lc-lang-pill,
+.lc-date-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.lc-lang-pill { background: #ede9fe; color: #6d28d9; }
+.lc-date-pill { background: #f0fdf4; color: #15803d; }
+
+/* Pricing */
+.lc-pricing {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.lc-price-now  { font-size: 20px; font-weight: 800; color: #7c3aed; }
+.lc-price-old  { font-size: 13px; color: #aaa; text-decoration: line-through; }
+.lc-price-free { font-size: 20px; font-weight: 800; color: #10b981; }
+
+/* ─── Upcoming Session Label ────────────────────────── */
+.lc-session-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: #e11d48;
+  margin-bottom: 6px;
+}
+.lc-label-dot {
+  font-size: 7px;
+  color: #e11d48;
+  animation: blink 1.2s infinite;
+}
+
+/* ─── Session Pill ──────────────────────────────────── */
+.lc-session-block {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.lc-session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.lc-session-none {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  font-weight: 400;
+  font-style: italic;
+}
+.lc-sdate   { color: #be123c; font-weight: 700; }
+.lc-sdivider{ color: #fca5a5; }
+.lc-stime   { color: #555; }
+
+/* ─── CTA Button ────────────────────────────────────── */
+.lc-cta { margin-top: auto; }
+.lc-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .2s ease, transform .2s ease;
+  letter-spacing: .3px;
+}
+.lc-btn:hover { opacity: .88; transform: translateY(-1px); }
+.lc-btn-enroll   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+.lc-btn-free     { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; }
+.lc-btn-enrolled { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; }
+
+/* ─── Arrows ────────────────────────────────────────── */
+.slide-arrow2 { transition: all .3s ease; }
+.slide-arrow2:active { transform: translateY(-50%) scale(.95); }
+.slide-arrow2:hover  { opacity: 1 !important; }
+
+/* ─── Responsive ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main-heading { font-size: 26px; }
+  .lc-thumb     { height: 140px; }
+  .lc-title     { font-size: 14px; }
+}
+</style>
+{% endif %}

@@ -1,0 +1,421 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+{% include 'message.html' %}
+<style>
+/* Info Alert Box */
+.info-alert {
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.info-alert-header {
+    color: #0369a1;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.info-alert-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #0369a1;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Form Layout */
+.upload-form-layout {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.upload-main-column {
+    flex: 2;
+    min-width: 0;
+}
+
+.upload-sidebar-column {
+    flex: 1;
+    min-width: 280px;
+}
+
+/* File Preview */
+.file-preview-container {
+    margin-top: 16px;
+    display: none;
+}
+
+.file-preview-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.file-preview-header {
+    color: var(--ad-text);
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.clear-files-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
+}
+
+.clear-files-btn:hover {
+    background: #b91c1c;
+}
+
+.file-list-box {
+    background: var(--ad-panel-2);
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid var(--ad-border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.file-item:last-child {
+    margin-bottom: 0;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.file-icon {
+    width: 32px;
+    height: 32px;
+    background: #fee2e2;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc2626;
+    font-weight: bold;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.file-status {
+    font-size: 12px;
+    flex-shrink: 0;
+    font-weight: 500;
+}
+
+/* Summary Box */
+.summary-box {
+    background: var(--ad-panel-2);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.summary-title {
+    margin: 0 0 12px 0;
+    color: #374151;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.summary-content {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.summary-item {
+    margin-bottom: 8px;
+}
+
+.summary-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .upload-form-layout {
+        flex-direction: column;
+    }
+    
+    .upload-sidebar-column {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="wrapper">
+    <h1 class="h1">Upload Multiple PDFs</h1>
+    <p class="small">Add multiple PDF files to "{{ course.title }}"</p>
+
+    <div class="nav-buttons">
+        <a href="{% url 'elibrary_course_detail' course.pk %}" class="btn">← Back to Course</a>
+    </div>
+
+    <div class="panel">
+        <!-- Info Alert -->
+        <div class="info-alert">
+            <h4 class="info-alert-header">
+                💡 Upload Guidelines
+            </h4>
+            <ul class="info-alert-list">
+                <li>Select up to 10 PDF files at once (maximum 50MB each)</li>
+                <li>Files will be automatically named based on filename (unless you uncheck auto-title)</li>
+                <li>All files will be assigned to the same chapter number</li>
+                <li>You can edit individual PDF details later from the course detail page</li>
+                <li>Supported format: PDF only</li>
+            </ul>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="pdfUploadForm">
+            {% csrf_token %}
+            
+            <div class="upload-form-layout">
+                <!-- Main Column -->
+                <div class="upload-main-column">
+                    <div class="form-group">
+                        <label for="{{ form.pdfs.id_for_label }}">Select PDF Files*</label>
+                        {{ form.pdfs }}
+                        <div class="help-text">Hold Ctrl/Cmd to select multiple files</div>
+                        {% if form.pdfs.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.pdfs.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- File Preview Area -->
+                    <div id="filePreview" class="file-preview-container">
+                        <div class="file-preview-header-row">
+                            <h4 class="file-preview-header">Selected Files:</h4>
+                            <button type="button" class="clear-files-btn" id="clearFilesBtn">
+                                <span>✕</span>
+                                <span>Clear All</span>
+                            </button>
+                        </div>
+                        <div id="fileList" class="file-list-box">
+                            <!-- Files will be listed here via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Column -->
+                <div class="upload-sidebar-column">
+                    <div class="form-group">
+                        <label for="{{ form.chapter_number.id_for_label }}">Chapter Number*</label>
+                        {{ form.chapter_number }}
+                        <div class="help-text">All PDFs will be assigned to this chapter</div>
+                        {% if form.chapter_number.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.chapter_number.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            {{ form.auto_title }}
+                            <span>Use filename as title</span>
+                        </label>
+                        <div class="help-text">Automatically generate titles from filenames</div>
+                        {% if form.auto_title.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.auto_title.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-box">
+                        <h4 class="summary-title">Upload Summary</h4>
+                        <div class="summary-content">
+                            <div class="summary-item">Course: <strong>{{ course.title }}</strong></div>
+                            <div class="summary-item">Current PDFs: <strong>{{ course.total_pdfs }}</strong></div>
+                            <div class="summary-item" id="newFilesCount">New files: <strong>0</strong></div>
+                            <div class="summary-item" id="totalFilesAfter">Total after upload: <strong>{{ course.total_pdfs }}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary" id="uploadButton">
+                    📤 Upload PDFs
+                </button>
+                <a href="{% url 'elibrary_course_detail' course.pk %}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('id_pdfs');
+    const filePreview = document.getElementById('filePreview');
+    const fileList = document.getElementById('fileList');
+    const uploadButton = document.getElementById('uploadButton');
+    const clearFilesBtn = document.getElementById('clearFilesBtn');
+    const newFilesCount = document.getElementById('newFilesCount');
+    const totalFilesAfter = document.getElementById('totalFilesAfter');
+    const currentPDFs = {{ course.total_pdfs }};
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function updateFileList() {
+        const files = fileInput.files;
+        fileList.innerHTML = '';
+
+        if (files.length === 0) {
+            filePreview.style.display = 'none';
+            newFilesCount.innerHTML = 'New files: <strong>0</strong>';
+            totalFilesAfter.innerHTML = `Total after upload: <strong>${currentPDFs}</strong>`;
+            return;
+        }
+
+        filePreview.style.display = 'block';
+
+        // Update counts
+        newFilesCount.innerHTML = `New files: <strong>${files.length}</strong>`;
+        totalFilesAfter.innerHTML = `Total after upload: <strong>${currentPDFs + files.length}</strong>`;
+
+        // Show file list
+        Array.from(files).forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            const isPDF = file.type === 'application/pdf';
+            const isTooBig = file.size > 50 * 1024 * 1024;
+            const sizeClass = isTooBig ? 'color: #dc2626;' : 'color: #6b7280;';
+            
+            fileItem.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">PDF</div>
+                    <div class="file-details">
+                        <div class="file-name" title="${file.name}">${file.name}</div>
+                        <div class="file-size" style="${sizeClass}">${formatFileSize(file.size)}${isTooBig ? ' (Too large!)' : ''}</div>
+                    </div>
+                </div>
+                <div class="file-status" style="color: ${isPDF && !isTooBig ? '#16a34a' : '#dc2626'};">
+                    ${isPDF && !isTooBig ? '✅ Valid' : '❌ Invalid'}
+                </div>
+            `;
+            
+            fileList.appendChild(fileItem);
+        });
+    }
+
+    // Clear all selected files
+    clearFilesBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        updateFileList();
+    });
+
+    fileInput.addEventListener('change', updateFileList);
+
+    // Form submission handling
+    document.getElementById('pdfUploadForm').addEventListener('submit', function(e) {
+        const files = fileInput.files;
+        
+        // Check if no files selected
+        if (files.length === 0) {
+            e.preventDefault();
+            alert('⚠️ No files selected!\n\nPlease select at least one PDF file to upload.');
+            return false;
+        }
+
+        // Check if any files are invalid
+        const hasInvalidFiles = Array.from(files).some(file => 
+            file.type !== 'application/pdf' || file.size > 50 * 1024 * 1024
+        );
+        
+        if (hasInvalidFiles) {
+            e.preventDefault();
+            alert('❌ Invalid files detected!\n\nPlease ensure all files are:\n- PDF format only\n- Less than 50MB each');
+            return false;
+        }
+
+        // Show loading state
+        uploadButton.innerHTML = '<div class="spinner"></div> Uploading...';
+        uploadButton.disabled = true;
+    });
+});
+</script>
+{% endblock %}
+    

@@ -1,0 +1,670 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}SMTP Configuration{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    <div class="nav-buttons">
+        <a href="{% url 'admindashboard' %}" class="btn">
+            <span>←</span> Back to Dashboard
+        </a>
+        <a href="{% url 'smtp_create' %}" class="btn btn-primary">
+            <span>+</span> Add SMTP Config
+        </a>
+    </div>
+
+    <h1 class="h1">SMTP Configuration</h1>
+    <p class="small">Manage email server settings for OTP and notifications</p>
+
+    {% include "message.html" %}
+
+    <div class="panel">
+        <div class="admin-card-hd">
+            <h3 class="panel-title">SMTP Configurations</h3>
+        </div>
+
+        {% if configurations %}
+            <!-- Desktop Table View -->
+            <div class="admin-card-bd desktop-view">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email Host</th>
+                            <th>Port</th>
+                            <th>User</th>
+                            <th>Status</th>
+                            <th>Last Tested</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for config in configurations %}
+                            <tr id="smtp-row-{{ config.id }}" {% if config.is_active %}style="background: #f0fdf4;"{% endif %}>
+                                <td>
+                                    <div class="coupon-code">
+                                        {{ config.name }}
+                                        {% if config.is_active %}
+                                            <span class="status-badge status-active">Active</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <code>{{ config.email_host }}{% if config.email_use_tls %}:TLS{% endif %}{% if config.email_use_ssl %}:SSL{% endif %}</code>
+                                </td>
+                                <td><strong>{{ config.email_port }}</strong></td>
+                                <td>{{ config.email_host_user }}</td>
+                                <td>
+                                    {% if config.test_status == 'success' %}
+                                        <span class="status-badge status-active">✅ Success</span>
+                                    {% elif config.test_status == 'failed' %}
+                                        <span class="status-badge status-expired">❌ Failed</span>
+                                    {% else %}
+                                        <span class="status-badge status-inactive">⏳ Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if config.last_tested %}
+                                        <div style="font-size: 13px;">{{ config.last_tested|date:"M d, Y" }}</div>
+                                        <div style="font-size: 11px; color: var(--admin-muted);">{{ config.last_tested|date:"g:i A" }}</div>
+                                    {% else %}
+                                        <span style="color: var(--admin-muted); font-style: italic;">Never tested</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="row-actions">
+                                        <button onclick="testSMTP({{ config.id }})" class="btn btn-primary" id="test-btn-{{ config.id }}">Test</button>
+                                        <a href="{% url 'smtp_edit' config.id %}" class="btn">Edit</a>
+                                        <button onclick="confirmDelete({{ config.id }}, '{{ config.name|escapejs }}')" class="btn btn-danger">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="admin-card-bd mobile-view">
+                {% for config in configurations %}
+                    <div class="smtp-card {% if config.is_active %}active-config{% endif %}" id="smtp-card-{{ config.id }}">
+                        <div class="smtp-card-header">
+                            <div class="smtp-name">
+                                <strong>{{ config.name }}</strong>
+                                {% if config.is_active %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% endif %}
+                            </div>
+                            <div class="smtp-status">
+                                {% if config.test_status == 'success' %}
+                                    <span class="status-badge status-active">✅ Success</span>
+                                {% elif config.test_status == 'failed' %}
+                                    <span class="status-badge status-expired">❌ Failed</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">⏳ Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="smtp-card-body">
+                            <div class="smtp-info-row">
+                                <span class="label">Host:</span>
+                                <code class="value">{{ config.email_host }}</code>
+                            </div>
+                            <div class="smtp-info-row">
+                                <span class="label">Port:</span>
+                                <span class="value"><strong>{{ config.email_port }}</strong></span>
+                            </div>
+                            <div class="smtp-info-row">
+                                <span class="label">User:</span>
+                                <span class="value">{{ config.email_host_user }}</span>
+                            </div>
+                            <div class="smtp-info-row">
+                                <span class="label">Security:</span>
+                                <span class="value">
+                                    {% if config.email_use_tls %}TLS{% endif %}
+                                    {% if config.email_use_ssl %}SSL{% endif %}
+                                    {% if not config.email_use_tls and not config.email_use_ssl %}None{% endif %}
+                                </span>
+                            </div>
+                            <div class="smtp-info-row">
+                                <span class="label">Last Tested:</span>
+                                <span class="value">
+                                    {% if config.last_tested %}
+                                        {{ config.last_tested|date:"M d, Y g:i A" }}
+                                    {% else %}
+                                        <span style="color: var(--admin-muted); font-style: italic;">Never tested</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="smtp-card-actions">
+                            <button onclick="testSMTP({{ config.id }})" class="btn btn-primary btn-block" id="mobile-test-btn-{{ config.id }}">
+                                <span class="btn-text">Test Connection</span>
+                            </button>
+                            <div class="action-buttons">
+                                <a href="{% url 'smtp_edit' config.id %}" class="btn">Edit</a>
+                                <button onclick="confirmDelete({{ config.id }}, '{{ config.name|escapejs }}')" class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>No SMTP Configurations Found</h3>
+                <p>Set up your first SMTP configuration to start sending emails.</p>
+                <div style="margin-top: 20px;">
+                    <a href="{% url 'smtp_create' %}" class="btn btn-primary">Create SMTP Configuration</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⚠️ Confirm Delete</h3>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete the SMTP configuration:</p>
+            <p><strong id="delete-config-name"></strong></p>
+            <p class="warning-text">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDeleteModal()" class="btn">Cancel</button>
+            <button onclick="executeDelete()" class="btn btn-danger" id="confirm-delete-btn">
+                <span class="btn-text">Delete</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token for AJAX -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<style>
+/* Desktop/Mobile View Toggle */
+.desktop-view {
+    display: block;
+}
+
+.mobile-view {
+    display: none;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #111827;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-body p {
+    margin: 0 0 12px;
+    color: #374151;
+}
+
+.modal-body .warning-text {
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 16px;
+    padding: 10px;
+    background: #fef2f2;
+    border-radius: 6px;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Mobile View Styles */
+@media screen and (max-width: 768px) {
+    .desktop-view {
+        display: none;
+    }
+
+    .mobile-view {
+        display: block;
+    }
+
+    .smtp-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .smtp-card.active-config {
+        background: #f0fdf4;
+        border-color: #86efac;
+    }
+
+    .smtp-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .smtp-name {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .smtp-name strong {
+        font-size: 16px;
+        color: #111827;
+    }
+
+    .smtp-status {
+        margin-left: 10px;
+    }
+
+    .smtp-card-body {
+        margin-bottom: 16px;
+    }
+
+    .smtp-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 10px 0;
+        border-bottom: 1px solid #f3f4f6;
+        gap: 10px;
+    }
+
+    .smtp-info-row:last-child {
+        border-bottom: none;
+    }
+
+    .smtp-info-row .label {
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 13px;
+        min-width: 90px;
+        flex-shrink: 0;
+    }
+
+    .smtp-info-row .value {
+        color: #111827;
+        font-size: 13px;
+        text-align: right;
+        word-break: break-word;
+        flex: 1;
+    }
+
+    .smtp-info-row code {
+        background: #f3f4f6;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        display: inline-block;
+    }
+
+    .smtp-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-block {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        display: flex;
+        align-items: center;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .status-badge {
+        font-size: 11px;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+
+    .modal-content {
+        margin: 20px;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Button Loader */
+.btn-loader {
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn .btn-text {
+    display: inline;
+}
+
+/* Row fade out animation */
+.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+}
+</style>
+
+<script>
+let deleteConfigId = null;
+
+// Delete Modal Functions
+function confirmDelete(configId, configName) {
+    deleteConfigId = configId;
+    document.getElementById('delete-config-name').textContent = `"${configName}"`;
+    document.getElementById('delete-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    deleteConfigId = null;
+}
+
+async function executeDelete() {
+    if (!deleteConfigId) return;
+    
+    const btn = document.getElementById('confirm-delete-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="btn-loader"></span> Deleting...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(`/smtp/delete/${deleteConfigId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeDeleteModal();
+            
+            // Animate row/card removal
+            const row = document.getElementById(`smtp-row-${deleteConfigId}`);
+            const card = document.getElementById(`smtp-card-${deleteConfigId}`);
+            
+            if (row) {
+                row.classList.add('fade-out');
+                setTimeout(() => row.remove(), 300);
+            }
+            if (card) {
+                card.classList.add('fade-out');
+                setTimeout(() => card.remove(), 300);
+            }
+            
+            // Show success notification
+            showNotification('success', data.message);
+            
+            // Reload after animation to update any counters
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification('error', 'Failed to delete configuration');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    } catch (error) {
+        showNotification('error', 'An error occurred while deleting');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Close modal on overlay click
+document.getElementById('delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+
+// Test SMTP Function
+async function testSMTP(configId) {
+    const desktopBtn = document.getElementById(`test-btn-${configId}`);
+    const mobileBtn = document.getElementById(`mobile-test-btn-${configId}`);
+    
+    const desktopOriginal = desktopBtn ? desktopBtn.innerHTML : '';
+    const mobileOriginal = mobileBtn ? mobileBtn.innerHTML : '';
+    
+    if (desktopBtn) {
+        desktopBtn.innerHTML = '<span class="btn-loader"></span> Testing...';
+        desktopBtn.disabled = true;
+        desktopBtn.classList.add('loading');
+    }
+    
+    if (mobileBtn) {
+        mobileBtn.innerHTML = '<span class="btn-loader"></span> Testing...';
+        mobileBtn.disabled = true;
+        mobileBtn.classList.add('loading');
+    }
+    
+    try {
+        const response = await fetch(`/smtp/test/${configId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (desktopBtn) {
+                desktopBtn.innerHTML = '✅ Success';
+                desktopBtn.className = 'btn btn-success';
+            }
+            if (mobileBtn) {
+                mobileBtn.innerHTML = '✅ Success';
+                mobileBtn.className = 'btn btn-success btn-block';
+            }
+            showNotification('success', 'SMTP test successful!');
+        } else {
+            if (desktopBtn) {
+                desktopBtn.innerHTML = '❌ Failed';
+                desktopBtn.className = 'btn btn-danger';
+            }
+            if (mobileBtn) {
+                mobileBtn.innerHTML = '❌ Failed';
+                mobileBtn.className = 'btn btn-danger btn-block';
+            }
+            showNotification('error', data.message || 'SMTP test failed');
+        }
+        
+        setTimeout(() => location.reload(), 2000);
+        
+    } catch (error) {
+        if (desktopBtn) {
+            desktopBtn.innerHTML = '❌ Error';
+            desktopBtn.className = 'btn btn-danger';
+        }
+        if (mobileBtn) {
+            mobileBtn.innerHTML = '❌ Error';
+            mobileBtn.className = 'btn btn-danger btn-block';
+        }
+        showNotification('error', 'Network error occurred');
+        setTimeout(() => location.reload(), 2000);
+    }
+}
+
+// Notification Function
+function showNotification(type, message) {
+    // Remove existing notifications
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${type === 'success' ? '✅' : '❌'}</span>
+        <span class="toast-message">${message}</span>
+    `;
+    
+    // Add styles if not exists
+    if (!document.getElementById('toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            .toast-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 14px 20px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: toastSlideIn 0.3s ease-out;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            .toast-success {
+                background: #10b981;
+                color: white;
+            }
+            .toast-error {
+                background: #ef4444;
+                color: white;
+            }
+            @keyframes toastSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @media (max-width: 768px) {
+                .toast-notification {
+                    left: 20px;
+                    right: 20px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
+
+{% endblock %}

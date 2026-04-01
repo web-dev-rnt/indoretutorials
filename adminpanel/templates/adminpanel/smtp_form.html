@@ -1,0 +1,443 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    <div class="nav-buttons">
+        <a href="{% url 'smtp_configuration' %}" class="btn">
+            <span>←</span> Back to SMTP Configurations
+        </a>
+    </div>
+
+    <h1 class="h1">{{ page_title }}</h1>
+    <p class="small">
+        {% if is_edit %}
+            Modify the email server settings for OTPs and notifications
+        {% else %}
+            Set up a new email server configuration for sending OTPs and notifications
+        {% endif %}
+    </p>
+
+    {% include "message.html" %}
+
+    <form method="post" onsubmit="return handleSubmit(this)" id="smtp-form">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="panel">
+            <h3 class="panel-title">Basic Information</h3>
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="name">Configuration Name *</label>
+                        <input type="text" id="name" name="name" required 
+                               placeholder="e.g., Gmail SMTP, Office 365" 
+                               value="{{ config.name|default:'' }}">
+                        <div class="help-text">Friendly name to identify this configuration</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="email_backend">Email Backend *</label>
+                        <select id="email_backend" name="email_backend" required>
+                            <option value="django.core.mail.backends.smtp.EmailBackend"
+                                {% if config.email_backend == 'django.core.mail.backends.smtp.EmailBackend' %}selected{% endif %}>
+                                SMTP Backend (Production)
+                            </option>
+                            <option value="django.core.mail.backends.console.EmailBackend"
+                                {% if config.email_backend == 'django.core.mail.backends.console.EmailBackend' %}selected{% endif %}>
+                                Console Backend (Development)
+                            </option>
+                        </select>
+                        <div class="help-text">Choose SMTP for production, Console for testing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Settings -->
+        <div class="panel">
+            <h3 class="panel-title">Server Settings</h3>
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="email_host">SMTP Host *</label>
+                        <input type="text" id="email_host" name="email_host" required 
+                               placeholder="smtp.gmail.com" 
+                               value="{{ config.email_host|default:'smtp.gmail.com' }}">
+                        <div class="help-text">Common hosts: smtp.gmail.com, smtp.outlook.com, smtp.yahoo.com</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="email_port">Port *</label>
+                        <input type="number" id="email_port" name="email_port" required 
+                               min="1" max="65535" 
+                               value="{{ config.email_port|default:'587' }}">
+                        <div class="help-text">TLS: 587, SSL: 465, Non-encrypted: 25</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                            <input type="checkbox" name="email_use_tls" id="email_use_tls"
+                                   {% if config.email_use_tls or not is_edit %}checked{% endif %}>
+                            Use TLS (Recommended)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                            <input type="checkbox" name="email_use_ssl" id="email_use_ssl"
+                                   {% if config.email_use_ssl %}checked{% endif %}>
+                            Use SSL
+                        </label>
+                    </div>
+                    <div class="help-text">Enable TLS for port 587 or SSL for port 465</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication -->
+        <div class="panel">
+            <h3 class="panel-title">Authentication</h3>
+            <div class="grid">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="email_host_user">Email Address *</label>
+                        <input type="email" id="email_host_user" name="email_host_user" required 
+                               placeholder="your.email@gmail.com"
+                               value="{{ config.email_host_user|default:'' }}">
+                        <div class="help-text">Email address used for authentication</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="email_host_password">
+                            Password/App Password {% if not is_edit %}*{% endif %}
+                            {% if is_edit and has_saved_password %}
+                                <span style="font-size: 11px; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: normal;">🔒 Saved</span>
+                            {% endif %}
+                        </label>
+                        <div style="position: relative;">
+                            <input type="password" 
+                                   id="email_host_password" 
+                                   name="email_host_password" 
+                                   {% if not is_edit %}required{% endif %}
+                                   placeholder="{% if is_edit and has_saved_password %}Password saved • Click 👁️ to view{% else %}Enter password or app password{% endif %}"
+                                   value="{% if is_edit and has_saved_password %}{{ actual_password }}{% endif %}"
+                                   data-original="{{ actual_password|default:'' }}"
+                                   data-has-saved="{{ has_saved_password|yesno:'true,false' }}"
+                                   style="padding-right: {% if is_edit and has_saved_password %}120px{% else %}80px{% endif %};"
+                                   autocomplete="new-password">
+                            
+                            <div style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); display: flex; gap: 4px;">
+                                <button type="button" onclick="togglePassword()" 
+                                        style="padding: 5px 10px; cursor: pointer; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;"
+                                        id="toggle-pwd-btn" title="Show/Hide Password">
+                                    👁️
+                                </button>
+                                {% if is_edit and has_saved_password %}
+                                <button type="button" onclick="copyPassword()" 
+                                        style="padding: 5px 10px; cursor: pointer; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;"
+                                        id="copy-pwd-btn" title="Copy Password">
+                                    📋
+                                </button>
+                                <button type="button" onclick="clearPassword()" 
+                                        style="padding: 5px 10px; cursor: pointer; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; color: #dc2626; font-weight: bold;"
+                                        id="clear-pwd-btn" title="Clear Password">
+                                    ✕
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if is_edit and has_saved_password %}
+                        <div id="password-status" style="margin-top: 8px;">
+                            <span id="status-saved" style="font-size: 12px; background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 4px; display: inline-block;">
+                                ✓ Using saved password ({{ password_length }} chars)
+                            </span>
+                            <span id="status-new" style="font-size: 12px; background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; display: none;">
+                                ✎ New password entered
+                            </span>
+                            <span id="status-cleared" style="font-size: 12px; background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; display: none;">
+                                ⚠ Cleared - enter new password
+                                <button type="button" onclick="restorePassword()" style="background: #fff; border: 1px solid #fca5a5; border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer; color: #991b1b; margin-left: 8px;">Restore</button>
+                            </span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="help-text">
+                            {% if is_edit %}
+                                {% if has_saved_password %}
+                                    Click 👁️ to view, 📋 to copy, or ✕ to clear and enter new password.
+                                {% else %}
+                                    No password saved. Enter a new password.
+                                {% endif %}
+                            {% else %}
+                                For Gmail: Use App Password if 2FA is enabled
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-group">
+                        <label for="default_from_email">Default From Email *</label>
+                        <input type="email" id="default_from_email" name="default_from_email" required 
+                               placeholder="noreply@yourdomain.com"
+                               value="{{ config.default_from_email|default:'' }}">
+                        <div class="help-text">Default sender address for outgoing emails</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="panel">
+            <h3 class="panel-title">Configuration Status</h3>
+            <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="is_active" 
+                       {% if config.is_active or not is_edit %}checked{% endif %}>
+                <strong>Set as Active Configuration</strong>
+            </label>
+            <div class="help-text" style="margin-top: 8px;">
+                Only one SMTP configuration can be active at a time. This will deactivate other configurations.
+            </div>
+        </div>
+
+        <!-- Quick Setup Templates (Only for Create) -->
+        {% if not is_edit %}
+        <div class="panel">
+            <h3 class="panel-title">Quick Setup Templates</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" onclick="loadTemplate('gmail')" class="btn">📧 Gmail</button>
+                <button type="button" onclick="loadTemplate('outlook')" class="btn">📧 Outlook</button>
+                <button type="button" onclick="loadTemplate('yahoo')" class="btn">📧 Yahoo</button>
+                <button type="button" onclick="loadTemplate('sendgrid')" class="btn">📧 SendGrid</button>
+            </div>
+            <div class="help-text" style="margin-top: 8px;">
+                Click to auto-fill common email provider settings
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="actions">
+            <button type="submit" class="btn btn-success">
+                <span class="spinner" style="display: none;"></span>
+                <span class="btn-text">{{ submit_text }}</span>
+            </button>
+            <a href="{% url 'smtp_configuration' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Configuration
+const isEditMode = {{ is_edit|yesno:"true,false" }};
+const hasSavedPassword = {{ has_saved_password|yesno:"true,false" }};
+
+// Password handling
+let originalPassword = '';
+let isPasswordModified = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('email_host_password');
+    if (passwordField) {
+        originalPassword = passwordField.dataset.original || '';
+    }
+});
+
+// Toggle password visibility
+function togglePassword() {
+    const passwordField = document.getElementById('email_host_password');
+    const button = document.getElementById('toggle-pwd-btn');
+
+    if (passwordField.type === "password") {
+        passwordField.type = "text";
+        button.textContent = "🙈";
+        button.title = "Hide Password";
+    } else {
+        passwordField.type = "password";
+        button.textContent = "👁️";
+        button.title = "Show Password";
+    }
+}
+
+// Copy password to clipboard
+function copyPassword() {
+    const passwordField = document.getElementById('email_host_password');
+    const password = passwordField.value;
+    const copyBtn = document.getElementById('copy-pwd-btn');
+    
+    if (!password) {
+        alert('No password to copy');
+        return;
+    }
+    
+    navigator.clipboard.writeText(password).then(() => {
+        // Visual feedback
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = '✓';
+        copyBtn.style.background = '#d1fae5';
+        copyBtn.style.borderColor = '#10b981';
+        
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = '#f3f4f6';
+            copyBtn.style.borderColor = '#d1d5db';
+        }, 2000);
+    }).catch(() => {
+        // Fallback
+        passwordField.type = 'text';
+        passwordField.select();
+        document.execCommand('copy');
+        passwordField.type = 'password';
+        alert('Password copied!');
+    });
+}
+
+// Clear password
+function clearPassword() {
+    const passwordField = document.getElementById('email_host_password');
+    passwordField.value = '';
+    passwordField.type = 'text';
+    passwordField.placeholder = 'Enter new password';
+    passwordField.focus();
+    
+    updatePasswordStatus('cleared');
+    isPasswordModified = true;
+    
+    document.getElementById('toggle-pwd-btn').textContent = "👁️";
+}
+
+// Restore original password
+function restorePassword() {
+    const passwordField = document.getElementById('email_host_password');
+    passwordField.value = originalPassword;
+    passwordField.type = 'password';
+    passwordField.placeholder = 'Password saved • Click 👁️ to view';
+    
+    updatePasswordStatus('saved');
+    isPasswordModified = false;
+    
+    document.getElementById('toggle-pwd-btn').textContent = "👁️";
+}
+
+// Update password status display
+function updatePasswordStatus(status) {
+    const statusSaved = document.getElementById('status-saved');
+    const statusNew = document.getElementById('status-new');
+    const statusCleared = document.getElementById('status-cleared');
+    
+    if (!statusSaved || !statusNew || !statusCleared) return;
+    
+    // Hide all
+    statusSaved.style.display = 'none';
+    statusNew.style.display = 'none';
+    statusCleared.style.display = 'none';
+    
+    // Show appropriate
+    if (status === 'saved') {
+        statusSaved.style.display = 'inline-block';
+    } else if (status === 'new') {
+        statusNew.style.display = 'inline-block';
+    } else if (status === 'cleared') {
+        statusCleared.style.display = 'inline-block';
+    }
+}
+
+// Monitor password field changes
+document.getElementById('email_host_password')?.addEventListener('input', function() {
+    // Remove spaces
+    this.value = this.value.replace(/\s/g, '');
+    
+    if (isEditMode && hasSavedPassword) {
+        if (this.value === originalPassword) {
+            updatePasswordStatus('saved');
+            isPasswordModified = false;
+        } else if (this.value === '') {
+            updatePasswordStatus('cleared');
+            isPasswordModified = true;
+        } else {
+            updatePasswordStatus('new');
+            isPasswordModified = true;
+        }
+    }
+});
+
+// Form submit handler
+function handleSubmit(form) {
+    const passwordField = document.getElementById('email_host_password');
+    
+    // Validate password for create mode
+    if (!isEditMode && !passwordField.value.trim()) {
+        alert('Password is required');
+        passwordField.focus();
+        return false;
+    }
+    
+    // For edit mode with cleared password
+    if (isEditMode && hasSavedPassword && passwordField.value === '' && isPasswordModified) {
+        if (!confirm('Password field is empty. Keep the existing password?')) {
+            passwordField.focus();
+            return false;
+        }
+        // Restore original password
+        passwordField.value = originalPassword;
+    }
+    
+    // Show loading
+    showLoading(form);
+    return true;
+}
+
+function showLoading(form) {
+    const btn = form.querySelector('button[type="submit"]');
+    const spinner = btn.querySelector('.spinner');
+    const text = btn.querySelector('.btn-text');
+    
+    spinner.style.display = 'inline-block';
+    text.textContent = isEditMode ? 'Updating...' : 'Creating...';
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+}
+
+// Template configurations
+const templates = {
+    gmail: { host: 'smtp.gmail.com', port: '587', tls: true, ssl: false },
+    outlook: { host: 'smtp-mail.outlook.com', port: '587', tls: true, ssl: false },
+    yahoo: { host: 'smtp.mail.yahoo.com', port: '587', tls: true, ssl: false },
+    sendgrid: { host: 'smtp.sendgrid.net', port: '587', tls: true, ssl: false }
+};
+
+function loadTemplate(provider) {
+    const config = templates[provider];
+    if (config) {
+        document.getElementById('email_host').value = config.host;
+        document.getElementById('email_port').value = config.port;
+        document.getElementById('email_use_tls').checked = config.tls;
+        document.getElementById('email_use_ssl').checked = config.ssl;
+    }
+}
+
+// Auto-fill default_from_email when email_host_user changes
+document.getElementById('email_host_user')?.addEventListener('input', function() {
+    const fromEmail = document.getElementById('default_from_email');
+    if (!fromEmail.value) {
+        fromEmail.value = this.value;
+    }
+});
+
+// TLS/SSL mutual exclusivity
+document.getElementById('email_use_tls')?.addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('email_use_ssl').checked = false;
+    }
+});
+
+document.getElementById('email_use_ssl')?.addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('email_use_tls').checked = false;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<main>
+{% include "message.html" %}
+
+<style>
+/* Reusing panel input styles */
+.panel input[type="text"],
+.panel input[type="email"],
+.panel input[type="number"],
+.panel input[type="password"],
+.panel input[type="file"],
+.panel select,
+.panel textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.panel input:focus,
+.panel select:focus,
+.panel textarea:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 3px rgba(199,33,47,.1), 0 1px 2px rgba(0,0,0,0.05);
+  background: #ffffff;
+}
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.header-content h1 { margin: 0; font-size: 28px; font-weight:700; color:var(--ad-text); }
+.page-subtitle { color:var(--ad-muted); margin:4px 0 0; font-size:14px; }
+.actions { display:flex; justify-content:flex-end; gap:12px; margin-top:16px; }
+fieldset.grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:16px; border:none; padding:0; }
+</style>
+
+<div style="padding: 0 24px; width: 100%;">
+  <div class="h1">Add User</div>
+  <div class="small">Create a new account with optional profile image and roles.</div>
+
+  <div class="panel" style="max-width: 100%; width: 100%;">
+    <div class="panel-title">User Details</div>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <fieldset class="grid">
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; grid-column: 1 / -1;">
+          <img id="avatarPreview" src="{% static 'img/default-avatar.png' %}" alt="Preview"
+               style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:1px solid var(--ad-border); background:#f7f7fb;">
+          <div style="flex:1; min-width:200px;">
+            <label>Profile image</label>
+            {{ form.profile_image }}
+            {% if form.profile_image.errors %}
+              <div class="errorlist">{{ form.profile_image.errors }}</div>
+            {% endif %}
+            <small class="help-text">PNG/JPG, optional.</small>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="grid">
+        <div>
+          <label>First name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <div class="errorlist">{{ form.first_name.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Middle name</label>
+          {{ form.middle_name }}
+          {% if form.middle_name.errors %}
+            <div class="errorlist">{{ form.middle_name.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Last name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <div class="errorlist">{{ form.last_name.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Age</label>
+          {{ form.age }}
+          {% if form.age.errors %}
+            <div class="errorlist">{{ form.age.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Contact number</label>
+          {{ form.contact_number }}
+          {% if form.contact_number.errors %}
+            <div class="errorlist">{{ form.contact_number.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Gender</label>
+          {{ form.gender }}
+          {% if form.gender.errors %}
+            <div class="errorlist">{{ form.gender.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="errorlist">{{ form.email.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Password</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="errorlist">{{ form.password.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label>Confirm password</label>
+          {{ form.confirm_password }}
+          {% if form.confirm_password.errors %}
+            <div class="errorlist">{{ form.confirm_password.errors }}</div>
+          {% endif %}
+        </div>
+      </fieldset>
+
+      <fieldset class="grid">
+        <legend style="font-weight: 600; margin-bottom: 12px; color: var(--ad-text);">Roles & Status</legend>
+        <label style="display:flex; gap:8px; align-items:center;">
+          {{ form.is_active }} <span>Active</span>
+        </label>
+        <label style="display:flex; gap:8px; align-items:center;">
+          {{ form.is_staff }} <span>Staff</span>
+        </label>
+        <label style="display:flex; gap:8px; align-items:center;">
+          {{ form.is_superuser }} <span>Superuser</span>
+        </label>
+        {% if form.non_field_errors %}
+          <div class="errorlist" style="grid-column: 1 / -1;">{{ form.non_field_errors }}</div>
+        {% endif %}
+      </fieldset>
+
+      <div class="actions">
+        <a href="{% url 'signupdashboard' %}" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-primary">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  ['email','password','confirm_password'].forEach(id=>{
+    let el=document.getElementById('id_'+id);
+    if(el&&el.tagName==='INPUT'){
+      el.type = id.includes('email') ? 'email' : 'password';
+    }
+  });
+})();
+document.addEventListener('DOMContentLoaded',function(){
+  const input=document.getElementById('id_profile_image'),
+        preview=document.getElementById('avatarPreview');
+  if(input&&preview){
+    input.setAttribute('accept','image/*');
+    input.addEventListener('change',()=>{
+      const file=input.files[0];
+      if(file&&file.type.startsWith('image/')){
+        let reader=new FileReader();
+        reader.onload=e=>preview.src=e.target.result;
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+});
+</script>
+{% endblock content %}

@@ -1,0 +1,400 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Navbar Settings{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>🎨 Navbar Settings</h1>
+        <p>Manage your website navbar appearance and contact settings</p>
+    </div>
+
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>Navbar Configuration</h2>
+        </div>
+        <div class="ad-card-body">
+            <form method="post" enctype="multipart/form-data" class="ad-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3>🖼️ Logo & Favicon Settings</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.logo.id_for_label }}">Website Logo</label>
+                        {{ form.logo }}
+                        {% if navbar_settings and navbar_settings.logo %}
+                            <div class="current-logo">
+                                <p class="preview-label">Current Logo:</p>
+                                <img src="{{ navbar_settings.logo.url }}" alt="Current logo" class="logo-preview">
+                            </div>
+                        {% endif %}
+                        <small class="form-help">{{ form.logo.help_text }}</small>
+                        {% if form.logo.errors %}
+                            <div class="form-error">{{ form.logo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.favicon.id_for_label }}">Website Favicon</label>
+                        {{ form.favicon }}
+                        {% if navbar_settings and navbar_settings.favicon %}
+                            <div class="current-logo">
+                                <p class="preview-label">Current Favicon:</p>
+                                <img src="{{ navbar_settings.favicon.url }}" alt="Current favicon" class="favicon-preview">
+                            </div>
+                        {% endif %}
+                        <small class="form-help">{{ form.favicon.help_text }}</small>
+                        {% if form.favicon.errors %}
+                            <div class="form-error">{{ form.favicon.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📞 Contact Information</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.contact_number.id_for_label }}">Contact Number</label>
+                            {{ form.contact_number }}
+                            <small class="form-help">{{ form.contact_number.help_text }}</small>
+                            {% if form.contact_number.errors %}
+                                <div class="form-error">{{ form.contact_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.contact_hours.id_for_label }}">Contact Hours</label>
+                            {{ form.contact_hours }}
+                            {% if form.contact_hours.errors %}
+                                <div class="form-error">{{ form.contact_hours.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.contact_type.id_for_label }}">
+                            Contact Method 
+                            <span class="info-badge" title="Choose how users will contact you">ℹ️</span>
+                        </label>
+                        {{ form.contact_type }}
+                        <small class="form-help">
+                            <strong>WhatsApp:</strong> Opens WhatsApp chat | 
+                            <strong>Phone Call:</strong> Initiates phone call
+                        </small>
+                        {% if form.contact_type.errors %}
+                            <div class="form-error">{{ form.contact_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if navbar_settings %}
+                    <div class="preview-contact">
+                        <p class="preview-label">Contact Preview:</p>
+                        <a href="{{ navbar_settings.get_contact_url }}" class="contact-preview-btn" target="_blank">
+                            <i class="{{ navbar_settings.get_contact_icon }}"></i>
+                            {{ navbar_settings.contact_number }}<br>
+                            <small>{{ navbar_settings.contact_hours }}</small>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-section">
+                    <h3>🔍 Search Settings</h3>
+                    <div class="form-group">
+                        <label for="{{ form.search_placeholder.id_for_label }}">Search Placeholder Text</label>
+                        {{ form.search_placeholder }}
+                        <small class="form-help">Text shown in the search box</small>
+                        {% if form.search_placeholder.errors %}
+                            <div class="form-error">{{ form.search_placeholder.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            {{ form.is_active }} Active (Show navbar settings)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="ad-btn ad-btn-primary">
+                        <i class="fa fa-save"></i> Save Navbar Settings
+                    </button>
+                    <a href="{% url 'admindashboard' %}" class="ad-btn ad-btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.ad-main-content {
+    font-family: 'Inter', sans-serif;
+}
+
+.form-section {
+    margin-bottom: 35px;
+    padding: 28px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.form-section h3 {
+    color: #c7212f;
+    margin-bottom: 24px;
+    font-size: 19px;
+    font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #c7212f;
+    letter-spacing: -0.3px;
+}
+
+.form-row {
+    display: flex;
+    gap: 24px;
+}
+
+.form-group {
+    flex: 1;
+    margin-bottom: 22px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+}
+
+.info-badge {
+    display: inline-block;
+    cursor: help;
+    font-size: 14px;
+    margin-left: 5px;
+}
+
+.form-control, 
+input[type="text"], 
+input[type="file"], 
+select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control:focus,
+input:focus,
+select:focus {
+    border-color: #c7212f;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(199, 33, 47, 0.1);
+}
+
+.current-logo {
+    margin-top: 18px;
+    padding: 18px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.preview-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 12px;
+}
+
+.logo-preview {
+    max-width: 220px;
+    max-height: 90px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    padding: 8px;
+    background: white;
+}
+
+.favicon-preview {
+    max-width: 48px;
+    max-height: 48px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    padding: 8px;
+    background: white;
+}
+
+.preview-contact {
+    margin-top: 20px;
+    padding: 18px;
+    background: white;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.contact-preview-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.contact-preview-btn i {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.contact-preview-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1.5px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-checkbox:hover {
+    border-color: #c7212f;
+    background: #fff5f5;
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.form-help {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.form-error {
+    color: #dc3545;
+    font-size: 13px;
+    margin-top: 8px;
+    font-weight: 600;
+    padding: 8px 12px;
+    background: #fff5f5;
+    border-radius: 6px;
+    border-left: 3px solid #dc3545;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 2px solid #dee2e6;
+}
+
+.ad-btn {
+    padding: 14px 28px;
+    margin: 0 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ad-btn i {
+    font-size: 16px;
+}
+
+.ad-btn-primary {
+    background: #c7212f;
+    color: white;
+    box-shadow: 0 4px 12px rgba(199, 33, 47, 0.3);
+}
+
+.ad-btn-primary:hover {
+    background: #a01c26;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(199, 33, 47, 0.4);
+}
+
+.ad-btn-secondary {
+    background: #6c757d;
+    color: white;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.ad-btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(108, 117, 125, 0.4);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-section {
+        padding: 22px 18px;
+    }
+
+    .form-section h3 {
+        font-size: 17px;
+    }
+    
+    .ad-btn {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

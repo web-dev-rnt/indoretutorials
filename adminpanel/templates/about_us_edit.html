@@ -1,0 +1,516 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}About Us Management{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>ℹ️ About Us Management</h1>
+        <p>Manage your About Us section content</p>
+        <a href="{% url 'about_us_section_edit' %}" class="ad-btn ad-btn-secondary">
+            <span>✏️</span> Edit Main Section
+        </a>
+    </div>
+    
+
+    <!-- Main About Us Section Preview -->
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>👁️ About Us Preview</h2>
+        </div>
+        <div class="ad-card-body">
+            {% if about_us %}
+                <div class="about-preview">
+                    <div class="preview-header">
+                        <h3>{{ about_us.heading }}</h3>
+                        {% if about_us.logo %}
+                            <img src="{{ about_us.logo.url }}" alt="Logo" class="preview-logo">
+                        {% endif %}
+                        <p class="company-name">{{ about_us.company_name }}</p>
+                    </div>
+                    <div class="preview-description">
+                        {{ about_us.description|linebreaks }}
+                    </div>
+                    <div class="preview-contact">
+                        <p><i class="fa fa-map-marker"></i> {{ about_us.address }}</p>
+                        <p><i class="fa fa-envelope"></i> {{ about_us.email }}</p>
+                        <p><i class="fa fa-phone"></i> {{ about_us.phone }} {{ about_us.phone_hours }}</p>
+                    </div>
+                </div>
+            {% else %}
+                <p class="ad-empty-state">No About Us section configured. <a href="{% url 'about_us_section_edit' %}">Configure now</a></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Why Choose Us Section -->
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>💡 Why Choose Us Items</h2>
+            <a href="{% url 'why_choose_create' %}" class="ad-btn ad-btn-primary">
+                <span>➕</span> Add Item
+            </a>
+        </div>
+        <div class="ad-card-body">
+            {% if why_choose_items %}
+
+                <!-- Desktop Table -->
+                <table class="ad-table desktop-table">
+                    <thead>
+                        <tr>
+                            <th>Icon</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Order</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in why_choose_items %}
+                            <tr {% if not item.is_active %}class="ad-inactive-row"{% endif %}>
+                                <td><i class="{{ item.icon_class }}"></i></td>
+                                <td><strong>{{ item.title }}</strong></td>
+                                <td>{{ item.description|truncatechars:60 }}</td>
+                                <td>
+                                    {% if item.is_active %}
+                                        <span class="ad-status ad-active">Active</span>
+                                    {% else %}
+                                        <span class="ad-status ad-inactive-status">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.order }}</td>
+                                <td class="ad-actions">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'why_choose_edit' item.pk %}" class="action-btn edit-btn" title="Edit">✏️ Edit</a>
+                                        <a href="{% url 'why_choose_toggle_status' item.pk %}"
+                                           class="action-btn {% if item.is_active %}hide-btn{% else %}show-btn{% endif %}">
+                                            {% if item.is_active %}⏸️ Hide{% else %}▶️ Show{% endif %}
+                                        </a>
+                                        <a href="{% url 'why_choose_delete' item.pk %}"
+                                           onclick="return confirm('Are you sure?')"
+                                           class="action-btn delete-btn">🗑️ Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Mobile Cards -->
+                <div class="mobile-cards">
+                    {% for item in why_choose_items %}
+                        <div class="mobile-card {% if not item.is_active %}mobile-card-inactive{% endif %}">
+                            <div class="mobile-card-header">
+                                <div class="mobile-card-icon-title">
+                                    <i class="{{ item.icon_class }} mobile-icon"></i>
+                                    <strong class="mobile-card-title">{{ item.title }}</strong>
+                                </div>
+                                <div class="mobile-card-meta">
+                                    {% if item.is_active %}
+                                        <span class="ad-status ad-active">Active</span>
+                                    {% else %}
+                                        <span class="ad-status ad-inactive-status">Inactive</span>
+                                    {% endif %}
+                                    <span class="order-badge">Order: {{ item.order }}</span>
+                                </div>
+                            </div>
+                            <p class="mobile-card-desc">{{ item.description|truncatechars:100 }}</p>
+                            <div class="mobile-card-actions">
+                                <a href="{% url 'why_choose_edit' item.pk %}" class="action-btn edit-btn">✏️ Edit</a>
+                                <a href="{% url 'why_choose_toggle_status' item.pk %}"
+                                   class="action-btn {% if item.is_active %}hide-btn{% else %}show-btn{% endif %}">
+                                    {% if item.is_active %}⏸️ Hide{% else %}▶️ Show{% endif %}
+                                </a>
+                                <a href="{% url 'why_choose_delete' item.pk %}"
+                                   onclick="return confirm('Are you sure?')"
+                                   class="action-btn delete-btn">🗑️ Delete</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <div class="ad-empty-state">
+                    <h3>No "Why Choose Us" items yet</h3>
+                    <p>Add items to showcase why users should choose your platform.</p>
+                    <a href="{% url 'why_choose_create' %}" class="ad-btn ad-btn-primary">Add First Item</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>🎓 Our Services</h2>
+            <a href="{% url 'service_create' %}" class="ad-btn ad-btn-primary">
+                <span>➕</span> Add Service
+            </a>
+        </div>
+        <div class="ad-card-body">
+            {% if service_items %}
+
+                <!-- Desktop Table -->
+                <table class="ad-table desktop-table">
+                    <thead>
+                        <tr>
+                            <th>Icon</th>
+                            <th>Service Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Order</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in service_items %}
+                            <tr {% if not item.is_active %}class="ad-inactive-row"{% endif %}>
+                                <td><i class="{{ item.icon_class }}"></i></td>
+                                <td><strong>{{ item.service_name }}</strong></td>
+                                <td>{{ item.service_description|truncatechars:60 }}</td>
+                                <td>
+                                    {% if item.is_active %}
+                                        <span class="ad-status ad-active">Active</span>
+                                    {% else %}
+                                        <span class="ad-status ad-inactive-status">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.order }}</td>
+                                <td class="ad-actions">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'service_edit' item.pk %}" class="action-btn edit-btn">✏️ Edit</a>
+                                        <a href="{% url 'service_toggle_status' item.pk %}"
+                                           class="action-btn {% if item.is_active %}hide-btn{% else %}show-btn{% endif %}">
+                                            {% if item.is_active %}⏸️ Hide{% else %}▶️ Show{% endif %}
+                                        </a>
+                                        <a href="{% url 'service_delete' item.pk %}"
+                                           onclick="return confirm('Are you sure?')"
+                                           class="action-btn delete-btn">🗑️ Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Mobile Cards -->
+                <div class="mobile-cards">
+                    {% for item in service_items %}
+                        <div class="mobile-card {% if not item.is_active %}mobile-card-inactive{% endif %}">
+                            <div class="mobile-card-header">
+                                <div class="mobile-card-icon-title">
+                                    <i class="{{ item.icon_class }} mobile-icon"></i>
+                                    <strong class="mobile-card-title">{{ item.service_name }}</strong>
+                                </div>
+                                <div class="mobile-card-meta">
+                                    {% if item.is_active %}
+                                        <span class="ad-status ad-active">Active</span>
+                                    {% else %}
+                                        <span class="ad-status ad-inactive-status">Inactive</span>
+                                    {% endif %}
+                                    <span class="order-badge">Order: {{ item.order }}</span>
+                                </div>
+                            </div>
+                            <p class="mobile-card-desc">{{ item.service_description|truncatechars:100 }}</p>
+                            <div class="mobile-card-actions">
+                                <a href="{% url 'service_edit' item.pk %}" class="action-btn edit-btn">✏️ Edit</a>
+                                <a href="{% url 'service_toggle_status' item.pk %}"
+                                   class="action-btn {% if item.is_active %}hide-btn{% else %}show-btn{% endif %}">
+                                    {% if item.is_active %}⏸️ Hide{% else %}▶️ Show{% endif %}
+                                </a>
+                                <a href="{% url 'service_delete' item.pk %}"
+                                   onclick="return confirm('Are you sure?')"
+                                   class="action-btn delete-btn">🗑️ Delete</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <div class="ad-empty-state">
+                    <h3>No services added yet</h3>
+                    <p>Add services to showcase what your platform offers.</p>
+                    <a href="{% url 'service_create' %}" class="ad-btn ad-btn-primary">Add First Service</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+
+    
+/* =====================
+   About Preview
+   ===================== */
+.about-preview {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.preview-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.preview-header h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: clamp(1rem, 4vw, 1.4rem);
+}
+
+.preview-logo {
+    max-width: 120px;
+    height: auto;
+    margin: 10px 0;
+}
+
+.company-name {
+    font-weight: 600;
+    color: #007bff;
+    margin: 10px 0;
+}
+
+.preview-description {
+    line-height: 1.6;
+    color: #495057;
+    margin-bottom: 15px;
+    word-break: break-word;
+}
+
+.preview-contact p {
+    margin: 6px 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+.preview-contact i {
+    width: 20px;
+    margin-right: 8px;
+    color: #007bff;
+}
+
+/* =====================
+   Desktop Table
+   ===================== */
+.desktop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.desktop-table th,
+.desktop-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.desktop-table thead th {
+    background: #f1f3f5;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.ad-inactive-row {
+    opacity: 0.6;
+    background: #fafafa;
+}
+
+/* =====================
+   Status Badges
+   ===================== */
+.ad-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ad-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.ad-inactive-status {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* =====================
+   Action Buttons
+   ===================== */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+    opacity: 0.82;
+    text-decoration: none;
+}
+
+.edit-btn  { background: #cce5ff; color: #004085; }
+.hide-btn  { background: #fff3cd; color: #856404; }
+.show-btn  { background: #d4edda; color: #155724; }
+.delete-btn{ background: #f8d7da; color: #721c24; }
+
+/* =====================
+   Order Badge
+   ===================== */
+.order-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e9ecef;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-left: 4px;
+}
+
+/* =====================
+   Mobile Cards — hidden on desktop
+   ===================== */
+.mobile-cards {
+    display: none;
+}
+
+/* =====================
+   Responsive Breakpoint
+   ===================== */
+@media (max-width: 768px) {
+
+    /* Hide desktop table, show mobile cards */
+    .desktop-table {
+        display: none;
+    }
+
+    .mobile-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* Individual card */
+    .mobile-card {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 14px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .mobile-card-inactive {
+        opacity: 0.65;
+        background: #f9f9f9;
+    }
+
+    /* Card header: icon+title on left, badges on right */
+    .mobile-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .mobile-card-icon-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .mobile-icon {
+        font-size: 1.2rem;
+        color: #007bff;
+        flex-shrink: 0;
+    }
+
+    .mobile-card-title {
+        font-size: 0.95rem;
+        color: #212529;
+        word-break: break-word;
+    }
+
+    .mobile-card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .mobile-card-desc {
+        font-size: 0.83rem;
+        color: #6c757d;
+        margin: 0 0 12px 0;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+
+    /* Actions row */
+    .mobile-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .mobile-card-actions .action-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 7px 10px;
+        font-size: 0.82rem;
+    }
+
+    /* Page header stacking */
+    .ad-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* Card header stacking */
+    .ad-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Preview contact word wrap */
+    .preview-contact p {
+        word-break: break-word;
+    }
+}
+
+@media (max-width: 400px) {
+    .mobile-card-actions .action-btn {
+        flex: 1 1 100%;
+    }
+}
+</style>
+{% endblock %}

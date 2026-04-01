@@ -1,0 +1,30 @@
+<div class="form-errors" aria-live="polite">
+  {% if form.non_field_errors %}
+      {% for err in form.non_field_errors %}
+        <span class="small-error">{{ err }}</span>
+      {% endfor %}
+  {% endif %}
+</div>
+<style>
+  .errorlist,
+  .errorlist.nonfield {
+    list-style: none;
+  }
+
+  .small-error {
+    color: #d93025;
+    font-size: 14px;
+    line-height: 1.3;
+    margin: 4px 0 0 0;
+  }
+
+
+  .msg-success{
+        color: #d93025;
+    font-size: 14px;
+    line-height: 1.3;
+    margin: 4px 0 0 0;
+     list-style: none;
+    
+  }
+</style>

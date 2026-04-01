@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ test.title }} - Test Results</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container" style="margin: 80px auto; max-width: 900px; padding: 30px;">
+        
+        <!-- Success Header -->
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div style="background: linear-gradient(135deg, #4caf50, #45a049); color: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(76,175,80,0.3);">
+                <i class="fa fa-trophy" style="font-size: 4em; margin-bottom: 20px; opacity: 0.9;"></i>
+                <h1 style="margin: 0; font-size: 2.5em;">Test Completed!</h1>
+                <p style="margin: 15px 0 0 0; font-size: 1.3em; opacity: 0.9;">{{ test.title }}</p>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+            
+            <!-- Score Card -->
+            <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #2196f3;">
+                <i class="fa fa-chart-bar" style="font-size: 2.5em; color: #2196f3; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; color: #333;">Your Score</h3>
+                <p style="font-size: 2em; font-weight: bold; color: #2196f3; margin: 10px 0;">
+                    {{ attempt.marks_obtained|floatformat:1 }}/{{ attempt.total_marks }}
+                </p>
+                <p style="color: #666; margin: 0;">{{ attempt.percentage_score|floatformat:1 }}%</p>
+            </div>
+
+            <!-- Questions Card -->
+            <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #ff9800;">
+                <i class="fa fa-question-circle" style="font-size: 2.5em; color: #ff9800; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; color: #333;">Questions</h3>
+                <p style="font-size: 2em; font-weight: bold; color: #ff9800; margin: 10px 0;">
+                    {{ attempt.attempted_questions }}/{{ attempt.total_questions }}
+                </p>
+                <p style="color: #666; margin: 0;">Attempted</p>
+            </div>
+
+            <!-- Time Card -->
+            <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #9c27b0;">
+                <i class="fa fa-clock" style="font-size: 2.5em; color: #9c27b0; margin-bottom: 15px;"></i>
+                <h3 style="margin: 0; color: #333;">Time Taken</h3>
+                <p style="font-size: 1.5em; font-weight: bold; color: #9c27b0; margin: 10px 0;">
+                    {% if attempt.time_spent %}
+                        {{ attempt.time_spent|time:"H:i:s" }}
+                    {% else %}
+                        {{ test.duration_minutes }} min
+                    {% endif %}
+                </p>
+                <p style="color: #666; margin: 0;">Duration</p>
+            </div>
+        </div>
+
+        <!-- Performance Breakdown -->
+        <div style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+            <h2 style="color: #333; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa fa-chart-pie"></i> Performance Breakdown
+            </h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="text-align: center;">
+                    <div style="background: #e8f5e8; color: #388e3c; padding: 15px; border-radius: 10px;">
+                        <i class="fa fa-check-circle" style="font-size: 1.5em; margin-bottom: 10px;"></i>
+                        <p style="font-size: 1.8em; font-weight: bold; margin: 5px 0;">{{ attempt.correct_answers }}</p>
+                        <p style="margin: 0; font-size: 14px;">Correct</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <div style="background: #ffebee; color: #d32f2f; padding: 15px; border-radius: 10px;">
+                        <i class="fa fa-times-circle" style="font-size: 1.5em; margin-bottom: 10px;"></i>
+                        <p style="font-size: 1.8em; font-weight: bold; margin: 5px 0;">{{ attempt.wrong_answers }}</p>
+                        <p style="margin: 0; font-size: 14px;">Wrong</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <div style="background: #f3e5f5; color: #7b1fa2; padding: 15px; border-radius: 10px;">
+                        <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-bottom: 10px;"></i>
+                        <p style="font-size: 1.8em; font-weight: bold; margin: 5px 0;">
+                            {{ skipped_questions|default:"0" }}
+                        </p>
+                        <p style="margin: 0; font-size: 14px;">Skipped</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Information -->
+        <div style="background: #f8f9fa; border-radius: 15px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #333; margin-bottom: 15px;">Test Details</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px;">
+                <p><strong>Test Series:</strong> {{ test.test_series.title }}</p>
+                <p><strong>Attempt Number:</strong> {{ attempt.attempt_number }}</p>
+                <p><strong>Started At:</strong> {{ attempt.started_at|date:"d M Y, H:i" }}</p>
+                <p><strong>Submitted At:</strong> {{ attempt.submitted_at|date:"d M Y, H:i" }}</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'front_exam_series_detail' pk=test.test_series.pk %}" 
+               style="background: linear-gradient(45deg, #2196f3, #1976d2); color: white; padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa fa-arrow-left"></i> Back to Test Series
+            </a>
+            
+        {% if test.allow_review %}
+<a href="{% url 'front_exam_review' attempt.id %}" 
+               style="background: linear-gradient(45deg, #ff9800, #f57c00); color: white; padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa fa-eye"></i> Review Answers
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'home' %}" 
+               style="background: linear-gradient(45deg, #4caf50, #45a049); color: white; padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa fa-home"></i> Go Home
+            </a>
+        </div>
+    </div>
+
+    <!-- Celebration Animation -->
+    <script>
+        // Add some celebration effect
+        function createConfetti() {
+            const colors = ['#f39c12', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.borderRadius = '50%';
+                    confetti.style.zIndex = '9999';
+                    document.body.appendChild(confetti);
+                    
+                    confetti.animate([
+                        { transform: 'translateY(-10px) rotate(0deg)', opacity: 1 },
+                        { transform: 'translateY(100vh) rotate(360deg)', opacity: 0 }
+                    ], {
+                        duration: 3000,
+                        easing: 'cubic-bezier(0.5, 0, 0.5, 1)'
+                    }).onfinish = () => confetti.remove();
+                }, Math.random() * 2000);
+            }
+        }
+        
+        // Trigger celebration
+        setTimeout(createConfetti, 500);
+    </script>
+</body>
+</html>

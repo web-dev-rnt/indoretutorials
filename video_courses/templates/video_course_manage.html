@@ -1,0 +1,428 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-vc-list { display: none; }
+
+    .mobile-vc-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .mvc-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .mvc-thumb {
+        width: 56px;
+        height: 38px;
+        object-fit: cover;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .mvc-thumb-placeholder {
+        width: 56px;
+        height: 38px;
+        background: #f1f5f9;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        flex-shrink: 0;
+    }
+
+    .mvc-title { font-weight: 600; font-size: 14px; color: #1f2937; }
+    .mvc-meta  { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+    .mvc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .mvc-row:last-child { border-bottom: none; }
+    .mvc-label { color: #6b7280; font-weight: 500; white-space: nowrap; min-width: 80px; }
+    .mvc-value { color: #1f2937; text-align: right; word-break: break-word; }
+
+    .mvc-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .mvc-actions .action-btn {
+        flex: 1;
+        justify-content: center;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        padding: 7px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        color: var(--admin-text);
+        transition: all 0.2s;
+    }
+
+    .mvc-actions .text-danger { color: #dc2626; border-color: #fecaca; }
+    .mvc-actions .text-danger:hover { background: #fef2f2; }
+
+    @media (max-width: 768px) {
+        .desktop-vc-table { display: none; }
+        .mobile-vc-list   { display: block; }
+
+        .admin-filters {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+
+        .admin-filter-input { width: 100%; }
+    }
+</style>
+
+<main>
+    <div class="wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Manage Video Courses</h1>
+                <p class="page-subtitle">View, edit, and manage all your video courses from this dashboard.</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-icon icon-total"><i class="fas fa-graduation-cap"></i></div>
+                <div class="analytics-value">{{ total_courses }}</div>
+                <div class="analytics-label">Total Courses</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-icon icon-active"><i class="fas fa-play-circle"></i></div>
+                <div class="analytics-value">{{ active_courses }}</div>
+                <div class="analytics-label">Active Courses</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-icon icon-usage"><i class="fas fa-star"></i></div>
+                <div class="analytics-value">{{ avg_rating }}</div>
+                <div class="analytics-label">Avg Rating</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-icon icon-discount"><i class="fas fa-video"></i></div>
+                <div class="analytics-value">{{ total_videos }}</div>
+                <div class="analytics-label">Total Videos</div>
+            </div>
+        </div>
+
+        <!-- Search + New Course -->
+        <div class="page-header">
+            <div class="header-content"><h1>All Courses</h1></div>
+            <div class="header-actions">
+                <div class="admin-filters" style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" class="admin-filter-input" placeholder="Search courses by name…" id="courseSearch">
+                    <a href="{% url 'video_course_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> New Course
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel -->
+        <div class="panel">
+
+            <!-- Desktop table -->
+            <div class="table-wrapper desktop-vc-table">
+                <table class="admin-table" id="coursesTable">
+                    <thead>
+                        <tr>
+                            <th>Thumbnail</th>
+                            <th>Course</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Rating</th>
+                            <th>Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesTableBody">
+                        {% if courses %}
+                            {% for c in courses %}
+                            <tr class="user-row" data-course-name="{{ c.name|lower }}">
+                                <td>
+                                    {% if c.thumbnail %}
+                                        <img src="{{ c.thumbnail.url }}" alt="{{ c.name }}" style="width:48px;height:32px;object-fit:cover;border-radius:4px;display:block;">
+                                    {% else %}
+                                        <div style="width:48px;height:32px;background:#f1f5f9;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:10px;">
+                                            <i class="fas fa-image"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-name">{{ c.name }}</div>
+                                        <div class="date-secondary">
+                                            <i class="fas fa-video" style="margin-right:4px;"></i>{{ c.videos.count }} videos
+                                            <span style="margin-left:8px;"><i class="fas fa-clock" style="margin-right:4px;"></i>{{ c.total_hours }}h</span>
+                                            {% if c.is_free %}<span style="margin-left:8px;color:#16a34a;font-weight:500;"><i class="fas fa-gift" style="margin-right:4px;"></i>Free</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="type-badge type-regular">{% if c.category %}{{ c.category.name }}{% else %}No Category{% endif %}</span>
+                                </td>
+                                <td>
+                                    <div class="date-cell">
+                                        {% if c.is_free %}
+                                            <div class="date-primary" style="color:#16a34a;font-weight:600;">FREE</div>
+                                        {% else %}
+                                            <div class="date-primary">₹{{ c.selling_price|floatformat:0 }}</div>
+                                            {% if c.original_price != c.selling_price %}
+                                                <div class="date-secondary" style="text-decoration:line-through;">₹{{ c.original_price|floatformat:0 }}</div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="date-cell">
+                                        <div class="date-primary" style="display:flex;align-items:center;gap:4px;">
+                                            <i class="fas fa-star" style="color:#fbbf24;font-size:12px;"></i>{{ c.rating|floatformat:1 }}
+                                        </div>
+                                        <div class="date-secondary">({{ c.rating_count }} reviews)</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="date-cell">
+                                        <div class="date-primary">{{ c.updated_at|date:"M d, Y" }}</div>
+                                        <div class="date-secondary">{{ c.updated_at|timesince }} ago</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'video_course_edit_by_pk' pk=c.pk %}" class="action-btn" title="Edit Course">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="action-btn text-danger" title="Delete Course"
+                                                onclick="deleteCourse({{ c.pk }}, '{{ c.name|escapejs }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <div class="empty-icon"><i class="fas fa-graduation-cap" style="font-size:48px;color:#ccc;"></i></div>
+                                    <div class="empty-title">No courses yet</div>
+                                    <div class="empty-text">Create your first course to get started</div>
+                                    <div style="margin-top:16px;">
+                                        <a href="{% url 'video_course_create' %}" class="btn btn-success"><i class="fas fa-plus"></i> Create First Course</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile cards -->
+            <div class="mobile-vc-list" id="mobileVcList">
+                {% if courses %}
+                    {% for c in courses %}
+                    <div class="mobile-vc-card" data-course-name="{{ c.name|lower }}">
+
+                        <div class="mvc-header">
+                            {% if c.thumbnail %}
+                                <img src="{{ c.thumbnail.url }}" alt="{{ c.name }}" class="mvc-thumb">
+                            {% else %}
+                                <div class="mvc-thumb-placeholder"><i class="fas fa-image"></i></div>
+                            {% endif %}
+                            <div>
+                                <div class="mvc-title">{{ c.name }}</div>
+                                <div class="mvc-meta">
+                                    <i class="fas fa-video"></i> {{ c.videos.count }} videos
+                                    &nbsp;·&nbsp;
+                                    <i class="fas fa-clock"></i> {{ c.total_hours }}h
+                                    {% if c.is_free %}&nbsp;·&nbsp;<span style="color:#16a34a;font-weight:500;"><i class="fas fa-gift"></i> Free</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mvc-row">
+                            <span class="mvc-label">Category</span>
+                            <span class="mvc-value"><span class="type-badge type-regular">{% if c.category %}{{ c.category.name }}{% else %}No Category{% endif %}</span></span>
+                        </div>
+                        <div class="mvc-row">
+                            <span class="mvc-label">Price</span>
+                            <span class="mvc-value">
+                                {% if c.is_free %}
+                                    <span style="color:#16a34a;font-weight:600;">FREE</span>
+                                {% else %}
+                                    <span style="font-weight:600;">₹{{ c.selling_price|floatformat:0 }}</span>
+                                    {% if c.original_price != c.selling_price %}
+                                        <span style="color:#9ca3af;text-decoration:line-through;font-size:11px;margin-left:4px;">₹{{ c.original_price|floatformat:0 }}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="mvc-row">
+                            <span class="mvc-label">Rating</span>
+                            <span class="mvc-value">
+                                <i class="fas fa-star" style="color:#fbbf24;font-size:12px;"></i>
+                                {{ c.rating|floatformat:1 }}
+                                <span style="color:#9ca3af;font-size:11px;">({{ c.rating_count }})</span>
+                            </span>
+                        </div>
+                        <div class="mvc-row">
+                            <span class="mvc-label">Updated</span>
+                            <span class="mvc-value">{{ c.updated_at|date:"M d, Y" }}</span>
+                        </div>
+
+                        <div class="mvc-actions">
+                            <a href="{% url 'video_course_edit_by_pk' pk=c.pk %}" class="action-btn">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <button class="action-btn text-danger"
+                                    onclick="deleteCourse({{ c.pk }}, '{{ c.name|escapejs }}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align:center;padding:40px;color:#9ca3af;">
+                        <i class="fas fa-graduation-cap" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+                        No courses yet.
+                        <a href="{% url 'video_course_create' %}" class="btn btn-success" style="display:block;margin-top:16px;">
+                            <i class="fas fa-plus"></i> Create First Course
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+/* ── Notification system ── */
+function showNotification(message, type = 'success', duration = 4000) {
+    document.querySelectorAll('.custom-notification').forEach(n => n.remove());
+    const colors = {
+        success: { bg:'#f0fdf4', text:'#16a34a', border:'#bbf7d0', icon:'fa-check-circle' },
+        error:   { bg:'#fef2f2', text:'#dc2626', border:'#fecaca', icon:'fa-exclamation-circle' },
+        info:    { bg:'#eff6ff', text:'#2563eb', border:'#bfdbfe', icon:'fa-info-circle' },
+    };
+    const c = colors[type] || colors.success;
+    const n = document.createElement('div');
+    n.className = `custom-notification custom-notification-${type}`;
+    n.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><span style="color:${c.text};"><i class="fas ${c.icon}"></i></span><span style="flex:1;">${message}</span><button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:${c.text};opacity:.6;">×</button></div>`;
+    n.style.cssText = `position:fixed;top:20px;right:20px;z-index:10000;max-width:400px;min-width:300px;background:${c.bg};color:${c.text};border:1px solid ${c.border};border-radius:8px;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,.1);font-size:14px;font-weight:500;animation:slideInRight .3s ease-out;`;
+    document.body.appendChild(n);
+    setTimeout(() => { if (n.parentNode) { n.style.animation='slideOutRight .3s ease-out'; setTimeout(()=>n.remove(),300); } }, duration);
+}
+
+const _style = document.createElement('style');
+_style.textContent = `
+@keyframes slideInRight  { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes slideOutRight { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+@keyframes fadeOut       { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(.95)} }
+.custom-notification:hover { transform:translateX(-5px);transition:transform .2s ease; }`;
+document.head.appendChild(_style);
+
+function getCSRFToken() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (el) return el.value;
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) { const [k,v]=c.trim().split('='); if(k==='csrftoken') return v; }
+    return null;
+}
+
+function deleteCourse(courseId, courseName) {
+    if (!confirm(`Are you sure you want to delete "${courseName}"?\n\nThis action cannot be undone and will permanently remove:\n• All course videos\n• Course materials\n• Student progress data`)) return;
+
+    showNotification('Deleting course...', 'info', 10000);
+
+    const btn = event.target.closest('button');
+    const originalContent = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true; }
+
+    const csrf = getCSRFToken();
+    if (!csrf) { showNotification('CSRF token not found. Please refresh the page.', 'error'); if (btn) { btn.innerHTML=originalContent; btn.disabled=false; } return; }
+
+    fetch(`/video-courses/${courseId}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({})
+    })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(data => {
+        document.querySelector('.custom-notification-info')?.remove();
+        if (data.success) {
+            showNotification(data.message, 'success', 5000);
+
+            /* Remove desktop row */
+            const row = document.querySelector(`#coursesTableBody tr[data-course-name="${courseName.toLowerCase()}"]`);
+            if (row) { row.style.animation='fadeOut .5s ease-out'; setTimeout(()=>row.remove(), 500); }
+
+            /* Remove mobile card */
+            const card = document.querySelector(`.mobile-vc-card[data-course-name="${courseName.toLowerCase()}"]`);
+            if (card) { card.style.animation='fadeOut .5s ease-out'; setTimeout(()=>card.remove(), 500); }
+        } else {
+            showNotification(`Error: ${data.error || 'Unknown error'}`, 'error');
+            if (btn) { btn.innerHTML=originalContent; btn.disabled=false; }
+        }
+    })
+    .catch(err => {
+        document.querySelector('.custom-notification-info')?.remove();
+        showNotification(`Network error: ${err.message}`, 'error');
+        if (btn) { btn.innerHTML=originalContent; btn.disabled=false; }
+    });
+}
+
+/* ── Search — filters both desktop rows and mobile cards ── */
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('courseSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+
+            document.querySelectorAll('#coursesTableBody tr.user-row').forEach(row => {
+                row.style.display = row.dataset.courseName.includes(term) ? '' : 'none';
+            });
+
+            document.querySelectorAll('.mobile-vc-card').forEach(card => {
+                card.style.display = card.dataset.courseName.includes(term) ? '' : 'none';
+            });
+        });
+    }
+
+    document.querySelectorAll('.messages .message').forEach(el => {
+        const type = el.classList.contains('error') ? 'error' : 'success';
+        const text = el.textContent.trim();
+        if (text) { showNotification(text, type); el.style.display='none'; }
+    });
+});
+</script>
+
+{% endblock %}

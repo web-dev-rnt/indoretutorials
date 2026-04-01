@@ -1,0 +1,604 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ bundle.title }} - Bundle Details{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+  <!-- Navigation -->
+  <div class="nav-buttons">
+    <a href="{% url 'bundle_manage' %}" class="btn">
+      <i class="fas fa-arrow-left"></i> Back to Bundles
+    </a>
+    <a href="{% url 'bundle_edit' bundle.pk %}" class="btn btn-primary">
+      <i class="fas fa-edit"></i> Edit Bundle
+    </a>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="h1">{{ bundle.title }}</h1>
+      <p class="page-subtitle">Bundle Details & Information</p>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      {% if bundle.status == 'active' %}
+        <span class="status-badge status-active">
+          <i class="fas fa-check-circle"></i> Active
+        </span>
+      {% else %}
+        <span class="status-badge status-inactive">
+          <i class="fas fa-times-circle"></i> {{ bundle.get_status_display }}
+        </span>
+      {% endif %}
+      {% if bundle.is_free %}
+        <span class="type-badge" style="background: #d1fae5; color: #065f46;">
+          <i class="fas fa-gift"></i> FREE Bundle
+        </span>
+      {% endif %}
+      {% if bundle.is_featured %}
+        <span class="type-badge type-super">
+          <i class="fas fa-star"></i> Featured
+        </span>
+      {% endif %}
+      {% if bundle.is_bestseller %}
+        <span class="type-badge type-staff">
+          <i class="fas fa-fire"></i> Bestseller
+        </span>
+      {% endif %}
+      {% if bundle.is_trending %}
+        <span class="type-badge type-regular">
+          <i class="fas fa-chart-line"></i> Trending
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bundle Information -->
+  <div class="panel">
+    <h2 class="panel-title">Bundle Information</h2>
+    
+    <div class="grid" style="grid-template-columns: 1fr 380px; gap: 24px;">
+      <div style="min-width: 0;">
+        <div class="info-section">
+          <h3 class="info-heading">Description</h3>
+          <p class="info-text">{{ bundle.description }}</p>
+        </div>
+
+        {% if bundle.short_description %}
+        <div class="info-section">
+          <h3 class="info-heading">Short Description</h3>
+          <p class="info-text">{{ bundle.short_description }}</p>
+        </div>
+        {% endif %}
+
+        {% if bundle.features %}
+        <div class="info-section">
+          <h3 class="info-heading">Features & Benefits</h3>
+          <ul class="features-list">
+            {% for feature in bundle.get_features_list %}
+              <li>{{ feature }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <div class="info-section">
+          <h3 class="info-heading">Included Products</h3>
+          
+          {% if bundle.video_courses.all %}
+          <div class="product-group">
+            <h4 class="product-type-heading">
+              <i class="fas fa-video" style="color: #fd7e14;"></i> Video Courses ({{ bundle.video_courses.count }})
+            </h4>
+            <ul class="product-list">
+              {% for course in bundle.video_courses.all %}
+                <li class="product-item">
+                  <i class="fas fa-play-circle" style="color: #fd7e14;"></i> {{ course.name }} - 
+                  <strong>{% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ course.selling_price }}</strong>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          {% if bundle.live_classes.all %}
+          <div class="product-group">
+            <h4 class="product-type-heading">
+              <i class="fas fa-chalkboard-teacher" style="color: #e83e8c;"></i> Live Class Courses ({{ bundle.live_classes.count }})
+            </h4>
+            <ul class="product-list">
+              {% for course in bundle.live_classes.all %}
+                <li class="product-item">
+                  <i class="fas fa-broadcast-tower" style="color: #e83e8c;"></i> {{ course.name }} - 
+                  <strong>{% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ course.current_price }}</strong>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          {% if bundle.test_series.all %}
+          <div class="product-group">
+            <h4 class="product-type-heading">
+              <i class="fas fa-clipboard" style="color: #20c997;"></i> Test Series ({{ bundle.test_series.count }})
+            </h4>
+            <ul class="product-list">
+              {% for test in bundle.test_series.all %}
+                <li class="product-item">
+                  <i class="fas fa-file-alt" style="color: #20c997;"></i> {{ test.title }} - 
+                  {% if test.is_free %}
+                    <strong style="color: #16a34a;">Free</strong>
+                  {% else %}
+                    <strong>{% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ test.price }}</strong>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          {% if bundle.elibrary_courses.all %}
+          <div class="product-group">
+            <h4 class="product-type-heading">
+              <i class="fas fa-book" style="color: #795548;"></i> E-Library Courses ({{ bundle.elibrary_courses.count }})
+            </h4>
+            <ul class="product-list">
+              {% for course in bundle.elibrary_courses.all %}
+                <li class="product-item">
+                  <i class="fas fa-book-open" style="color: #795548;"></i> {{ course.title }} - 
+                  <strong>{% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ course.current_price }}</strong>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="min-width: 0;">
+        {% if bundle.thumbnail %}
+        <div class="sidebar-card">
+          <h3 class="sidebar-heading">Thumbnail</h3>
+          <img src="{{ bundle.thumbnail.url }}" alt="{{ bundle.title }}" class="bundle-image">
+        </div>
+        {% endif %}
+
+        {% if bundle.banner_image %}
+        <div class="sidebar-card">
+          <h3 class="sidebar-heading">Banner Image</h3>
+          <img src="{{ bundle.banner_image.url }}" alt="{{ bundle.title }}" class="bundle-image">
+        </div>
+        {% endif %}
+
+        <div class="sidebar-card">
+          <h3 class="sidebar-heading">
+            <i class="fas fa-tag"></i> Pricing Details
+          </h3>
+          
+          {% if bundle.is_free %}
+            <!-- Free Bundle Display -->
+            <div style="text-align: center; padding: 24px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; margin-bottom: 16px; border: 2px solid #86efac;">
+              <div style="font-size: 56px; color: #16a34a; margin-bottom: 12px; animation: bounce 2s infinite;">
+                <i class="fas fa-gift"></i>
+              </div>
+              <div style="font-size: 36px; font-weight: 900; color: #065f46; margin-bottom: 8px;">
+                100% FREE
+              </div>
+              <div style="font-size: 14px; color: #15803d; font-weight: 600;">
+                <i class="fas fa-check-circle"></i> This bundle is completely free!
+              </div>
+            </div>
+            
+            {% if bundle.calculate_original_price > 0 %}
+            <div class="pricing-detail">
+              <div class="pricing-label">
+                <i class="fas fa-calculator"></i> Calculated Original Value
+              </div>
+              <div class="pricing-value-strike">
+                {% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ bundle.calculate_original_price|floatformat:2 }}
+              </div>
+            </div>
+            <div class="pricing-detail">
+              <div class="pricing-label">
+                <i class="fas fa-tags"></i> Bundle Price
+              </div>
+              <div style="font-size: 28px; font-weight: 900; color: #16a34a;">
+                FREE
+              </div>
+            </div>
+            <div class="savings-info" style="background: #ecfdf5; padding: 14px; border-radius: 8px; border: 1px dashed #86efac;">
+              <div class="pricing-label" style="color: #065f46;">
+                <i class="fas fa-piggy-bank"></i> Total Savings
+              </div>
+              <div class="savings-amount" style="font-size: 24px;">
+                <i class="fas fa-hand-holding-usd"></i> 
+                {% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ bundle.calculate_original_price|floatformat:2 }}
+              </div>
+              <div style="font-size: 12px; color: #15803d; margin-top: 4px; font-weight: 600;">
+                You save 100% on this bundle!
+              </div>
+            </div>
+            {% endif %}
+          {% else %}
+            <!-- Paid Bundle Display -->
+            <div class="pricing-detail">
+              <div class="pricing-label">
+                <i class="fas fa-money-bill-wave"></i> Currency
+              </div>
+              <div class="pricing-value-text">
+                {% if bundle.currency == 'USD' %}
+                  <i class="fas fa-dollar-sign"></i> USD - US Dollar
+                {% elif bundle.currency == 'EUR' %}
+                  <i class="fas fa-euro-sign"></i> EUR - Euro
+                {% elif bundle.currency == 'GBP' %}
+                  <i class="fas fa-pound-sign"></i> GBP - British Pound
+                {% else %}
+                  <i class="fas fa-rupee-sign"></i> INR - Indian Rupee
+                {% endif %}
+              </div>
+            </div>
+            <div class="pricing-detail">
+              <div class="pricing-label">
+                <i class="fas fa-receipt"></i> Original Price
+              </div>
+              <div class="pricing-value-strike">
+                {% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ bundle.original_price }}
+              </div>
+            </div>
+            <div class="pricing-detail">
+              <div class="pricing-label">
+                <i class="fas fa-tags"></i> Bundle Price
+              </div>
+              <div class="pricing-value-main">
+                {% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ bundle.bundle_price }}
+              </div>
+            </div>
+            <div class="discount-badge">
+              <i class="fas fa-percentage"></i> {{ bundle.discount_percentage }}% OFF
+            </div>
+            <div class="savings-info">
+              <div class="pricing-label">
+                <i class="fas fa-piggy-bank"></i> You Save
+              </div>
+              <div class="savings-amount">
+                <i class="fas fa-hand-holding-usd"></i> 
+                {% if bundle.currency == 'USD' %}${% elif bundle.currency == 'EUR' %}€{% elif bundle.currency == 'GBP' %}£{% else %}₹{% endif %}{{ bundle.savings_amount|floatformat:2 }}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="sidebar-card">
+          <h3 class="sidebar-heading">
+            <i class="fas fa-cog"></i> Settings
+          </h3>
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-money-check-alt"></i> Pricing Type:</span>
+            {% if bundle.is_free %}
+              <strong style="color: #16a34a;">
+                <i class="fas fa-gift"></i> FREE
+              </strong>
+            {% else %}
+              <strong style="color: var(--ad-primary);">
+                <i class="fas fa-dollar-sign"></i> PAID
+              </strong>
+            {% endif %}
+          </div>
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-clock"></i> Validity:</span>
+            <strong>{{ bundle.validity_days }} days</strong>
+          </div>
+          {% if bundle.start_date %}
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-calendar-plus"></i> Start Date:</span>
+            <strong>{{ bundle.start_date|date:"M d, Y" }}</strong>
+          </div>
+          {% endif %}
+          {% if bundle.end_date %}
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-calendar-times"></i> End Date:</span>
+            <strong>{{ bundle.end_date|date:"M d, Y" }}</strong>
+          </div>
+          {% endif %}
+          {% if bundle.max_enrollments %}
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-users-cog"></i> Max Enrollments:</span>
+            <strong>{{ bundle.max_enrollments }}</strong>
+          </div>
+          {% else %}
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-users-cog"></i> Max Enrollments:</span>
+            <strong style="color: #16a34a;">Unlimited</strong>
+          </div>
+          {% endif %}
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-folder"></i> Category:</span>
+            <strong>{{ bundle.category.name|default:"None" }}</strong>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-layer-group"></i> Type:</span>
+            <strong>{{ bundle.get_bundle_type_display }}</strong>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label"><i class="fas fa-sort-numeric-down"></i> Display Order:</span>
+            <strong>{{ bundle.display_order }}</strong>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 class="sidebar-heading">
+            <i class="fas fa-chart-bar"></i> Statistics
+          </h3>
+          <div class="stat-item">
+            <div class="stat-icon" style="background: #dbeafe; color: #1e40af;">
+              <i class="fas fa-eye"></i>
+            </div>
+            <div>
+              <div class="stat-label">Total Views</div>
+              <div class="stat-value">{{ bundle.total_views|default:0 }}</div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon" style="background: #dcfce7; color: #16a34a;">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div>
+              <div class="stat-label">Total Purchases</div>
+              <div class="stat-value">{{ bundle.total_purchases|default:0 }}</div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <div class="stat-label">Current Enrollments</div>
+              <div class="stat-value">{{ bundle.current_enrollments|default:0 }}</div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon" style="background: #fce7f3; color: #be185d;">
+              <i class="fas fa-star"></i>
+            </div>
+            <div>
+              <div class="stat-label">Rating</div>
+              <div class="stat-value">{{ bundle.rating|floatformat:2 }} <span style="font-size: 14px; color: var(--ad-muted);">({{ bundle.rating_count }})</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 class="sidebar-heading">
+            <i class="fas fa-info-circle"></i> Metadata
+          </h3>
+          <div class="metadata-item">
+            <span class="metadata-label"><i class="fas fa-user"></i> Created By:</span>
+            <strong>{{ bundle.created_by.get_full_name|default:bundle.created_by.email }}</strong>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label"><i class="fas fa-calendar-plus"></i> Created:</span>
+            <strong>{{ bundle.created_at|date:"M d, Y H:i" }}</strong>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label"><i class="fas fa-calendar-edit"></i> Last Updated:</span>
+            <strong>{{ bundle.updated_at|date:"M d, Y H:i" }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Bundle Detail Page Custom Styles */
+.info-section {
+  margin-bottom: 28px;
+}
+
+.info-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: var(--ad-text);
+}
+
+.info-text {
+  color: #42436b;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 14px;
+}
+
+.features-list {
+  color: var(--ad-muted);
+  line-height: 1.8;
+  padding-left: 20px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.product-group {
+  margin-bottom: 18px;
+}
+
+.product-type-heading {
+  font-size: 14px;
+  color: var(--ad-muted);
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.product-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.product-item {
+  padding: 10px 12px;
+  background: var(--ad-panel-2);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--ad-text);
+}
+
+.sidebar-card {
+  background: var(--ad-panel-2);
+  padding: 18px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  border: 1px solid var(--ad-border);
+}
+
+.sidebar-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 14px 0;
+  color: var(--ad-text);
+}
+
+.bundle-image {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--ad-border);
+  box-shadow: var(--ad-card-shadow);
+  display: block;
+}
+
+.pricing-detail {
+  margin-bottom: 14px;
+}
+
+.pricing-label {
+  font-size: 12px;
+  color: var(--ad-muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.pricing-value-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ad-text);
+}
+
+.pricing-value-strike {
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: line-through;
+  color: var(--ad-muted);
+  margin-top: 4px;
+}
+
+.pricing-value-main {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ad-primary);
+  margin-top: 4px;
+}
+
+.discount-badge {
+  padding: 12px;
+  background: #dcfce7;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 14px;
+  font-weight: 700;
+  color: #16a34a;
+  font-size: 20px;
+}
+
+.savings-info {
+  padding-top: 14px;
+  border-top: 1px solid var(--ad-border);
+}
+
+.savings-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: #16a34a;
+  margin-top: 4px;
+}
+
+.setting-row {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.setting-label {
+  color: var(--ad-muted);
+  flex-shrink: 0;
+}
+
+.metadata-item {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.metadata-label {
+  color: var(--ad-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Statistics Styling */
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--ad-border);
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--ad-muted);
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ad-text);
+}
+
+/* Bounce animation for free bundle icon */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+{% endblock %}

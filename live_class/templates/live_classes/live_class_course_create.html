@@ -1,0 +1,159 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+<div class="wrapper">
+  {% include 'message.html' %}
+  <div class="h1">Create Live Class Course</div>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <div class="form-group mb-3">
+      <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+      {{ form.name }}
+      {% for error in form.name.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group mb-3" style="flex: 1;">
+        <label for="{{ form.language.id_for_label }}">{{ form.language.label }}</label>
+        {{ form.language }}
+        {% for error in form.language.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group mb-3" style="flex: 1; margin-left: 16px;">
+        <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+        {{ form.category }}
+        {% for error in form.category.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-group mb-3">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        {{ form.is_free }}
+        <span style="font-weight: 600;">{{ form.is_free.label }}</span>
+      </label>
+      <small class="form-text text-muted">Check this if the course is completely free. Prices will be ignored.</small>
+      {% for error in form.is_free.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-row" id="pricing-fields">
+      <div class="form-group mb-3" style="flex: 1;">
+        <label for="{{ form.original_price.id_for_label }}">{{ form.original_price.label }}</label>
+        {{ form.original_price }}
+        {% for error in form.original_price.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group mb-3" style="flex: 1; margin-left: 16px;">
+        <label for="{{ form.current_price.id_for_label }}">{{ form.current_price.label }}</label>
+        {{ form.current_price }}
+        {% for error in form.current_price.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group mb-3" style="flex: 1;">
+        <label for="{{ form.banner_image_desktop.id_for_label }}">{{ form.banner_image_desktop.label }}</label>
+        {{ form.banner_image_desktop }}
+        <small class="form-text text-muted">Recommended: 1200x600px</small>
+        {% for error in form.banner_image_desktop.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group mb-3" style="flex: 1; margin-left: 16px;">
+        <label for="{{ form.banner_image_mobile.id_for_label }}">{{ form.banner_image_mobile.label }}</label>
+        {{ form.banner_image_mobile }}
+        <small class="form-text text-muted">Recommended: 800x400px</small>
+        {% for error in form.banner_image_mobile.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group mb-3" style="flex: 1;">
+        <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
+        {{ form.start_date }}
+        {% for error in form.start_date.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group mb-3" style="flex: 1; margin-left: 16px;">
+        <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+        {{ form.end_date }}
+        {% for error in form.end_date.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="{{ form.about.id_for_label }}">{{ form.about.label }}</label>
+      {{ form.about }}
+      {% for error in form.about.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group mb-3">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        {{ form.is_active }}
+        <span>{{ form.is_active.label }}</span>
+      </label>
+      {% for error in form.is_active.errors %}
+        <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <button class="btn btn-primary" type="submit">Create Course</button>
+    <a href="{% url 'liveclass' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+
+<style>
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+  .form-row .form-group {
+    margin-left: 0 !important;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const isFreeCheckbox = document.getElementById('{{ form.is_free.id_for_label }}');
+  const pricingFields = document.getElementById('pricing-fields');
+  
+  function togglePricingFields() {
+    if (isFreeCheckbox.checked) {
+      pricingFields.style.opacity = '0.5';
+      pricingFields.style.pointerEvents = 'none';
+    } else {
+      pricingFields.style.opacity = '1';
+      pricingFields.style.pointerEvents = 'auto';
+    }
+  }
+  
+  isFreeCheckbox.addEventListener('change', togglePricingFields);
+  togglePricingFields(); // Initialize on page load
+});
+</script>
+{% endblock %}

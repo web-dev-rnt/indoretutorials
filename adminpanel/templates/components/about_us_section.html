@@ -1,0 +1,419 @@
+{% if about_us %}
+
+<!-- About Us Section -->
+<div class="aboutus-section">
+  <div class="aboutus-heading">{{ about_us.heading }}</div>
+  <div class="aboutus-flex">
+    <div class="aboutus-info-card">
+      <div class="aboutus-logo-row">
+        {% if about_us.logo %}
+          <img src="{{ about_us.logo.url }}" alt="{{ about_us.company_name }} Logo" class="aboutus-logo">
+        {% else %}
+          <img src="{% load static %}{% static 'img/mainlogo.png' %}" alt="EduGorilla Logo" class="aboutus-logo">
+        {% endif %}
+        <div class="aboutus-company">{{ about_us.company_name }}</div>
+      </div>
+      <div class="aboutus-blurb">
+        {{ about_us.description|linebreaks }}
+      </div>
+      <ul class="aboutus-detail-list">
+        <li>
+          <span class="aboutus-item-icon"><i class="fa-solid fa-location-dot"></i></span>
+          <div>
+            <strong>Address:</strong><br>
+            {{ about_us.address }}
+          </div>
+        </li>
+        <li>
+          <span class="aboutus-item-icon"><i class="fa-solid fa-envelope"></i></span>
+          <div>
+            <strong>Email:</strong>
+            <a href="mailto:{{ about_us.email }}">{{ about_us.email }}</a>
+          </div>
+        </li>
+        <li>
+          <span class="aboutus-item-icon"><i class="fa-solid fa-phone"></i></span>
+          <div>
+            <strong>Phone:</strong> {{ about_us.phone }}
+            {% if about_us.phone_hours %}<span class="aboutus-hours"> {{ about_us.phone_hours }}</span>{% endif %}
+          </div>
+        </li>
+      </ul>
+
+      <div class="aboutus-socials">
+        {% if about_us.facebook_url %}
+          <a href="{{ about_us.facebook_url }}" class="aboutus-social" title="Facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+        {% endif %}
+        {% if about_us.twitter_url %}
+          <a href="{{ about_us.twitter_url }}" class="aboutus-social" title="Twitter" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+        {% endif %}
+        {% if about_us.linkedin_url %}
+          <a href="{{ about_us.linkedin_url }}" class="aboutus-social" title="LinkedIn" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
+        {% endif %}
+        {% if about_us.instagram_url %}
+          <a href="{{ about_us.instagram_url }}" class="aboutus-social" title="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        {% endif %}
+        {% if about_us.telegram_url %}
+          <a href="{{ about_us.telegram_url }}" class="aboutus-social" title="Telegram" target="_blank"><i class="fa-brands fa-telegram"></i></a>
+        {% endif %}
+      </div>
+      
+      <!-- Why Choose Us Section -->
+      {% if why_choose_items %}
+      <div class="aboutus-why">
+        <div class="aboutus-why-title">
+          <i class="fa-regular fa-lightbulb"></i>
+          Why Choose {{ about_us.company_name|default:"EduGorilla" }}?
+        </div>
+        <ul class="aboutus-why-list">
+          {% for item in why_choose_items %}
+            <li><i class="{{ item.icon_class }}"></i> {{ item.description|safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    
+    <div class="aboutus-map-card">
+      {% if about_us.map_embed_url %}
+        <iframe class="aboutus-map"
+          src="{{ about_us.map_embed_url }}"
+          allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      {% endif %}
+      
+      {% if service_items %}
+      <div class="aboutus-services">
+        <div class="aboutus-services-title">
+          <i class="fa-solid fa-graduation-cap"></i>
+          Our Key Services
+        </div>
+        <div class="aboutus-services-list">
+          {% for service in service_items %}
+            <div class="aboutus-service-item">
+              <i class="{{ service.icon_class }}"></i>
+              <div>
+                <div class="service-name">{{ service.service_name }}</div>
+                <div class="service-desc">{{ service.service_description }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+<style>
+/* <!-- About Us  css--> */
+
+.aboutus-section {
+  max-width: 1200px;
+  margin: 60px auto 50px auto;
+  border-radius: 18px;
+  padding: 35px 18px 32px 18px;
+  background: #f7f7fb;
+  box-shadow: 0 4px 24px #e2eaf2;
+}
+
+.aboutus-heading {
+  font-size: 2.13rem;
+  color: #c7212f;
+  font-weight: 900;
+  text-align: left;
+  margin-bottom: 25px;
+  letter-spacing: 0.5px;
+  border-left: 8px solid #c7212f;
+  padding-left: 18px;
+}
+
+.aboutus-flex {
+  display: flex;
+  gap: 38px;
+  align-items: stretch;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.aboutus-info-card,
+.aboutus-map-card {
+  flex: 2;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: #fff;
+  border-radius: 17px;
+  box-shadow: 0px 2px 8px #dbe8f944;
+  min-height: 520px; /* taller for both columns to match with why/services blocks */
+  box-sizing: border-box;
+}
+
+.aboutus-info-card { 
+  padding: 28px 26px 22px 26px; 
+}
+
+.aboutus-map-card { 
+  align-items: center; 
+  justify-content: flex-start; 
+  padding: 10px; 
+}
+
+.aboutus-logo-row {
+  display: flex;
+  align-items: center; /* Changed from flex-end to center */
+  gap: 13px;
+  margin-bottom: 9px;
+}
+
+.aboutus-logo {
+  width: 65px;
+  height: 65px;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px #e9e5f7;
+  background: #fff;
+}
+
+.aboutus-company {
+  font-size: 1.26rem;
+  font-weight: 700;
+  color: #332f54;
+}
+
+.aboutus-blurb {
+  font-size: 1.08em;
+  line-height: 1.48;
+  margin-bottom: 19px;
+  margin-top: 3px;
+  color: #42436b;
+  text-align: left;
+}
+
+.aboutus-detail-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 17px 0;
+}
+
+.aboutus-detail-list li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 9px;
+  gap: 8px;
+  font-size: 1.05em;
+  color: #27304a;
+}
+
+.aboutus-item-icon {
+  color: #c7212f;
+  min-width: 25px;
+  font-size: 1.20em;
+  margin-top: 2px;
+}
+
+.aboutus-detail-list a {
+  color: #225ec7; 
+  text-decoration: none;
+}
+
+.aboutus-hours {
+  color: #884aff;
+  font-size: 0.99em;
+  margin-left: 8px;
+}
+
+.aboutus-socials {
+  margin-top: 9px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.aboutus-social {
+  color: #fff;
+  background: #c7212f;
+  width: 38px; 
+  height: 38px;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  border-radius: 50%;
+  font-size: 1.28rem;
+  text-decoration: none;
+  transition: background .18s, color .14s;
+}
+
+.aboutus-social:hover { 
+  background: #ad1830; 
+  color: #ffd067; 
+}
+
+.aboutus-map {
+  width: 370px;
+  height: 265px;
+  border: 0;
+  border-radius: 15px;
+  max-width: 90vw;
+}
+
+/* Services block under map */
+.aboutus-services {
+  margin-top: 26px;
+  background: #f3f2fa;
+  border-radius: 15px;
+  box-shadow: 0 2px 12px #deecfc22;
+  padding: 20px 15px 13px 15px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.aboutus-services-title {
+  font-size: 1.15em;
+  color: #c7212f;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.aboutus-services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.aboutus-service-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.aboutus-service-item .fa {
+  color: #8246ef;
+  background: #fff;
+  border-radius: 50%;
+  width: 29px;
+  height: 29px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-size: 1.18em;
+  box-shadow: 0 2px 6px #dad6f844;
+  margin-top: 2px;
+}
+
+.service-name {
+  font-weight: 600;
+  color: #313969;
+  margin-bottom: 2px;
+  font-size: 1em;
+}
+
+.service-desc {
+  color: #646fa3;
+  font-size: 0.96em;
+  line-height: 1.39;
+}
+
+/* WHY CHOOSE block for visual symmetry */
+.aboutus-why {
+  margin-top: 30px;
+  background: #f5fafc;
+  border-radius: 15px;
+  box-shadow: 0 1px 7px #e4eafd40;
+  padding: 19px 14px 15px 14px;
+  width: 95%;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+}
+
+.aboutus-why-title {
+  font-size: 1.11em;
+  color: #c7212f;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.aboutus-why-list {
+  list-style: none;
+  margin: 0; 
+  padding: 0;
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px;
+}
+
+.aboutus-why-list li {
+  display: flex; 
+  align-items: center; 
+  gap: 9px;
+  color: #324168;
+  font-size: 1em;
+  line-height: 1.33;
+}
+
+.aboutus-why-list .fa {
+  color: #8246ef;
+  background: #fff;
+  border-radius: 50%;
+  width: 24px; 
+  height: 24px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-size: 1.13em;
+  box-shadow: 0 1px 5px #e6e0fb29;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+  .aboutus-section { 
+    padding: 21px 5vw; 
+  }
+  
+  .aboutus-flex { 
+    flex-direction: column; 
+    gap: 26px; 
+  }
+  
+  .aboutus-map-card { 
+    padding: 0 0 0 0; 
+    min-height: unset; 
+  }
+  
+  .aboutus-map { 
+    width: 100%; 
+    max-width: 97vw; 
+    min-width: 200px; 
+  }
+  
+  .aboutus-services { 
+    max-width: 97vw; 
+  }
+  
+  .aboutus-info-card { 
+    padding: 18px 10px 10px 10px; 
+    min-height: unset; 
+  }
+  
+  .aboutus-heading { 
+    font-size: 1.55rem; 
+    padding-left: 7px; 
+  }
+  
+  .aboutus-why, .aboutus-services { 
+    min-height: unset; 
+  }
+}
+</style>
+{% endif %}

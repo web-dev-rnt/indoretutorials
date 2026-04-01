@@ -1,0 +1,132 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<div class="wrapper">
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{% url 'admindashboard' %}" class="btn btn-primary">
+            <span>🏠</span>
+            <span>Admin Panel</span>
+        </a>
+        <a href="{% url 'coupon_create' %}" class="btn btn-success">
+            <span>➕</span>
+            <span>Create Coupon</span>
+        </a>
+        <a href="{% url 'coupon_analytics' %}" class="btn" style="background:#eef2ff; color: #2d3a66;">
+            <span>📊</span>
+            <span>Analytics</span>
+        </a>
+    </div>
+
+    <div class="h1">Manage Coupons</div>
+    <div class="small">Create, edit, and manage discount coupons for your customers.</div>
+
+    <!-- Search and Filters -->
+    <div class="search-filters">
+        <form method="GET">
+            <div class="filter-row">
+                <div class="form-group">
+                    <label>Search Coupons</label>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search by code or description..." class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
+                        <option value="">All Statuses</option>
+                        {% for key, value in status_choices %}
+                        <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <a href="{% url 'coupon_list' %}" class="btn">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Coupons List -->
+    <div class="coupon-list">
+        {% for coupon in coupons %}
+        <div class="coupon-card">
+            <div class="coupon-header">
+                <div>
+                    <div class="coupon-code">{{ coupon.code }}</div>
+                    <div class="small">{{ coupon.get_discount_display }}</div>
+                </div>
+                <div>
+                    <span class="coupon-status status-{{ coupon.status }}">
+                        {{ coupon.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            
+            {% if coupon.description %}
+            <p class="small">{{ coupon.description }}</p>
+            {% endif %}
+            
+            <div class="coupon-stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ coupon.used_count }}</div>
+                    <div class="stat-label">Used</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ coupon.remaining_uses }}</div>
+                    <div class="stat-label">Remaining</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">₹{{ coupon.minimum_amount }}</div>
+                    <div class="stat-label">Min Order</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ coupon.valid_to|date:"M d" }}</div>
+                    <div class="stat-label">Expires</div>
+                </div>
+            </div>
+            
+            <div class="row-actions" style="margin-top: 15px;">
+                <a href="{% url 'coupon_edit' coupon.pk %}" class="btn btn-primary">
+                    <span>✏️</span> Edit
+                </a>
+                <form method="post" action="{% url 'coupon_delete' coupon.pk %}" style="display: inline;" 
+                      onsubmit="return confirm('Are you sure you want to delete coupon {{ coupon.code }}?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <span>🗑️</span> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="coupon-card" style="text-align: center; padding: 60px;">
+            <h3>No Coupons Found</h3>
+            <p>Create your first coupon to get started.</p>
+            <a href="{% url 'coupon_create' %}" class="btn btn-success">
+                <span>➕</span> Create First Coupon
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if coupons.has_other_pages %}
+    <div style="text-align: center; margin-top: 30px;">
+        <div class="pagination">
+            {% if coupons.has_previous %}
+                <a href="?page={{ coupons.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}" class="btn">Previous</a>
+            {% endif %}
+            
+            <span style="margin: 0 15px;">
+                Page {{ coupons.number }} of {{ coupons.paginator.num_pages }}
+            </span>
+            
+            {% if coupons.has_next %}
+                <a href="?page={{ coupons.next_page_number }}&search={{ search_query }}&status={{ status_filter }}" class="btn">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

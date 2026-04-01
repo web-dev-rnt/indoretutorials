@@ -1,0 +1,166 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-coupon-list { display: none; }
+
+    .mobile-coupon-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .mcc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+
+    .mcc-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .mcc-row:last-child { border-bottom: none; }
+
+    .mcc-label {
+        color: #6b7280;
+        font-weight: 500;
+        white-space: nowrap;
+        min-width: 100px;
+    }
+
+    .mcc-value {
+        color: #1f2937;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    @media (max-width: 768px) {
+        .desktop-coupon-table { display: none; }
+        .mobile-coupon-list   { display: block; }
+    }
+</style>
+
+<div class="wrapper">
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{% url 'coupon_list' %}" class="btn">
+            <span>←</span>
+            <span>Back to Coupons</span>
+        </a>
+    </div>
+
+    <div class="h1">Coupon Analytics</div>
+    <div class="small">Monitor coupon performance and usage statistics.</div>
+
+    <!-- Analytics Cards Grid -->
+    <div class="analytics-grid">
+        <div class="analytics-card">
+            <div class="analytics-icon icon-total">🔑</div>
+            <div class="analytics-value">{{ total_coupons }}</div>
+            <div class="analytics-label">Total Coupons</div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="analytics-icon icon-active">✅</div>
+            <div class="analytics-value">{{ active_coupons }}</div>
+            <div class="analytics-label">Active Coupons</div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="analytics-icon icon-usage">📊</div>
+            <div class="analytics-value">{{ usage_stats.total_usage|default:0 }}</div>
+            <div class="analytics-label">Total Usage</div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="analytics-icon icon-discount">💰</div>
+            <div class="analytics-value">₹{{ usage_stats.total_discount|default:0 }}</div>
+            <div class="analytics-label">Total Discounts</div>
+        </div>
+    </div>
+
+    <!-- Top Performing Coupons -->
+    <div class="panel">
+        <h3 class="panel-title">Top Performing Coupons</h3>
+
+        {% if top_coupons %}
+
+            <!-- Desktop table -->
+            <div class="table-container desktop-coupon-table">
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Coupon Code</th>
+                            <th>Usage Count</th>
+                            <th>Total Discount</th>
+                            <th>Status</th>
+                            <th>Valid Until</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for coupon in top_coupons %}
+                        <tr>
+                            <td><span class="coupon-code">{{ coupon.code }}</span></td>
+                            <td>{{ coupon.usage_count }}</td>
+                            <td>₹{{ coupon.total_discount|default:0 }}</td>
+                            <td>
+                                <span class="status-badge status-{{ coupon.status }}">
+                                    {{ coupon.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ coupon.valid_to|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile cards -->
+            <div class="mobile-coupon-list">
+                {% for coupon in top_coupons %}
+                <div class="mobile-coupon-card">
+                    <div class="mcc-header">
+                        <span class="coupon-code">{{ coupon.code }}</span>
+                        <span class="status-badge status-{{ coupon.status }}">
+                            {{ coupon.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="mcc-row">
+                        <span class="mcc-label">Usage Count</span>
+                        <span class="mcc-value">{{ coupon.usage_count }}</span>
+                    </div>
+                    <div class="mcc-row">
+                        <span class="mcc-label">Total Discount</span>
+                        <span class="mcc-value">₹{{ coupon.total_discount|default:0 }}</span>
+                    </div>
+                    <div class="mcc-row">
+                        <span class="mcc-label">Valid Until</span>
+                        <span class="mcc-value">{{ coupon.valid_to|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+        <div class="empty-state">
+            <h3>No Data Available</h3>
+            <p>Create some coupons to see analytics here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ test.title }} - Take Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-info h2 { margin-bottom: 5px; }
+        .test-timer { 
+            background: rgba(255,255,255,0.2); 
+            padding: 15px 25px; 
+            border-radius: 25px; 
+            font-size: 18px; 
+            font-weight: bold;
+        }
+        
+        .time-warning {
+            background: rgba(244, 67, 54, 0.3) !important;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .test-container {
+            margin-top: 100px;
+            padding: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .question-number {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .question-marks {
+            background: #fff3e0;
+            color: #f57c00;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .question-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        
+        .options-container {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .option:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .option input[type="radio"], .option input[type="checkbox"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+        
+        .option.selected {
+            background: #e8f5e8;
+            border-color: #4caf50;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .nav-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .prev-btn {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        .prev-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .next-btn, .submit-btn {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(45deg, #ff5722, #e64a19);
+        }
+        
+        .progress-bar {
+            background: #f0f0f0;
+            height: 6px;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .text-answer {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        
+        .text-answer:focus {
+            border-color: #4caf50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Test Header -->
+    <div class="test-header">
+        <div class="test-info">
+            <h2>{{ test.title }}</h2>
+            <p>Question <span id="current-question">1</span> of {{ questions|length }}</p>
+        </div>
+        <div class="test-timer" id="timer">
+            <i class="fa fa-clock"></i> <span id="time-display">{{ test.duration_minutes }}:00</span>
+        </div>
+    </div>
+
+    <!-- Test Container -->
+    <div class="test-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+
+        <form id="test-form" method="POST" action="{% url 'front_exam_submit' attempt_id=attempt.id %}">
+            {% csrf_token %}
+            
+            {% for question in questions %}
+            <div class="question-card" id="question-{{ forloop.counter }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                <div class="question-header">
+                    <div class="question-number">{{ forloop.counter }}</div>
+                    <div class="question-marks">{{ question.marks }} Mark{{ question.marks|pluralize }}</div>
+                </div>
+                
+                <div class="question-text">
+                    {{ question.question_text|linebreaksbr }}
+                    {% if question.question_image %}
+                        <img src="{{ question.question_image.url }}" alt="Question Image" style="max-width: 100%; margin-top: 15px; border-radius: 8px;">
+                    {% endif %}
+                </div>
+                
+                <div class="options-container">
+                    {% if question.question_type == 'mcq_single' %}
+                        {% for key, option in question.options.items %}
+                        <label class="option" onclick="selectOption(this)">
+                            <input type="radio" name="question_{{ question.id }}" value="{{ key }}">
+                            <span><strong>{{ key|upper }}.</strong> {{ option }}</span>
+                        </label>
+                        {% endfor %}
+                    {% elif question.question_type == 'mcq_multiple' %}
+                        {% for key, option in question.options.items %}
+                        <label class="option" onclick="selectMultipleOption(this)">
+                            <input type="checkbox" name="question_{{ question.id }}" value="{{ key }}">
+                            <span><strong>{{ key|upper }}.</strong> {{ option }}</span>
+                        </label>
+                        {% endfor %}
+                    {% elif question.question_type == 'true_false' %}
+                        <label class="option" onclick="selectOption(this)">
+                            <input type="radio" name="question_{{ question.id }}" value="a">
+                            <span><strong>A.</strong> True</span>
+                        </label>
+                        <label class="option" onclick="selectOption(this)">
+                            <input type="radio" name="question_{{ question.id }}" value="b">
+                            <span><strong>B.</strong> False</span>
+                        </label>
+                    {% elif question.question_type in 'fill_blank,numerical' %}
+                        <input type="text" name="question_{{ question.id }}" placeholder="Enter your answer" class="text-answer">
+                    {% endif %}
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button type="button" class="nav-btn prev-btn" onclick="previousQuestion()" id="prev-btn-{{ forloop.counter }}" {% if forloop.first %}disabled{% endif %}>
+                        <i class="fa fa-arrow-left"></i> Previous
+                    </button>
+                    
+                    {% if forloop.last %}
+                        <button type="button" class="nav-btn submit-btn" onclick="confirmSubmit()">
+                            <i class="fa fa-check"></i> Submit Test
+                        </button>
+                    {% else %}
+                        <button type="button" class="nav-btn next-btn" onclick="nextQuestion()">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        const totalQuestions = {{ questions|length }};
+        let timeRemaining = {{ time_remaining }}; // in seconds
+        let timerInterval;
+
+        // Timer function
+        function updateTimer() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const display = document.getElementById('time-display');
+            display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Warning for last 5 minutes
+            if (timeRemaining <= 300 && timeRemaining > 0) {
+                document.getElementById('timer').classList.add('time-warning');
+            }
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                alert('Time is up! The test will be submitted automatically.');
+                document.getElementById('test-form').submit();
+                return;
+            }
+            
+            timeRemaining--;
+        }
+
+        // Start timer
+        if (timeRemaining > 0) {
+            updateTimer(); // Initial call
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Navigation functions
+        function nextQuestion() {
+            if (currentQuestion < totalQuestions) {
+                document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+                currentQuestion++;
+                document.getElementById(`question-${currentQuestion}`).style.display = 'block';
+                updateProgress();
+                updateQuestionDisplay();
+                updatePrevButton();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 1) {
+                document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+                currentQuestion--;
+                document.getElementById(`question-${currentQuestion}`).style.display = 'block';
+                updateProgress();
+                updateQuestionDisplay();
+                updatePrevButton();
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+        }
+
+        function updateQuestionDisplay() {
+            document.getElementById('current-question').textContent = currentQuestion;
+        }
+
+        function updatePrevButton() {
+            const prevBtn = document.getElementById(`prev-btn-${currentQuestion}`);
+            if (prevBtn) {
+                prevBtn.disabled = currentQuestion === 1;
+            }
+        }
+
+        function selectOption(optionElement) {
+            // Remove selected class from siblings
+            const siblings = optionElement.parentNode.querySelectorAll('.option');
+            siblings.forEach(sibling => sibling.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            optionElement.classList.add('selected');
+            
+            // Check the radio button
+            const radio = optionElement.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        }
+
+        function selectMultipleOption(optionElement) {
+            // Toggle selected class for multiple choice
+            optionElement.classList.toggle('selected');
+            
+            // Toggle checkbox
+            const checkbox = optionElement.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.checked = !checkbox.checked;
+        }
+
+        function confirmSubmit() {
+            if (confirm('Are you sure you want to submit the test? You cannot change your answers after submission.')) {
+                // Disable submit to prevent double submission
+                event.target.disabled = true;
+                event.target.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Submitting...';
+                document.getElementById('test-form').submit();
+            }
+        }
+
+        // Prevent accidental page refresh
+        window.addEventListener('beforeunload', function(e) {
+            if (timeRemaining > 0) {
+                e.preventDefault();
+                e.returnValue = 'Are you sure you want to leave? Your test progress may be lost.';
+            }
+        });
+
+        // Auto-save answers periodically (optional enhancement)
+        function autoSave() {
+            // You can implement auto-save functionality here if needed
+            console.log('Auto-save feature can be implemented here');
+        }
+
+        // Save every 30 seconds
+        // setInterval(autoSave, 30000);
+    </script>
+</body>
+</html>

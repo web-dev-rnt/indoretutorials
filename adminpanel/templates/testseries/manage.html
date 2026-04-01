@@ -1,0 +1,315 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Manage Test Series{% endblock %}
+
+{% block content %}
+{% include 'message.html' %}
+
+<style>
+    /* ── Mobile cards — hidden by default ── */
+    .mobile-testseries-list { display: none; }
+
+    .mobile-ts-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    .mts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+
+    .mts-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: #1f2937;
+        flex: 1;
+    }
+
+    .mts-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .mts-row:last-child { border-bottom: none; }
+    .mts-label { color: #6b7280; font-weight: 500; white-space: nowrap; min-width: 90px; }
+    .mts-value { color: #1f2937; text-align: right; word-break: break-word; }
+
+    .mts-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+        flex-wrap: wrap;
+    }
+
+    .mts-actions .btn {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        padding: 6px 8px;
+        min-width: 60px;
+    }
+
+    @media (max-width: 768px) {
+        .desktop-ts-table  { display: none; }
+        .mobile-testseries-list { display: block; }
+
+        /* Stack filters */
+        .admin-filters form {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        .admin-filter-input,
+        .admin-filter-select { width: 100%; }
+
+        /* Pagination wrap */
+        .pagination-row { flex-wrap: wrap; justify-content: center; }
+    }
+</style>
+
+<div class="wrapper">
+    <h1 class="h1">Test Series Management</h1>
+    <p class="small">Create and manage all test series courses</p>
+
+    <div class="nav-buttons">
+        <a href="{% url 'test_series_create' %}" class="btn btn-primary">➕ Add Test Series</a>
+    </div>
+
+    <div class="panel">
+        <div class="admin-card-hd">
+            <h3>All Test Series</h3>
+            <div class="admin-filters">
+                <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <input type="text" name="search" class="admin-filter-input" placeholder="Search test series..." value="{{ search_query }}">
+                    <select name="category" class="admin-filter-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="admin-filter-btn">Filter</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="admin-card-bd">
+            {% if page_obj %}
+
+                <!-- Desktop table -->
+                <div class="desktop-ts-table">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Tests</th>
+                                <th>Questions</th>
+                                <th>Total Marks</th>
+                                <th>Difficulty</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for series in page_obj %}
+                            <tr>
+                                <td>
+                                    <strong>{{ series.title }}</strong>
+                                    {% if series.is_featured %}
+                                        <span style="background:#f59e0b;color:white;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:8px;">FEATURED</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ series.category.name }}</td>
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:5px;">
+                                        <span style="background:#3b82f6;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">{{ series.total_tests }}</span>
+                                        {% if series.total_tests > 0 %}<span style="color:#16a34a;">✓</span>{% else %}<span style="color:#dc2626;">⚠</span>{% endif %}
+                                    </div>
+                                </td>
+                                <td><span style="background:#8b5cf6;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">{{ series.total_questions }}</span></td>
+                                <td><span style="font-weight:600;color:#059669;">{{ series.total_marks }}</span></td>
+                                <td>
+                                    <span style="background:{% if series.difficulty == 'easy' %}#10b981{% elif series.difficulty == 'medium' %}#f59e0b{% else %}#dc2626{% endif %};color:white;padding:2px 6px;border-radius:4px;font-size:10px;">
+                                        {{ series.get_difficulty_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if series.is_free %}<span style="color:#10b981;font-weight:600;">FREE</span>{% else %}₹{{ series.price }}{% endif %}
+                                </td>
+                                <td>
+                                    {% if series.is_active %}<span style="color:#10b981;">Active</span>{% else %}<span style="color:#dc2626;">Inactive</span>{% endif %}
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                                        <a href="{% url 'test_series_detail' pk=series.pk %}" class="btn" style="padding:4px 8px;font-size:12px;background:#3b82f6;color:white;">📋 View</a>
+                                        <a href="{% url 'test_series_edit' pk=series.pk %}" class="btn" style="padding:4px 8px;font-size:12px;">✏️ Edit</a>
+                                        <a href="{% url 'test_create' series_pk=series.pk %}" class="btn btn-primary" style="padding:4px 8px;font-size:12px;">➕ Add Test</a>
+                                        <button type="button" class="btn" style="padding:4px 8px;font-size:12px;background:#dc2626;color:white;border:none;cursor:pointer;border-radius:4px;"
+                                                onclick="openDeleteModal('{% url 'test_series_delete' pk=series.pk %}','{{ series.title|escapejs }}','{{ series.total_tests }}','{{ series.total_questions }}')">🗑️ Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile cards -->
+                <div class="mobile-testseries-list">
+                    {% for series in page_obj %}
+                    <div class="mobile-ts-card">
+
+                        <div class="mts-header">
+                            <div class="mts-title">
+                                {{ series.title }}
+                                {% if series.is_featured %}
+                                    <span style="background:#f59e0b;color:white;padding:2px 5px;border-radius:4px;font-size:10px;margin-left:6px;">FEATURED</span>
+                                {% endif %}
+                            </div>
+                            {% if series.is_active %}
+                                <span style="color:#10b981;font-size:12px;white-space:nowrap;">● Active</span>
+                            {% else %}
+                                <span style="color:#dc2626;font-size:12px;white-space:nowrap;">● Inactive</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="mts-row">
+                            <span class="mts-label">Category</span>
+                            <span class="mts-value">{{ series.category.name }}</span>
+                        </div>
+                        <div class="mts-row">
+                            <span class="mts-label">Tests</span>
+                            <span class="mts-value">
+                                <span style="background:#3b82f6;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">{{ series.total_tests }}</span>
+                                {% if series.total_tests > 0 %}<span style="color:#16a34a;margin-left:4px;">✓</span>{% else %}<span style="color:#dc2626;margin-left:4px;">⚠</span>{% endif %}
+                            </span>
+                        </div>
+                        <div class="mts-row">
+                            <span class="mts-label">Questions</span>
+                            <span class="mts-value"><span style="background:#8b5cf6;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">{{ series.total_questions }}</span></span>
+                        </div>
+                        <div class="mts-row">
+                            <span class="mts-label">Total Marks</span>
+                            <span class="mts-value" style="color:#059669;font-weight:600;">{{ series.total_marks }}</span>
+                        </div>
+                        <div class="mts-row">
+                            <span class="mts-label">Difficulty</span>
+                            <span class="mts-value">
+                                <span style="background:{% if series.difficulty == 'easy' %}#10b981{% elif series.difficulty == 'medium' %}#f59e0b{% else %}#dc2626{% endif %};color:white;padding:2px 6px;border-radius:4px;font-size:11px;">
+                                    {{ series.get_difficulty_display }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="mts-row">
+                            <span class="mts-label">Price</span>
+                            <span class="mts-value">
+                                {% if series.is_free %}<span style="color:#10b981;font-weight:600;">FREE</span>{% else %}₹{{ series.price }}{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="mts-actions">
+                            <a href="{% url 'test_series_detail' pk=series.pk %}" class="btn" style="background:#3b82f6;color:white;">📋 View</a>
+                            <a href="{% url 'test_series_edit' pk=series.pk %}" class="btn">✏️ Edit</a>
+                            <a href="{% url 'test_create' series_pk=series.pk %}" class="btn btn-primary">➕ Add Test</a>
+                            <button type="button" class="btn" style="background:#dc2626;color:white;border:none;cursor:pointer;"
+                                    onclick="openDeleteModal('{% url 'test_series_delete' pk=series.pk %}','{{ series.title|escapejs }}','{{ series.total_tests }}','{{ series.total_questions }}')">🗑️ Delete</button>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div style="margin-top:20px;text-align:center;">
+                    <div class="pagination-row" style="display:inline-flex;gap:8px;">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category_filter }}" class="btn">Previous</a>
+                        {% endif %}
+                        <span style="padding:8px 12px;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category_filter }}" class="btn">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div style="text-align:center;padding:40px;">
+                    <p>No test series found.</p>
+                    <a href="{% url 'test_series_create' %}" class="btn btn-primary">Create First Test Series</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
+    <div style="background:white;border-radius:12px;padding:30px;max-width:450px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:modalSlideIn 0.3s ease;">
+        <div style="text-align:center;margin-bottom:20px;">
+            <div style="width:60px;height:60px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;">
+                <span style="font-size:28px;">⚠️</span>
+            </div>
+            <h3 style="margin:0 0 8px;color:#1f2937;font-size:20px;">Delete Test Series</h3>
+            <p style="margin:0;color:#6b7280;font-size:14px;">This action cannot be undone.</p>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;margin-bottom:20px;">
+            <p style="margin:0 0 8px;font-weight:600;color:#dc2626;font-size:14px;">You are about to delete:</p>
+            <p style="margin:0 0 5px;color:#1f2937;font-weight:600;" id="deleteSeriesTitle"></p>
+            <p style="margin:0;color:#6b7280;font-size:13px;" id="deleteSeriesInfo"></p>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" onclick="closeDeleteModal()" style="padding:10px 20px;border:1px solid #d1d5db;background:white;border-radius:8px;cursor:pointer;font-size:14px;color:#374151;font-weight:500;">Cancel</button>
+            <form id="deleteForm" method="POST" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" style="padding:10px 20px;background:#dc2626;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;">🗑️ Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes modalSlideIn {
+    from { opacity:0; transform:translateY(-20px) scale(0.95); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
+</style>
+
+<script>
+function openDeleteModal(deleteUrl, seriesTitle, totalTests, totalQuestions) {
+    document.getElementById('deleteSeriesTitle').textContent = seriesTitle;
+    document.getElementById('deleteSeriesInfo').textContent = totalTests + ' test(s) and ' + totalQuestions + ' question(s) will also be deleted.';
+    document.getElementById('deleteForm').action = deleteUrl;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+document.getElementById('deleteModal').addEventListener('click', function (e) {
+    if (e.target === this) closeDeleteModal();
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDeleteModal();
+});
+</script>
+{% endblock %}

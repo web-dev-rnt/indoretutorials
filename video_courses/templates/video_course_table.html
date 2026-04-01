@@ -1,0 +1,54 @@
+<!-- Courses table -->
+  <div class="panel">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thumbnail</th>
+            <th>Course</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Rating</th>
+            <th>Updated</th>
+            <th style="width:180px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in courses %}
+            <tr>
+              <td>
+                {% if c.thumbnail %}
+                  <img class="thumb" src="{{ c.thumbnail.url }}" alt="{{ c.name }}">
+                {% else %}
+                  <span class="small">No image</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ c.name }}</strong>
+                <div class="small" style="margin-top:2px;">{{ c.videos.count }} videos · {{ c.total_hours }}h</div>
+              </td>
+              <td>{% if c.category %}<span class="badge">{{ c.category.name }}</span>{% else %}<span class="small">—</span>{% endif %}</td>
+              <td>₹{{ c.selling_price }} <span class="small" style="text-decoration:line-through; color:#98a2b3;">₹{{ c.original_price }}</span></td>
+              <td>★ {{ c.rating }} <span class="small">({{ c.rating_count }})</span></td>
+              <td class="small">{{ c.updated_at|date:"Y-m-d H:i" }}</td>
+              <td>
+                <div class="row-actions">
+                  
+              <a class="link-btn" href="{% url 'video_course_edit' c.pk %}">Edit</a>
+
+                  <form class="inline-form" method="post" action="{% url 'video_course_delete' c.pk %}" onsubmit="return confirm('Delete this course?');">
+                    {% csrf_token %}
+                    <button type="submit" class="danger">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="small">No courses yet. Create your first course above.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
