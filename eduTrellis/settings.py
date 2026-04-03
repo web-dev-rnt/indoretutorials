@@ -183,6 +183,7 @@ SECURE_REFERRER_POLICY = 'same-origin'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://www.thevedaeducation.info",
     "https://ganeshsirclasses.online",
     "https://www.ganeshsirclasses.online",
     "https://web-production-ab46.up.railway.app",
