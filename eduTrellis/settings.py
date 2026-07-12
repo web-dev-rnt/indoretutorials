@@ -75,6 +75,7 @@ TEMPLATES = [
                 # Custom context processors
                 "adminpanel.context_processors.navbar_settings",
                 "adminpanel.context_processors.footer_settings",
+                "adminpanel.context_processors.site_contact",
                 "video_courses.context_processors.categories_context",
             ],
             "loaders": [
@@ -100,7 +101,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-        'CONN_MAX_AGE': 600,  # Keep DB connections alive for 10 minutes
+        'CONN_MAX_AGE': 600,
         'OPTIONS': {
             'timeout': 20,
         },
@@ -115,7 +116,7 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "edutrellis-cache",
-        "TIMEOUT": 300,  # 5 minutes default
+        "TIMEOUT": 300,
         "OPTIONS": {
             "MAX_ENTRIES": 1000,
         },
@@ -158,7 +159,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # WhiteNoise: serve compressed static files with aggressive browser caching (1 year)
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_MAX_AGE = 31536000  # 1 year cache for hashed static files
+WHITENOISE_MAX_AGE = 31536000
 WHITENOISE_ALLOW_ALL_ORIGINS = True
 
 # --------------------
@@ -178,12 +179,10 @@ SECURE_SSL_REDIRECT = not DEBUG
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-# Trust Railway/Heroku reverse proxy HTTPS header
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
-# Limit upload size to 10 MB to prevent memory exhaustion
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
 
 # --------------------
@@ -247,7 +246,6 @@ DROPBOX_REFRESH_TOKEN = "Si57f7yXuB0AAAAAAAAAAZGrsYbd1YLQpvGHxlJES4DRvKr7mDfZo8x
 
 # --------------------
 # LOGGING
-# Suppress noisy DEBUG logs in production; capture WARNING+ to console
 # --------------------
 LOGGING = {
     "version": 1,
@@ -280,7 +278,7 @@ LOGGING = {
         },
         "django.db.backends": {
             "handlers": ["console"],
-            "level": "WARNING",  # Set to DEBUG locally to log SQL queries
+            "level": "WARNING",
             "propagate": False,
         },
         "base": {
