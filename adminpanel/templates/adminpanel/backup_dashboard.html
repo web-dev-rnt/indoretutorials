@@ -1,0 +1,133 @@
+{% extends 'admin_dashboard.html' %}
+{% load static %}
+
+{% block title %}Backup Management - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-content-header">
+  <h1><i class="fas fa-database" style="color: #6c757d;"></i> Backup Management</h1>
+  <p class="text-muted">Manage Dropbox database backups for EduTrellis</p>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Stats Row -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body text-center">
+        <i class="fas fa-hdd fa-2x mb-2" style="color: #007bff;"></i>
+        <h4 class="mb-0">{{ total_backups }}</h4>
+        <small class="text-muted">Total Backups</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body text-center">
+        <i class="fas fa-folder fa-2x mb-2" style="color: #28a745;"></i>
+        <h4 class="mb-0" style="font-size:1rem;">{{ backup_folder }}</h4>
+        <small class="text-muted">Dropbox Folder</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body text-center">
+        <form method="post" action="{% url 'backup_now' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary w-100"
+                  onclick="return confirm('Create a new backup now?');">
+            <i class="fas fa-plus-circle"></i> Backup Now
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dropbox Error -->
+{% if dropbox_error %}
+  <div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <strong>Dropbox Error:</strong> {{ dropbox_error }}
+  </div>
+{% endif %}
+
+<!-- Backup List -->
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white">
+    <h5 class="mb-0"><i class="fas fa-list" style="color:#007bff;"></i> Available Backups</h5>
+  </div>
+  <div class="card-body p-0">
+    {% if backups %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Filename</th>
+              <th>Size</th>
+              <th>Date Modified</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for backup in backups %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><i class="fas fa-file-archive text-muted me-1"></i>{{ backup.name }}</td>
+              <td>{{ backup.size|filesizeformat }}</td>
+              <td>{{ backup.modified|date:"d M Y, h:i A" }}</td>
+              <td class="text-center">
+                <!-- Download -->
+                <a href="{% url 'backup_download' backup.name %}"
+                   class="btn btn-sm btn-outline-primary me-1" title="Download">
+                  <i class="fas fa-download"></i>
+                </a>
+                <!-- Restore -->
+                <form method="post" action="{% url 'backup_restore' %}" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="filename" value="{{ backup.name }}">
+                  <button type="submit" class="btn btn-sm btn-outline-warning me-1" title="Restore"
+                          onclick="return confirm('Restore from {{ backup.name }}? Current data will be overwritten.');">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </form>
+                <!-- Delete -->
+                <form method="post" action="{% url 'backup_delete' %}" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="filename" value="{{ backup.name }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
+                          onclick="return confirm('Delete {{ backup.name }}? This cannot be undone.');">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No backups found in Dropbox.</p>
+        <form method="post" action="{% url 'backup_now' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Create First Backup
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

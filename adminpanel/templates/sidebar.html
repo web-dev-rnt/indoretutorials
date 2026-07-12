@@ -66,28 +66,22 @@
       </a>
     </div>
       
-<!-- E-Library -->
-<a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'elibrary_manage,elibrary_course_create,elibrary_course_detail,elibrary_course_edit,elibrary_course_delete,elibrary_toggle_course_status,elibrary_pdf_upload_multiple,elibrary_pdf_delete' %}admin-open{% endif %}">
-  <span class="admin-ico"><i class="fas fa-book" style="color: #795548;"></i></span><span>E-Library</span>
-</a>
-
-<div class="admin-submenu" {% if request.resolver_match.url_name in 'elibrary_manage,elibrary_course_create,elibrary_course_detail,elibrary_course_edit,elibrary_course_delete,elibrary_toggle_course_status,elibrary_pdf_upload_multiple,elibrary_pdf_delete' %}style="display:flex;"{% endif %}>
-
-  <!-- Manage Courses -->
-  <a href="{% url 'elibrary_manage' %}" 
-     class="{% if request.resolver_match.url_name in 'elibrary_manage,elibrary_course_detail,elibrary_course_edit,elibrary_course_delete,elibrary_toggle_course_status,elibrary_pdf_upload_multiple,elibrary_pdf_delete' %}admin-active{% endif %}">
-    <span class="admin-ico"><i class="fas fa-list" style="color: #007bff;"></i></span>
-    Manage Courses
-  </a>
-
-  <!-- Create Course -->
-  <a href="{% url 'elibrary_course_create' %}" 
-     class="{% if request.resolver_match.url_name == 'elibrary_course_create' %}admin-active{% endif %}">
-    <span class="admin-ico"><i class="fas fa-plus" style="color: #28a745;"></i></span>
-    Create Course
-  </a>
-
-</div>
+    <!-- E-Library -->
+    <a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'elibrary_manage,elibrary_course_create,elibrary_course_detail,elibrary_course_edit,elibrary_course_delete,elibrary_toggle_course_status,elibrary_pdf_upload_multiple,elibrary_pdf_delete' %}admin-open{% endif %}">
+      <span class="admin-ico"><i class="fas fa-book" style="color: #795548;"></i></span><span>E-Library</span>
+    </a>
+    <div class="admin-submenu" {% if request.resolver_match.url_name in 'elibrary_manage,elibrary_course_create,elibrary_course_detail,elibrary_course_edit,elibrary_course_delete,elibrary_toggle_course_status,elibrary_pdf_upload_multiple,elibrary_pdf_delete' %}style="display:flex;"{% endif %}>
+      <a href="{% url 'elibrary_manage' %}" 
+         class="{% if request.resolver_match.url_name in 'elibrary_manage,elibrary_course_detail,elibrary_course_edit,elibrary_course_delete,elibrary_toggle_course_status,elibrary_pdf_upload_multiple,elibrary_pdf_delete' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-list" style="color: #007bff;"></i></span>
+        Manage Courses
+      </a>
+      <a href="{% url 'elibrary_course_create' %}" 
+         class="{% if request.resolver_match.url_name == 'elibrary_course_create' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-plus" style="color: #28a745;"></i></span>
+        Create Course
+      </a>
+    </div>
 
     <!-- Product Bundling -->
     <a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'bundle_manage,bundle_create,bundle_edit,bundle_detail,bundle_delete,bundle_toggle_status,bundle_toggle_featured,bundle_enrollments,bundle_analytics' %}admin-open{% endif %}">
@@ -102,25 +96,23 @@
       </a>
     </div>
 
-<!-- Manage Categories -->
-<a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'manage_categories,create_category,edit_category,delete_category' %}admin-open{% endif %}">
-  <span class="admin-ico"><i class="fas fa-folder" style="color: #ffc107;"></i></span><span>Manage Categories</span>
-</a>
-<div class="admin-submenu" {% if request.resolver_match.url_name in 'manage_categories,create_category,edit_category,delete_category' %}style="display:flex;"{% endif %}>
-  
-  <a href="{% url 'manage_categories' %}" 
-     class="{% if request.resolver_match.url_name in 'manage_categories,edit_category,delete_category' %}admin-active{% endif %}">
-    <span class="admin-ico"><i class="fas fa-list" style="color: #007bff;"></i></span>
-    Manage Categories
-  </a>
+    <!-- Manage Categories -->
+    <a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'manage_categories,create_category,edit_category,delete_category' %}admin-open{% endif %}">
+      <span class="admin-ico"><i class="fas fa-folder" style="color: #ffc107;"></i></span><span>Manage Categories</span>
+    </a>
+    <div class="admin-submenu" {% if request.resolver_match.url_name in 'manage_categories,create_category,edit_category,delete_category' %}style="display:flex;"{% endif %}>
+      <a href="{% url 'manage_categories' %}" 
+         class="{% if request.resolver_match.url_name in 'manage_categories,edit_category,delete_category' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-list" style="color: #007bff;"></i></span>
+        Manage Categories
+      </a>
+      <a href="{% url 'create_category' %}" 
+         class="{% if request.resolver_match.url_name == 'create_category' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-plus" style="color: #28a745;"></i></span>
+        Create Category
+      </a>
+    </div>
 
-  <a href="{% url 'create_category' %}" 
-     class="{% if request.resolver_match.url_name == 'create_category' %}admin-active{% endif %}">
-    <span class="admin-ico"><i class="fas fa-plus" style="color: #28a745;"></i></span>
-    Create Category
-  </a>
-
-</div>
     <!-- Coupons -->
     <a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'coupon_list,coupon_create,coupon_edit,coupon_analytics' %}admin-open{% endif %}">
       <span class="admin-ico"><i class="fas fa-ticket-alt" style="color: #e91e63;"></i></span><span>Coupons</span>
@@ -185,6 +177,11 @@
     <!-- OTP Configuration -->
     <a href="{% url 'smtp_configuration' %}" class="{% if request.resolver_match.url_name in 'smtp_configuration,smtp_create,smtp_edit,smtp_test,smtp_delete' %}admin-active{% endif %}">
       <span class="admin-ico"><i class="fas fa-envelope" style="color: #ff5722;"></i></span><span>OTP Configuration</span>
+    </a>
+
+    <!-- Backup Management -->
+    <a href="{% url 'backup_dashboard' %}" class="{% if request.resolver_match.url_name in 'backup_dashboard,backup_now,backup_restore,backup_download,backup_delete' %}admin-active{% endif %}">
+      <span class="admin-ico"><i class="fas fa-database" style="color: #6c757d;"></i></span><span>Backup Management</span>
     </a>
 
     <!-- Log Out -->
