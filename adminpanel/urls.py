@@ -1,5 +1,6 @@
-from django.urls import path , include
+from django.urls import path, include
 from adminpanel import views
+from adminpanel import backup_views
 from live_class import views as live_class_views
 from testseries import views as tviews
 
@@ -11,7 +12,7 @@ urlpatterns = [
     path('signups/', views.signup_dashboard, name='signupdashboard'),
     path('payments/', views.payment_dashboard, name='paymentdashboard'),
 
-    # User Management URLs - Put these FIRST before coupon URLs
+    # User Management URLs
     path('user/<int:user_id>/edit/', views.edit_user, name='edit_user'),
     path('user/<int:user_id>/delete/', views.delete_user, name='delete_user'),
     path('user/<int:user_id>/toggle-status/', views.toggle_user_status, name='toggle_user_status'),
@@ -45,7 +46,7 @@ urlpatterns = [
     path('stat-card/delete/<int:pk>/', views.stat_card_delete, name='stat_card_delete'),
     path('stat-card/toggle/<int:pk>/', views.stat_card_toggle_status, name='stat_card_toggle_status'),
 
-   # CTA Section URLs
+    # CTA Section URLs
     path('cta-section/create/', views.cta_section_create, name='cta_section_create'),
     path('cta-section/<int:pk>/edit/', views.cta_section_edit, name='cta_section_edit'),
     path('cta-section/<int:pk>/delete/', views.cta_section_delete, name='cta_section_delete'),
@@ -91,65 +92,64 @@ urlpatterns = [
     path('categories/edit/<int:category_id>/', views.edit_category, name='edit_category'),
     path('categories/delete/<int:category_id>/', views.delete_category, name='delete_category'),
 
-# SMTP Configuration URLs
-path('smtp/', views.smtp_configuration, name='smtp_configuration'),
-path('smtp/create/', views.smtp_create, name='smtp_create'),
-path('smtp/edit/<int:config_id>/', views.smtp_edit, name='smtp_edit'),
-path('smtp/test/<int:config_id>/', views.smtp_test, name='smtp_test'),
-path('smtp/delete/<int:config_id>/', views.smtp_delete, name='smtp_delete'),
+    # SMTP Configuration URLs
+    path('smtp/', views.smtp_configuration, name='smtp_configuration'),
+    path('smtp/create/', views.smtp_create, name='smtp_create'),
+    path('smtp/edit/<int:config_id>/', views.smtp_edit, name='smtp_edit'),
+    path('smtp/test/<int:config_id>/', views.smtp_test, name='smtp_test'),
+    path('smtp/delete/<int:config_id>/', views.smtp_delete, name='smtp_delete'),
 
     # Live Class Management URLs
     path('liveclass/', live_class_views.live_class_course_manage, name='liveclass'),
     path('liveclass/create/', live_class_views.live_class_course_create, name='live_class_course_create'),
     path('liveclass/edit/<int:pk>/', live_class_views.live_class_course_edit, name='live_class_course_edit'),
     path('liveclass/delete/<int:pk>/', live_class_views.live_class_course_delete, name='live_class_course_delete'),
-
     path('liveclass/toggle-status/<int:pk>/', live_class_views.live_class_course_toggle_status, name='live_class_course_toggle_status'),
     path('liveclass/classes/<int:pk>/', live_class_views.live_class_course_classes, name='live_class_course_classes'),
-
     path('liveclass/schedule/add/<int:course_id>/', live_class_views.add_scheduled_class, name='add_scheduled_class'),
     path('liveclass/schedule/delete/<int:session_id>/', live_class_views.live_class_schedule_delete, name='live_class_schedule_delete'),
-    
-    #add user
+
+    # Add user
     path('users/add/', views.add_user, name='admin_add_user'),
-    
-# Test Series URLs - Proper naming
-path('test-series-courses/', tviews.test_series_manage, name='test_series_manage'),
-path('test-series-courses/create/', tviews.test_series_create, name='test_series_create'),
-path('test-series-courses/<int:pk>/', tviews.test_series_detail, name='test_series_detail'),
-path('test-series-courses/<int:pk>/edit/', tviews.test_series_edit, name='test_series_edit'),
-path('test-series-courses/<int:pk>/delete/', tviews.test_series_delete, name='test_series_delete'),
-path('test-series-courses/<int:series_pk>/schedule-test/', tviews.test_create, name='test_create'),
-path('scheduled-tests/<int:pk>/edit/', tviews.test_edit, name='test_edit'),
-path('scheduled-tests/<int:test_pk>/add-question/', tviews.question_create, name='question_create'),
 
+    # Test Series URLs
+    path('test-series-courses/', tviews.test_series_manage, name='test_series_manage'),
+    path('test-series-courses/create/', tviews.test_series_create, name='test_series_create'),
+    path('test-series-courses/<int:pk>/', tviews.test_series_detail, name='test_series_detail'),
+    path('test-series-courses/<int:pk>/edit/', tviews.test_series_edit, name='test_series_edit'),
+    path('test-series-courses/<int:pk>/delete/', tviews.test_series_delete, name='test_series_delete'),
+    path('test-series-courses/<int:series_pk>/schedule-test/', tviews.test_create, name='test_create'),
+    path('scheduled-tests/<int:pk>/edit/', tviews.test_edit, name='test_edit'),
+    path('scheduled-tests/<int:test_pk>/add-question/', tviews.question_create, name='question_create'),
 
-  # Main bundle management
+    # Bundle URLs
     path('bundle_manage/', views.bundle_manage, name='bundle_manage'),
     path('create/', views.bundle_create, name='bundle_create'),
     path('<int:pk>/', views.bundle_detail, name='bundle_detail'),
     path('<int:pk>/edit/', views.bundle_edit, name='bundle_edit'),
     path('<int:pk>/delete/', views.bundle_delete, name='bundle_delete'),
-    
-    # Status toggles
     path('<int:pk>/toggle-status/', views.bundle_toggle_status, name='bundle_toggle_status'),
     path('<int:pk>/toggle-featured/', views.bundle_toggle_featured, name='bundle_toggle_featured'),
-
-    
-    # AJAX endpoints
     path('calculate-price/', views.bundle_calculate_price, name='bundle_calculate_price'),
 
-   # ========================================
-    # DEVELOPER POPUP URLs - NEW
-    # ========================================
+    # Developer Popup URLs
     path('developer-popup/', views.developer_popup_manage, name='developer_popup_manage'),
     path('developer-popup/create/', views.developer_popup_create, name='developer_popup_create'),
     path('developer-popup/edit/<int:pk>/', views.developer_popup_edit, name='developer_popup_edit'),
     path('developer-popup/delete/<int:pk>/', views.developer_popup_delete, name='developer_popup_delete'),
     path('developer-popup/toggle/<int:pk>/', views.developer_popup_toggle_status, name='developer_popup_toggle_status'),
-    
 
+    # Notifications
     path('adminnotifications/', views.notification_manage, name='adminnotifications'),
     path('notifications/create/', views.notification_create, name='notification_create'),
     path('notifications/delete/<int:pk>/', views.notification_delete, name='notification_delete'),
+
+    # ================================================================
+    # DATABASE BACKUP (Superadmin only)
+    # ================================================================
+    path('backup/', backup_views.backup_dashboard, name='backup_dashboard'),
+    path('backup/now/', backup_views.backup_now, name='backup_now'),
+    path('backup/restore/', backup_views.backup_restore, name='backup_restore'),
+    path('backup/download/<str:filename>/', backup_views.backup_download, name='backup_download'),
+    path('backup/delete/', backup_views.backup_delete, name='backup_delete'),
 ]
