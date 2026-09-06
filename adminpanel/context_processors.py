@@ -1,6 +1,7 @@
 # adminpanel/context_processors.py
 from .models import NavbarSettings, FooterSettings, FooterLink, FooterLegalLink
 from video_courses.models import Category
+from django.core.cache import cache
 
 # ── Site-wide contact constants ──────────────────────────────────────────────
 SITE_EMAIL = "support@edutrellis.in"
@@ -41,12 +42,15 @@ def site_contact(request):
 def navbar_settings(request):
     """Make navbar settings available in all templates"""
     try:
-        settings = NavbarSettings.objects.filter(is_active=True).first()
+        settings = cache.get("site-navbar-settings")
+        if settings is None:
+            settings = NavbarSettings.objects.filter(is_active=True).first()
         if not settings:
             settings = NavbarSettings.objects.create(
                 contact_number=SITE_PHONE,
                 contact_type="whatsapp",
             )
+        cache.set("site-navbar-settings", settings, 300)
         return {"navbar_settings": settings}
     except Exception as e:
         import logging
@@ -57,15 +61,25 @@ def navbar_settings(request):
 def footer_settings(request):
     """Make footer settings available in all templates"""
     try:
-        settings = FooterSettings.objects.filter(is_active=True).first()
-        footer_links = FooterLink.objects.filter(is_active=True)
-        footer_legal_links = FooterLegalLink.objects.filter(is_active=True)
+        cached_footer = cache.get("site-footer-settings")
+        if cached_footer is None:
+            settings = FooterSettings.objects.filter(is_active=True).first()
+            footer_links = list(FooterLink.objects.filter(is_active=True))
+            footer_legal_links = list(FooterLegalLink.objects.filter(is_active=True))
+        else:
+            settings, footer_links, footer_legal_links = cached_footer
 
         if not settings:
             settings = FooterSettings.objects.create(
                 email=SITE_EMAIL,
                 copyright_text="Copyright \u00a9 2025 EduTrellis Private Limited. All rights reserved.",
             )
+
+        cache.set(
+            "site-footer-settings",
+            (settings, footer_links, footer_legal_links),
+            300,
+        )
 
         return {
             "footer_settings": settings,

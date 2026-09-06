@@ -6,8 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.mail import send_mail
+from django.contrib.staticfiles import finders
 from django.db import transaction
-from django.db.models import Count, Sum, Prefetch, Q, Avg
+from django.db.models import Count, Sum, Prefetch, Q, Avg, F
+from django.core.exceptions import PermissionDenied
+from django.core import signing
 from django.http import (
     JsonResponse,
     FileResponse,
@@ -54,6 +57,7 @@ from adminpanel.models import (
     Coupon,
     UserCoupon,
     SMTPConfiguration,
+    RazorpayConfiguration,
     Notification as AdminNotification
 )
 
@@ -67,13 +71,32 @@ from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
+
+@require_GET
+@cache_control(private=True, max_age=300)
+def dropbox_file_redirect(request, token):
+    """Resolve a signed storage URL outside the page-rendering request."""
+    try:
+        file_name = signing.loads(token, salt="dropbox-media", max_age=4 * 60 * 60)
+    except signing.BadSignature:
+        raise Http404("File link is invalid or expired")
+
+    from video_courses.dropbox_storage import DropboxStorage
+
+    target_url = DropboxStorage().temporary_url(file_name)
+    if not target_url:
+        raise Http404("File is temporarily unavailable")
+    return redirect(target_url)
+
 @require_GET
 @cache_control(max_age=0, no_cache=True, no_store=True, must_revalidate=True)
 def service_worker(request):
     """Serve the service worker from root URL"""
-    sw_path = os.path.join(settings.BASE_DIR, 'static', 'js', 'serviceworker.js')
+    sw_path = finders.find('serviceworker.js')
     
     try:
+        if not sw_path:
+            raise FileNotFoundError
         with open(sw_path, 'r', encoding='utf-8') as sw_file:
             sw_content = sw_file.read()
             response = HttpResponse(sw_content, content_type='application/javascript; charset=utf-8')
@@ -108,49 +131,13 @@ def manifest(request):
         # Icons - required for PWA
         "icons": [
             {
-                "src": build_icon_url("icon-72x72.png"),
-                "sizes": "72x72",
-                "type": "image/png",
-                "purpose": "any"
-            },
-            {
-                "src": build_icon_url("icon-96x96.png"),
-                "sizes": "96x96",
-                "type": "image/png",
-                "purpose": "any"
-            },
-            {
-                "src": build_icon_url("icon-128x128.png"),
-                "sizes": "128x128",
-                "type": "image/png",
-                "purpose": "any"
-            },
-            {
-                "src": build_icon_url("icon-144x144.png"),
-                "sizes": "144x144",
-                "type": "image/png",
-                "purpose": "any"
-            },
-            {
-                "src": build_icon_url("icon-152x152.png"),
-                "sizes": "152x152",
-                "type": "image/png",
-                "purpose": "any"
-            },
-            {
-                "src": build_icon_url("icon-192x192.png"),
+                "src": build_icon_url("icon-192.png"),
                 "sizes": "192x192",
                 "type": "image/png",
                 "purpose": "any maskable"
             },
             {
-                "src": build_icon_url("icon-384x384.png"),
-                "sizes": "384x384",
-                "type": "image/png",
-                "purpose": "any"
-            },
-            {
-                "src": build_icon_url("icon-512x512.png"),
+                "src": build_icon_url("icon-512.png"),
                 "sizes": "512x512",
                 "type": "image/png",
                 "purpose": "any maskable"
@@ -166,7 +153,7 @@ def manifest(request):
                 "url": "/#video-courses",
                 "icons": [
                     {
-                        "src": build_icon_url("icon-192x192.png"),
+                        "src": build_icon_url("icon-192.png"),
                         "sizes": "192x192",
                         "type": "image/png"
                     }
@@ -179,7 +166,7 @@ def manifest(request):
                 "url": "/#live-classes",
                 "icons": [
                     {
-                        "src": build_icon_url("icon-192x192.png"),
+                        "src": build_icon_url("icon-192.png"),
                         "sizes": "192x192",
                         "type": "image/png"
                     }
@@ -192,7 +179,7 @@ def manifest(request):
                 "url": "/#test-series",
                 "icons": [
                     {
-                        "src": build_icon_url("icon-192x192.png"),
+                        "src": build_icon_url("icon-192.png"),
                         "sizes": "192x192",
                         "type": "image/png"
                     }
@@ -205,29 +192,11 @@ def manifest(request):
                 "url": "/#e-library",
                 "icons": [
                     {
-                        "src": build_icon_url("icon-192x192.png"),
+                        "src": build_icon_url("icon-192.png"),
                         "sizes": "192x192",
                         "type": "image/png"
                     }
                 ]
-            }
-        ],
-        
-        # Screenshots - helps with app store listing (optional but recommended)
-        "screenshots": [
-            {
-                "src": build_icon_url("screenshot-1.png"),
-                "sizes": "540x720",
-                "type": "image/png",
-                "form_factor": "narrow",
-                "label": "Home page showing all courses"
-            },
-            {
-                "src": build_icon_url("screenshot-2.png"),
-                "sizes": "1280x720",
-                "type": "image/png",
-                "form_factor": "wide",
-                "label": "Course detail page"
             }
         ],
         
@@ -571,7 +540,6 @@ def my_purchases(request):
                     })
     
     if test_series_ids:
-        from exam.models import TestSeries
         test_series = TestSeries.objects.filter(id__in=test_series_ids)
         test_series_dict = {ts.id: ts for ts in test_series}
         
@@ -603,7 +571,6 @@ def my_purchases(request):
                     })
     
     if bundle_ids:
-        from bundle.models import ProductBundle
         bundles = ProductBundle.objects.filter(id__in=bundle_ids)
         bundles_dict = {b.id: b for b in bundles}
         
@@ -646,20 +613,11 @@ def home(request):
     now = timezone.now()
     user = request.user
 
-    # ===== Video Courses (ULTRA CLEAN - NO JOINS) ===== 
-    video_course_ids = list(
-        VideoCourse.objects
-        .values_list('id', flat=True)
-        .order_by('-created_at')[:10]
-    )
-    
-    # Remove duplicates at Python level (preserves order)
-    video_course_ids = list(dict.fromkeys(video_course_ids))
-    
+    # Fetch the category in the same query because cards display it.
     video_courses = list(
         VideoCourse.objects
-        .filter(id__in=video_course_ids)
-        .order_by('-created_at')
+        .select_related("category")
+        .order_by('-created_at')[:10]
     )
     
     # Get user's purchased video courses if authenticated
@@ -689,22 +647,22 @@ def home(request):
     
     video_courses = unique_video_courses
 
-    # ===== Live Classes (ULTRA CLEAN - NO PREFETCH) ===== 
-    live_class_ids = list(
-        LiveClassCourse.objects
-        .filter(is_active=True)
-        .values_list('id', flat=True)
-        .order_by('-created_at')[:10]
-    )
-    
-    # Remove duplicates at Python level
-    live_class_ids = list(dict.fromkeys(live_class_ids))
-    
-    # Fetch WITHOUT any prefetch to avoid JOIN duplication
+    upcoming_sessions_query = LiveClassSession.objects.filter(
+        scheduled_datetime__gte=now
+    ).order_by("scheduled_datetime")
+
     live_classes = list(
         LiveClassCourse.objects
-        .filter(id__in=live_class_ids)
-        .order_by('-created_at')
+        .filter(is_active=True)
+        .select_related("category")
+        .prefetch_related(
+            Prefetch(
+                "sessions",
+                queryset=upcoming_sessions_query,
+                to_attr="upcoming_sessions_list",
+            )
+        )
+        .order_by('-created_at')[:10]
     )
     
     # Get user's purchased live classes if authenticated
@@ -728,17 +686,7 @@ def home(request):
         if course.id not in seen_lc_ids:
             seen_lc_ids.add(course.id)
             
-            # Fetch sessions SEPARATELY to avoid JOIN duplication
-            upcoming_sessions = list(
-                LiveClassSession.objects
-                .filter(
-                    course_id=course.id,
-                    scheduled_datetime__gte=now
-                )
-                .order_by('scheduled_datetime')[:2]
-            )
-            
-            course.next_sessions = upcoming_sessions
+            course.next_sessions = course.upcoming_sessions_list[:2]
             
             # Handle pricing display based on is_free field
             if course.is_free:
@@ -768,23 +716,14 @@ def home(request):
     live_classes = unique_live_classes
 
     # ===== Test Series (Keep as is - working correctly) ===== 
-    test_series_ids = list(
-        TestSeries.objects
-        .filter(is_active=True)
-        .values_list('id', flat=True)
-        .distinct()
-        .order_by('-created_at')[:10]
-    )
-    
     test_series = list(
         TestSeries.objects
-        .filter(id__in=test_series_ids)
+        .filter(is_active=True)
         .prefetch_related(
             Prefetch(
                 'tests',
                 queryset=Test.objects
                 .filter(is_active=True)
-                .prefetch_related('questions')
                 .annotate(
                     question_count=Count('questions', distinct=True),
                     total_marks_sum=Sum('questions__marks')
@@ -793,7 +732,7 @@ def home(request):
             )
         )
         .select_related('category')
-        .order_by('-created_at')
+        .order_by('-created_at')[:10]
     )
     
     # Get user's purchased test series if authenticated
@@ -826,21 +765,11 @@ def home(request):
         series.is_purchased = series.id in purchased_test_series_ids
 
         
-    # ===== E-Library Courses (ULTRA CLEAN) ===== 
-    elibrary_ids = list(
-        ELibraryCourse.objects
-        .filter(is_active=True)
-        .values_list('id', flat=True)
-        .order_by('-created_at')[:10]
-    )
-    
-    # Remove duplicates at Python level
-    elibrary_ids = list(dict.fromkeys(elibrary_ids))
-    
     elibrary_courses = list(
         ELibraryCourse.objects
-        .filter(id__in=elibrary_ids)
-        .order_by('-created_at')
+        .filter(is_active=True)
+        .select_related("category")
+        .order_by('-created_at')[:10]
     )
     
     # Get user's purchased elibrary courses if authenticated
@@ -881,24 +810,16 @@ def home(request):
     elibrary_courses = unique_elibrary
     
     # ===== Product Bundles (WITH PURCHASE STATUS) ===== 
-    bundle_ids = list(
-        ProductBundle.objects
-        .filter(status='active')
-        .values_list('id', flat=True)
-        .distinct()
-        .order_by('display_order', '-created_at')[:6]
-    )
-    
     product_bundles = list(
         ProductBundle.objects
-        .filter(id__in=bundle_ids)
+        .filter(status='active')
         .prefetch_related(
             Prefetch('video_courses', to_attr='video_courses_list'),
             Prefetch('live_classes', to_attr='live_classes_list'),
             Prefetch('test_series', to_attr='test_series_list'),
             Prefetch('elibrary_courses', to_attr='elibrary_courses_list')
         )
-        .order_by('display_order', '-created_at')
+        .order_by('display_order', '-created_at')[:6]
     )
     
     # Get user's purchased bundles if authenticated
@@ -2339,14 +2260,6 @@ def my_coupons(request):
     except Exception:
         return JsonResponse({'success': False, 'message': 'Error loading coupons'})
 
-# Categories
-def category_detail(request, slug):
-    """Show a category detail page."""
-    category = get_object_or_404(Category, slug=slug)
-    return render(request, 'category_detail.html', {'category': category})
-
-
-
 # base/views.py or create search/views.py
 def search_suggestions(request):
     """
@@ -2379,7 +2292,7 @@ def search_suggestions(request):
     # Search Video Courses
     video_courses = VideoCourse.objects.filter(
         Q(name__icontains=query) | Q(description__icontains=query)
-    )[:3]
+    ).select_related("category")[:3]
     
     for course in video_courses:
         suggestions.append({
@@ -2395,7 +2308,7 @@ def search_suggestions(request):
     live_courses = LiveClassCourse.objects.filter(
         Q(name__icontains=query) | Q(about__icontains=query),
         is_active=True
-    )[:3]
+    ).select_related("category")[:3]
     
     for course in live_courses:
         suggestions.append({
@@ -2411,7 +2324,7 @@ def search_suggestions(request):
     test_series = TestSeries.objects.filter(
         Q(title__icontains=query) | Q(description__icontains=query),
         is_active=True
-    )[:3]
+    ).select_related("category")[:3]
     
     for series in test_series:
         suggestions.append({
@@ -2427,7 +2340,7 @@ def search_suggestions(request):
     elibrary_courses = ELibraryCourse.objects.filter(
         Q(title__icontains=query) | Q(description__icontains=query),
         is_active=True
-    )[:3]
+    ).select_related("category")[:3]
 
     for course in elibrary_courses:
         suggestions.append({
@@ -2445,6 +2358,8 @@ def search_suggestions(request):
         Q(description__icontains=query) |
         Q(short_description__icontains=query),
         status='active'
+    ).prefetch_related(
+        "video_courses", "live_classes", "test_series", "elibrary_courses"
     )[:3]
     
     for bundle in bundles:
@@ -2565,18 +2480,29 @@ def search_results(request):
             bundle.discount_percent = discount_percent
             bundle_list.append(bundle)
         
+        categories = list(categories)
+        video_courses = list(video_courses)
+        live_courses = list(live_courses)
+        test_series = list(test_series)
+        elibrary_courses = list(elibrary_courses)
+
         context['categories'] = categories
         context['video_courses'] = video_courses
         context['live_courses'] = live_courses
         context['test_series'] = test_series
         context['elibrary_courses'] = elibrary_courses
         context['product_bundles'] = bundle_list
+        context['category_count'] = len(categories)
+        context['video_course_count'] = len(video_courses)
+        context['live_course_count'] = len(live_courses)
+        context['test_series_count'] = len(test_series)
+        context['elibrary_course_count'] = len(elibrary_courses)
         context['total_results'] = (
-            categories.count() +
-            video_courses.count() + 
-            live_courses.count() + 
-            test_series.count() + 
-            elibrary_courses.count() +
+            len(categories) +
+            len(video_courses) +
+            len(live_courses) +
+            len(test_series) +
+            len(elibrary_courses) +
             len(bundle_list)
         )
     
@@ -2593,31 +2519,31 @@ def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug)
     
     # Get all courses under this category
-    video_courses = VideoCourse.objects.filter(
+    video_courses = list(VideoCourse.objects.filter(
         category=category
-    ).order_by('-created_at')
+    ).order_by('-created_at'))
     
-    live_courses = LiveClassCourse.objects.filter(
+    live_courses = list(LiveClassCourse.objects.filter(
         category=category,
         is_active=True
-    ).order_by('-created_at')
+    ).order_by('-created_at'))
     
-    test_series = TestSeries.objects.filter(
+    test_series = list(TestSeries.objects.filter(
         category=category,
         is_active=True
-    ).order_by('-created_at')
+    ).order_by('-created_at'))
     
-    elibrary_courses = ELibraryCourse.objects.filter(
+    elibrary_courses = list(ELibraryCourse.objects.filter(
         category=category,
         is_active=True
-    ).order_by('-created_at')
+    ).order_by('-created_at'))
     
     # Count total courses
     total_courses = (
-        video_courses.count() + 
-        live_courses.count() + 
-        test_series.count() + 
-        elibrary_courses.count()
+        len(video_courses) +
+        len(live_courses) +
+        len(test_series) +
+        len(elibrary_courses)
     )
     
     context = {
@@ -2627,6 +2553,10 @@ def category_detail(request, slug):
         'test_series': test_series,
         'elibrary_courses': elibrary_courses,
         'total_courses': total_courses,
+        'video_course_count': len(video_courses),
+        'live_course_count': len(live_courses),
+        'test_series_count': len(test_series),
+        'elibrary_course_count': len(elibrary_courses),
     }
     
     return render(request, 'category_detail.html', context)    
@@ -2666,7 +2596,7 @@ def elibrary_course_detail(request, pk):
     course = get_object_or_404(ELibraryCourse, pk=pk, is_active=True)
     
     # Check if user has purchased/has access to the course
-    is_purchased = False
+    is_purchased = course.is_free
     access_expires_at = None
     
     if request.user.is_authenticated:
@@ -2683,10 +2613,12 @@ def elibrary_course_detail(request, pk):
             access_expires_at = access.expires_at
     
     # Get PDFs organized by chapter
-    pdfs = course.pdfs.filter(is_active=True).order_by('chapter_number', 'order')
+    pdfs = list(
+        course.pdfs.filter(is_active=True).order_by('chapter_number', 'order')
+    )
     
     # Get preview PDFs (free access)
-    preview_pdfs = pdfs.filter(is_preview=True)
+    preview_pdfs = [pdf for pdf in pdfs if pdf.is_preview]
     
     # Organize PDFs by chapter
     chapters = {}
@@ -2701,6 +2633,7 @@ def elibrary_course_detail(request, pk):
         'access_expires_at': access_expires_at,
         'pdfs': pdfs,
         'preview_pdfs': preview_pdfs,
+        'preview_pdf_count': len(preview_pdfs),
         'chapters': chapters,
         'total_chapters': len(chapters),
     }
@@ -2710,60 +2643,77 @@ def elibrary_course_detail(request, pk):
 
 @login_required
 def elibrary_view_pdf(request, pdf_id):
-    """View a PDF file (no access restrictions)."""
-    
-    pdf = get_object_or_404(ELibraryPDF, pk=pdf_id, is_active=True)
-    
-    # Log download
-    ELibraryDownload.objects.create(
-        user=request.user,
-        pdf=pdf,
-        ip_address=request.META.get('REMOTE_ADDR')
+    """Stream a PDF after verifying preview, free-course, or purchase access."""
+    pdf = get_object_or_404(
+        ELibraryPDF.objects.select_related("course"),
+        pk=pdf_id,
+        is_active=True,
     )
-    
-    # Update download count
-    pdf.download_count += 1
-    pdf.save()
-    
-    # Serve PDF
-    try:
-        return FileResponse(
-            open(pdf.file.path, 'rb'),
-            content_type='application/pdf',
-            as_attachment=False,
-            filename=f"{pdf.title}.pdf"
-        )
-    except FileNotFoundError:
-        raise Http404("PDF file not found")
+    if not _user_can_access_elibrary_pdf(request.user, pdf):
+        raise PermissionDenied("Purchase this course to view this PDF.")
+    return _serve_elibrary_pdf(request, pdf, as_attachment=False)
 
 
 @login_required
 def elibrary_download_pdf(request, pdf_id):
-    """Force download a PDF file (no access restrictions)."""
-    
-    pdf = get_object_or_404(ELibraryPDF, pk=pdf_id, is_active=True)
-    
-    # Log download
+    """Download a PDF after verifying course access."""
+    pdf = get_object_or_404(
+        ELibraryPDF.objects.select_related("course"),
+        pk=pdf_id,
+        is_active=True,
+    )
+    if not _user_can_access_elibrary_pdf(request.user, pdf):
+        raise PermissionDenied("Purchase this course to download this PDF.")
+    return _serve_elibrary_pdf(request, pdf, as_attachment=True)
+
+
+def _user_can_access_elibrary_pdf(user, pdf):
+    if pdf.is_preview or pdf.course.is_free:
+        return True
+
+    now = timezone.now()
+    has_course_access = UserCourseAccess.objects.filter(
+        user=user,
+        course_id=pdf.course_id,
+        course_type="elibrary",
+        is_active=True,
+    ).filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now)).exists()
+
+    if has_course_access:
+        return True
+
+    return ELibraryEnrollment.objects.filter(
+        user=user,
+        course_id=pdf.course_id,
+        payment_status="completed",
+    ).exists()
+
+
+def _serve_elibrary_pdf(request, pdf, *, as_attachment):
+    try:
+        pdf_file = pdf.file.open("rb")
+    except Exception as exc:
+        logger.error("Unable to open e-library PDF %s: %s", pdf.pk, exc)
+        return HttpResponse(
+            "This PDF is temporarily unavailable.",
+            status=503,
+            content_type="text/plain",
+        )
+
     ELibraryDownload.objects.create(
         user=request.user,
         pdf=pdf,
-        ip_address=request.META.get('REMOTE_ADDR')
+        ip_address=request.META.get("REMOTE_ADDR"),
     )
-    
-    # Update download count
-    pdf.download_count += 1
-    pdf.save()
-    
-    # Force download
-    try:
-        return FileResponse(
-            open(pdf.file.path, 'rb'),
-            content_type='application/pdf',
-            as_attachment=True,
-            filename=f"{pdf.title}.pdf"
-        )
-    except FileNotFoundError:
-        raise Http404("PDF file not found")
+    ELibraryPDF.objects.filter(pk=pdf.pk).update(
+        download_count=F("download_count") + 1
+    )
+    return FileResponse(
+        pdf_file,
+        content_type="application/pdf",
+        as_attachment=as_attachment,
+        filename=f"{pdf.title}.pdf",
+    )
 
 
 @login_required
@@ -2805,10 +2755,20 @@ def elibrary_category(request, category_slug):
 
 logger = logging.getLogger(__name__)
 
-# Initialize Razorpay client
-razorpay_client = razorpay.Client(
-    auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-)
+def get_razorpay_client():
+    """Build a client from the active admin configuration or environment fallback."""
+    config = RazorpayConfiguration.objects.filter(is_active=True).first()
+    if config:
+        key_id = config.key_id
+        key_secret = config.key_secret
+    else:
+        key_id = settings.RAZORPAY_KEY_ID
+        key_secret = settings.RAZORPAY_KEY_SECRET
+
+    if not key_id or not key_secret:
+        raise ValueError('Razorpay credentials are not configured.')
+
+    return razorpay.Client(auth=(key_id, key_secret)), key_id
 
 # ===== COURSE MODEL MAPPING =====
 COURSE_MODELS = {
@@ -2975,6 +2935,7 @@ def create_payment_order(request, course_type, course_id):
         
         # Create Razorpay order
         try:
+            razorpay_client, razorpay_key_id = get_razorpay_client()
             order_data = {
                 'amount': amount_paise,
                 'currency': 'INR',
@@ -3025,7 +2986,7 @@ def create_payment_order(request, course_type, course_id):
             'success': True,
             'is_free': False,
             'razorpay_order_id': razorpay_order_id,
-            'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
+            'razorpay_merchant_key': razorpay_key_id,
             'amount': amount_paise,
             'currency': 'INR',
             'course_name': course_name,
@@ -3082,6 +3043,7 @@ def payment_handler(request):
         
         # Verify signature
         try:
+            razorpay_client, _ = get_razorpay_client()
             params_dict = {
                 'razorpay_order_id': order_id,
                 'razorpay_payment_id': payment_id,
@@ -3210,145 +3172,3 @@ def payment_handler(request):
             'error': str(e),
             'type': 'error'
         }, status=500)
-
-
-# ===== MY PURCHASES VIEW =====
-@login_required
-def my_purchases(request):
-    """
-    Display all purchased products for the authenticated user.
-    """
-    user = request.user
-    
-    # Get all active course access records for the user
-    course_access_records = UserCourseAccess.objects.filter(
-        user=user,
-        is_active=True
-    ).select_related('payment').order_by('-access_granted_at')
-    
-    # Organize purchases by type
-    purchases = {
-        'video_courses': [],
-        'live_classes': [],
-        'test_series': [],
-        'elibrary_courses': [],
-        'bundles': []
-    }
-    
-    # Process each access record
-    for access_record in course_access_records:
-        payment = access_record.payment  # Use the ForeignKey relationship
-        
-        try:
-            if access_record.course_type == 'video_course':
-                try:
-                    from video_courses.models import VideoCourse
-                    course = VideoCourse.objects.get(id=access_record.course_id)
-                    purchases['video_courses'].append({
-                        'course': course,
-                        'access_granted': access_record.access_granted_at,
-                        'payment': payment,
-                        'expires_at': access_record.expires_at,
-                    })
-                except VideoCourse.DoesNotExist:
-                    print(f"Video course {access_record.course_id} not found")
-                except ImportError:
-                    print("Could not import VideoCourse")
-            
-            elif access_record.course_type == 'live_class':
-                try:
-                    from live_class.models import LiveClassCourse
-                    course = LiveClassCourse.objects.get(id=access_record.course_id)
-                    purchases['live_classes'].append({
-                        'course': course,
-                        'access_granted': access_record.access_granted_at,
-                        'payment': payment,
-                        'expires_at': access_record.expires_at,
-                    })
-                except LiveClassCourse.DoesNotExist:
-                    print(f"Live class {access_record.course_id} not found")
-                except ImportError:
-                    print("Could not import LiveClassCourse")
-            
-            elif access_record.course_type == 'test_series':
-                try:
-                    from testseries.models import TestSeries
-                    course = TestSeries.objects.get(id=access_record.course_id)
-                    purchases['test_series'].append({
-                        'course': course,
-                        'access_granted': access_record.access_granted_at,
-                        'payment': payment,
-                        'expires_at': access_record.expires_at,
-                    })
-                except TestSeries.DoesNotExist:
-                    print(f"Test series {access_record.course_id} not found")
-                except ImportError:
-                    print("Could not import TestSeries")
-            
-            elif access_record.course_type == 'elibrary':
-                try:
-                    from elibrary.models import ELibraryCourse
-                    course = ELibraryCourse.objects.get(id=access_record.course_id)
-                    purchases['elibrary_courses'].append({
-                        'course': course,
-                        'access_granted': access_record.access_granted_at,
-                        'payment': payment,
-                        'expires_at': access_record.expires_at,
-                    })
-                except ELibraryCourse.DoesNotExist:
-                    print(f"Elibrary course {access_record.course_id} not found")
-                except ImportError:
-                    print("Could not import ELibraryCourse")
-            
-            elif access_record.course_type == 'bundle':
-                try:
-                    from adminpanel.models import ProductBundle  # ← Check if this is correct
-                    bundle = ProductBundle.objects.get(id=access_record.course_id)
-                    purchases['bundles'].append({
-                        'course': bundle,
-                        'access_granted': access_record.access_granted_at,
-                        'payment': payment,
-                        'expires_at': access_record.expires_at,
-                    })
-                    print(f"✓ Bundle added: {bundle.title}")  # Debug
-                except ProductBundle.DoesNotExist:
-                    print(f"✗ Bundle {access_record.course_id} not found in database")
-                except ImportError as e:
-                    print(f"✗ Could not import ProductBundle: {e}")
-                    # Try alternative import if ProductBundle might be in base.models
-                    try:
-                        from base.models import ProductBundle
-                        bundle = ProductBundle.objects.get(id=access_record.course_id)
-                        purchases['bundles'].append({
-                            'course': bundle,
-                            'access_granted': access_record.access_granted_at,
-                            'payment': payment,
-                            'expires_at': access_record.expires_at,
-                        })
-                        print(f"✓ Bundle added from base.models: {bundle.title}")
-                    except:
-                        print(f"✗ Could not import ProductBundle from base.models either")
-        
-        except Exception as e:
-            print(f"Error processing {access_record.course_type} (ID: {access_record.course_id}): {str(e)}")
-            import traceback
-            traceback.print_exc()
-            continue
-    
-    
-    # Calculate total spent
-    total_spent = 0
-    for access in course_access_records:
-        if access.payment:
-            total_spent += access.payment.amount / 100
-    
-    # Count total purchases
-    total_purchases = course_access_records.count()
-    
-    context = {
-        'purchases': purchases,
-        'total_spent': total_spent,
-        'total_purchases': total_purchases,
-    }
-    
-    return render(request, 'my_purchases.html', context)

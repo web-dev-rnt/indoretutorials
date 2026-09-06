@@ -31,11 +31,11 @@ def render_about_us_section():
         'service_items': service_items,
     }
 
-@register.inclusion_tag('components/footer_section.html')
-def render_footer_section():
-    footer_settings = FooterSettings.objects.filter(is_active=True).first()
-    footer_links = FooterLink.objects.filter(is_active=True)
-    footer_legal_links = FooterLegalLink.objects.filter(is_active=True)
+@register.inclusion_tag('components/footer_section.html', takes_context=True)
+def render_footer_section(context):
+    footer_settings = context.get('footer_settings')
+    footer_links = context.get('footer_links', [])
+    footer_legal_links = context.get('footer_legal_links', [])
     
     # Define footer sections for template
     footer_sections = [

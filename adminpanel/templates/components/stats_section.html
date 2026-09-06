@@ -2,7 +2,7 @@
 <div class="stats-container">
     <div class="stats">
         {% for stat in stat_cards %}
-            <div class="stat-card" data-index="{{ forloop.counter0 }}" {% if stat.scroll_to %}data-scroll-to="{{ stat.scroll_to }}"{% endif %}>
+            <div class="stat-card" data-index="{{ forloop.counter0 }}" role="button" tabindex="0" aria-label="View {{ stat.label }}" {% if stat.scroll_to %}data-scroll-to="{{ stat.scroll_to }}"{% endif %}>
                 <div class="stat-icon">
                     {% if stat.icon_type == 'font_awesome' and stat.icon %}
                         <i class="fas fa-{{ stat.icon }}" style="color: {{ stat.icon_color }};"></i>
@@ -21,13 +21,17 @@
 
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap');
-
-
 .stats-container {
-    background: #ffffff;
-    padding: 20px 20px 25px 20px;
+    background: linear-gradient(180deg, #f8fafc 0, #ffffff 42px);
+    padding: clamp(36px, 4vw, 52px) 20px 30px;
     margin: 0;
+    position: relative;
+    border-top: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+/* Override the banner's old zero-spacing sibling rule. */
+.banner-slider-container + .stats-container {
+    padding-top: clamp(20px, 2.5vw, 34px) !important;
 }
 
 
@@ -39,17 +43,20 @@
     margin: 0 auto;
     padding: 0 20px;
     gap: 20px;
+    perspective: 1000px;
 }
 
 
 .stat-card {
+    --stat-accent: 37, 99, 235;
     text-align: center;
     flex: 1;
     max-width: 200px;
     padding: 28px 18px;
-    border-radius: 12px;
-    background: rgba(248, 249, 250, 0.5);
-    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border: 1px solid rgba(var(--stat-accent), 0.14);
+    box-shadow: 0 7px 20px rgba(15, 23, 42, 0.06);
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -62,10 +69,16 @@
         border-color 0.3s ease;
 
     /* Entry animation */
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 1;
+    transform: translateY(0);
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
+
+.stat-card:nth-child(2) { --stat-accent: 139, 92, 246; }
+.stat-card:nth-child(3) { --stat-accent: 239, 68, 68; }
+.stat-card:nth-child(4) { --stat-accent: 14, 165, 233; }
+.stat-card:nth-child(5) { --stat-accent: 16, 185, 129; }
+.stat-card:nth-child(6) { --stat-accent: 245, 158, 11; }
 
 
 /* Staggered animation delay */
@@ -78,6 +91,10 @@
 
 
 @keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
     to {
         opacity: 1;
         transform: translateY(0);
@@ -87,10 +104,18 @@
 
 /* ── Hover — lift UP ── */
 .stat-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-    background: rgba(248, 249, 250, 0.9);
-    border-color: rgba(0,0,0,0.15);
+    transform: translateY(-10px) scale(1.025);
+    box-shadow:
+        0 20px 40px rgba(var(--stat-accent), 0.16),
+        0 8px 18px rgba(15, 23, 42, 0.08);
+    background: #ffffff;
+    border-color: rgba(var(--stat-accent), 0.42);
+}
+
+.stat-card:focus-visible {
+    outline: 3px solid rgba(var(--stat-accent), 0.25);
+    outline-offset: 4px;
+    transform: translateY(-5px);
 }
 
 
@@ -133,11 +158,31 @@
     justify-content: center;
     line-height: 1;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+
+.stat-icon::before {
+    content: '';
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--stat-accent), 0.16), transparent 68%);
+    opacity: 0;
+    transform: scale(0.55);
+    transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: -1;
 }
 
 
 .stat-card:hover .stat-icon {
-    transform: scale(1.1) rotate(5deg);
+    transform: translateY(-3px) scale(1.12) rotate(4deg);
+}
+
+.stat-card:hover .stat-icon::before {
+    opacity: 1;
+    transform: scale(1);
 }
 
 
@@ -197,13 +242,14 @@
     line-height: 1;
     letter-spacing: -1.2px;
     text-rendering: optimizeLegibility;
-    transition: color 0.3s ease;
+    transition: color 0.3s ease, transform 0.3s ease;
     margin-bottom: 6px;
 }
 
 
 .stat-card:hover .stat-number {
-    color: #2563eb;
+    color: rgb(var(--stat-accent));
+    transform: translateY(-1px);
 }
 
 
@@ -245,14 +291,34 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.5s;
+    background: linear-gradient(90deg, transparent, rgba(var(--stat-accent), 0.09), transparent);
+    transition: left 0.65s ease;
     pointer-events: none;
+    z-index: 2;
 }
 
 
 .stat-card:hover::before {
     left: 100%;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
+    background: rgb(var(--stat-accent));
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.stat-card:hover::after,
+.stat-card:focus-visible::after {
+    transform: scaleX(1);
 }
 
 
@@ -266,7 +332,7 @@
 
 /* ════════════ Responsive ════════════ */
 @media (max-width: 1024px) {
-    .stats-container { padding: 45px 20px 30px 20px; }
+    .stats-container { padding: 38px 20px 30px; }
     .stats { padding: 0 15px; gap: 18px; max-width: 950px; }
     .stat-card { max-width: 170px; padding: 24px 16px; }
     .stat-icon { font-size: 42px; height: 50px; margin-bottom: 12px; }
@@ -277,7 +343,7 @@
 
 
 @media (max-width: 768px) {
-    .stats-container { padding: 40px 15px 25px 15px; }
+    .stats-container { padding: 32px 15px 26px; }
     .stats { padding: 0 12px; gap: 15px; max-width: 750px; }
     .stat-card { max-width: 145px; padding: 20px 14px; }
     .stat-icon { font-size: 36px; height: 44px; margin-bottom: 10px; }
@@ -288,7 +354,7 @@
 
 
 @media (max-width: 480px) {
-    .stats-container { padding: 35px 12px 20px 12px; }
+    .stats-container { padding: 26px 12px 22px; }
     .stats { padding: 0 10px; gap: 12px; flex-wrap: wrap; justify-content: center; }
     .stat-card { max-width: 135px; min-width: 120px; padding: 18px 12px; margin-bottom: 0; }
     .stat-icon { font-size: 32px; height: 40px; margin-bottom: 8px; }
@@ -377,6 +443,13 @@ document.addEventListener('DOMContentLoaded', function () {
          2. No attribute                               → scrolls to next sibling section
     ── */
     document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                card.click();
+            }
+        });
+
         card.addEventListener('click', function () {
             const targetSelector = card.getAttribute('data-scroll-to');
             let scrollTarget = null;

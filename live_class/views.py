@@ -2,35 +2,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 from django.contrib.auth import authenticate, login
 from django.conf import settings
 import json
-import hashlib
-import secrets
 
 from .models import LiveClassSession, LiveClassCourse
 from .forms import LiveClassCourseForm
-
-
-# Utility functions
-def generate_room_name(session_id, class_name):
-    """Generate a unique room name for the session"""
-    unique_string = f"{session_id}_{class_name}_{secrets.token_hex(8)}"
-    room_hash = hashlib.md5(unique_string.encode()).hexdigest()[:12]
-    return f"LiveClass_{room_hash}"
-
-
-def is_room_moderator(user):
-    """Determine if user should be a moderator"""
-    return user.is_staff or user.is_superuser
+from .utils.jitsi_free import generate_room_name, is_room_moderator
 
 
 # Course Management Views
+@staff_member_required(login_url="login")
 def live_class_course_manage(request):
     """Display and filter live class courses"""
     courses = LiveClassCourse.objects.select_related('category').all()
@@ -53,6 +40,7 @@ def live_class_course_manage(request):
     })
 
 
+@staff_member_required(login_url="login")
 def live_class_course_create(request):
     """Create a new live class course"""
     if request.method == "POST":
@@ -70,6 +58,7 @@ def live_class_course_create(request):
     })
 
 
+@staff_member_required(login_url="login")
 def live_class_course_edit(request, pk):
     """Edit an existing live class course"""
     course = get_object_or_404(LiveClassCourse, pk=pk)
@@ -90,6 +79,7 @@ def live_class_course_edit(request, pk):
 
 
 @require_POST
+@staff_member_required(login_url="login")
 def live_class_course_delete(request, pk):
     """Delete a live class course"""
     course = get_object_or_404(LiveClassCourse, pk=pk)
@@ -99,6 +89,7 @@ def live_class_course_delete(request, pk):
 
 
 @require_POST
+@staff_member_required(login_url="login")
 def live_class_course_toggle_status(request, pk):
     """Toggle active status of a course"""
     course = get_object_or_404(LiveClassCourse, pk=pk)
@@ -111,6 +102,7 @@ def live_class_course_toggle_status(request, pk):
     })
 
 
+@staff_member_required(login_url="login")
 def live_class_course_classes(request, pk):
     """Get all classes for a specific course"""
     course = get_object_or_404(LiveClassCourse, pk=pk)
@@ -132,7 +124,8 @@ def live_class_course_classes(request, pk):
 
 
 # Session Management Views
-@csrf_exempt
+@staff_member_required(login_url="login")
+@require_POST
 def add_scheduled_class(request, course_id):
     """Add a new scheduled class to a course"""
     if request.method != "POST":
@@ -188,7 +181,8 @@ def add_scheduled_class(request, course_id):
         }, status=500)
 
 
-@csrf_exempt
+@staff_member_required(login_url="login")
+@require_POST
 def live_class_schedule_delete(request, session_id):
     """Delete a scheduled class"""
     if request.method != "POST":

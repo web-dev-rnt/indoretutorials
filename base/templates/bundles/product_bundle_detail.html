@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Razorpay Checkout -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
     
     <style>
         * {
@@ -864,7 +864,7 @@
                     {% elif bundle.thumbnail %}
                     <img src="{{ bundle.thumbnail.url }}" alt="{{ bundle.title }}">
                     {% else %}
-                    <img src="{% static 'img/default-bundle.jpg' %}" alt="{{ bundle.title }}">
+                    <img src="{% static 'img/default-thumb.jpg' %}" alt="{{ bundle.title }}">
                     {% endif %}
                 </div>
             </div>

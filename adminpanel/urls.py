@@ -1,7 +1,6 @@
 from django.urls import path, include
 from adminpanel import views
 from adminpanel import backup_views
-from live_class import views as live_class_views
 from testseries import views as tviews
 
 urlpatterns = [
@@ -99,15 +98,10 @@ urlpatterns = [
     path('smtp/test/<int:config_id>/', views.smtp_test, name='smtp_test'),
     path('smtp/delete/<int:config_id>/', views.smtp_delete, name='smtp_delete'),
 
-    # Live Class Management URLs
-    path('liveclass/', live_class_views.live_class_course_manage, name='liveclass'),
-    path('liveclass/create/', live_class_views.live_class_course_create, name='live_class_course_create'),
-    path('liveclass/edit/<int:pk>/', live_class_views.live_class_course_edit, name='live_class_course_edit'),
-    path('liveclass/delete/<int:pk>/', live_class_views.live_class_course_delete, name='live_class_course_delete'),
-    path('liveclass/toggle-status/<int:pk>/', live_class_views.live_class_course_toggle_status, name='live_class_course_toggle_status'),
-    path('liveclass/classes/<int:pk>/', live_class_views.live_class_course_classes, name='live_class_course_classes'),
-    path('liveclass/schedule/add/<int:course_id>/', live_class_views.add_scheduled_class, name='add_scheduled_class'),
-    path('liveclass/schedule/delete/<int:session_id>/', live_class_views.live_class_schedule_delete, name='live_class_schedule_delete'),
+    # Razorpay Configuration URLs
+    path('razorpay/', views.razorpay_configuration, name='razorpay_configuration'),
+    path('razorpay/edit/<int:config_id>/', views.razorpay_configuration, name='razorpay_edit'),
+    path('razorpay/delete/<int:config_id>/', views.razorpay_delete, name='razorpay_delete'),
 
     # Add user
     path('users/add/', views.add_user, name='admin_add_user'),

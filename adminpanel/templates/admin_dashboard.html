@@ -14,10 +14,10 @@
     <link rel="icon" type="image/png" href="{{ favicon_url }}">
     <link rel="shortcut icon" type="image/png" href="{{ favicon_url }}">
 {% else %}
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.ico' %}">
+    <link rel="icon" type="image/png" href="{% static 'img/icon-192.png' %}">
 {% endif %}
 
-<title>Admin Dashboard</title>
+<title>{% block title %}Admin Dashboard{% endblock %}</title>
 <style>
 html, body { 
   width: 100%; 
@@ -82,7 +82,14 @@ html, body {
   background: #0f1b33;
   color: #e1e6f5;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   z-index: 1000;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .admin-sidebar .admin-sb-head { 
@@ -1356,6 +1363,7 @@ section.admin-card {
   }
 }
 </style>
+{% block extra_css %}{% endblock %}
 </head>
 <body>
   <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
@@ -1707,5 +1715,6 @@ document.getElementById('searchInput')?.addEventListener('keypress', function(e)
   }
 });
 </script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

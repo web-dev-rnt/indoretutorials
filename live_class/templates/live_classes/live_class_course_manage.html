@@ -6,6 +6,22 @@
     /* ── Mobile cards — hidden by default ── */
     .mobile-lc-list { display: none; }
 
+    /* Keep the desktop table inside its panel without a horizontal scrollbar. */
+    .panel > .admin-card-bd { overflow-x: hidden; }
+    .desktop-lc-table { width: 100%; overflow: hidden; }
+    .desktop-lc-table .admin-table { width: 100%; min-width: 0; table-layout: fixed; }
+    .desktop-lc-table .admin-table th,
+    .desktop-lc-table .admin-table td {
+        padding: 12px 7px;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+    .desktop-lc-table .admin-table th { font-size: 12px; line-height: 1.2; }
+    .desktop-lc-table .admin-table td { font-size: 13px; }
+    .desktop-lc-table .type-badge,
+    .desktop-lc-table .status-badge { white-space: normal; text-align: center; }
+    .desktop-lc-table .action-buttons .btn { min-width: 0; padding: 6px 4px !important; }
+
     .mobile-lc-card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -92,10 +108,10 @@
       <div class="table-wrapper desktop-lc-table">
         <table class="admin-table">
           <colgroup>
-            <col style="width:3%"><col style="width:14%"><col style="width:7%">
-            <col style="width:7%"><col style="width:8%"><col style="width:8%">
+            <col style="width:3%"><col style="width:12%"><col style="width:7%">
+            <col style="width:6%"><col style="width:8%"><col style="width:8%">
             <col style="width:7%"><col style="width:7%"><col style="width:10%">
-            <col style="width:10%"><col style="width:10%"><col style="width:12%">
+            <col style="width:9%"><col style="width:10%"><col style="width:13%">
           </colgroup>
           <thead>
             <tr>

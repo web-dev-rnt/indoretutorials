@@ -1,0 +1,155 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Razorpay Configuration{% endblock %}
+
+{% block extra_css %}
+<style>
+  .razorpay-wrap { max-width: 1180px; margin: 0 auto; }
+  .razorpay-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:22px; flex-wrap:wrap; }
+  .razorpay-head h1 { margin:0; font-size:28px; }
+  .razorpay-head p { color:var(--admin-muted); margin:5px 0 0; }
+  .rz-grid { display:grid; grid-template-columns:minmax(300px, .8fr) minmax(500px, 1.4fr); gap:22px; align-items:start; }
+  .rz-card { background:#fff; border:1px solid var(--admin-border); border-radius:14px; box-shadow:var(--admin-card-shadow); overflow:hidden; }
+  .rz-card-head { padding:18px 22px; border-bottom:1px solid var(--admin-border); display:flex; justify-content:space-between; align-items:center; }
+  .rz-card-head h2 { font-size:18px; margin:0; }
+  .rz-card-body { padding:22px; }
+  .rz-field { margin-bottom:17px; }
+  .rz-field label { display:block; font-weight:700; font-size:13px; margin-bottom:7px; }
+  .rz-field input[type="text"], .rz-field input[type="password"] { width:100%; border:1px solid var(--input-border); border-radius:9px; padding:11px 12px; font-size:14px; }
+  .rz-field input:focus { border-color:var(--input-border-focus); outline:0; box-shadow:var(--admin-ring); }
+  .rz-help { color:var(--admin-muted); font-size:12px; margin-top:6px; }
+  .rz-error { color:var(--admin-danger); font-size:12px; margin-top:5px; }
+  .rz-check { display:flex; gap:9px; align-items:center; margin-bottom:20px; }
+  .rz-check label { font-weight:700; font-size:14px; }
+  .rz-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .rz-table-wrap { overflow-x:auto; }
+  .rz-table { width:100%; border-collapse:collapse; }
+  .rz-table th, .rz-table td { padding:13px 15px; border-bottom:1px solid var(--admin-border); text-align:left; font-size:13px; vertical-align:middle; }
+  .rz-table th { background:#f8fafc; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  .rz-table tr:last-child td { border-bottom:0; }
+  .rz-code { font-family:Consolas,monospace; background:#f1f5f9; padding:4px 7px; border-radius:5px; white-space:nowrap; }
+  .rz-badge { display:inline-block; border-radius:999px; padding:4px 9px; font-size:11px; font-weight:800; }
+  .rz-active { color:#166534; background:#dcfce7; }
+  .rz-inactive { color:#64748b; background:#f1f5f9; }
+  .rz-notice { padding:13px 16px; border-radius:10px; margin-bottom:18px; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; font-size:13px; }
+  .rz-empty { padding:48px 20px; color:var(--admin-muted); text-align:center; }
+  .btn-danger { background:#fff; color:var(--admin-danger); border-color:#fecaca; }
+  @media(max-width:900px) { .rz-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="razorpay-wrap">
+  <div class="razorpay-head">
+    <div>
+      <h1><i class="fas fa-wallet" style="color:#3395ff;"></i> Razorpay Configuration</h1>
+      <p>Manage the credentials used to create and verify course payments.</p>
+    </div>
+    {% if editing_config %}
+      <a class="btn" href="{% url 'razorpay_configuration' %}">Add New Configuration</a>
+    {% endif %}
+  </div>
+
+  {% include 'message.html' %}
+
+  {% if not active_config and environment_configured %}
+    <div class="rz-notice">
+      No database configuration is active. Payments currently use environment key
+      <span class="rz-code">{{ environment_key_id }}</span>.
+    </div>
+  {% elif not active_config %}
+    <div class="rz-notice" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412;">
+      No active Razorpay credentials are configured. Paid checkout will remain unavailable until credentials are saved and activated.
+    </div>
+  {% endif %}
+
+  <div class="rz-grid">
+    <section class="rz-card">
+      <div class="rz-card-head">
+        <h2>{% if editing_config %}Edit {{ editing_config.name }}{% else %}Add Configuration{% endif %}</h2>
+      </div>
+      <div class="rz-card-body">
+        <form method="post">
+          {% csrf_token %}
+          {% if editing_config %}<input type="hidden" name="config_id" value="{{ editing_config.id }}">{% endif %}
+
+          <div class="rz-field">
+            <label for="{{ form.name.id_for_label }}">Configuration name</label>
+            {{ form.name }}
+            {% for error in form.name.errors %}<div class="rz-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="rz-field">
+            <label for="{{ form.key_id.id_for_label }}">Key ID</label>
+            {{ form.key_id }}
+            <div class="rz-help">Use the matching test or live Key ID from your Razorpay dashboard.</div>
+            {% for error in form.key_id.errors %}<div class="rz-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="rz-field">
+            <label for="{{ form.key_secret.id_for_label }}">Key Secret</label>
+            {{ form.key_secret }}
+            <div class="rz-help">
+              {% if editing_config %}A secret is already saved. Leave this blank to keep it.{% else %}The secret is masked after it is saved.{% endif %}
+            </div>
+            {% for error in form.key_secret.errors %}<div class="rz-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="rz-check">
+            {{ form.is_active }}
+            <label for="{{ form.is_active.id_for_label }}">Use this configuration for payments</label>
+          </div>
+          {% for error in form.non_field_errors %}<div class="rz-error" style="margin-bottom:12px;">{{ error }}</div>{% endfor %}
+
+          <div class="rz-actions">
+            <button class="btn btn-primary" type="submit">
+              {% if editing_config %}Update Configuration{% else %}Save Configuration{% endif %}
+            </button>
+            {% if editing_config %}<a class="btn" href="{% url 'razorpay_configuration' %}">Cancel</a>{% endif %}
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="rz-card">
+      <div class="rz-card-head">
+        <h2>Saved Configurations</h2>
+        <span>{{ configurations|length }} saved</span>
+      </div>
+      {% if configurations %}
+        <div class="rz-table-wrap">
+          <table class="rz-table">
+            <thead>
+              <tr><th>Name</th><th>Key ID</th><th>Saved secret</th><th>Status</th><th>Updated</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for config in configurations %}
+                <tr>
+                  <td><strong>{{ config.name }}</strong></td>
+                  <td><span class="rz-code">{{ config.key_id }}</span></td>
+                  <td><span class="rz-code">{{ config.masked_secret }}</span></td>
+                  <td>
+                    {% if config.is_active %}<span class="rz-badge rz-active">Active</span>{% else %}<span class="rz-badge rz-inactive">Inactive</span>{% endif %}
+                  </td>
+                  <td>{{ config.updated_at|date:'d M Y, g:i A' }}</td>
+                  <td>
+                    <div class="rz-actions">
+                      <a class="btn" href="{% url 'razorpay_edit' config.id %}">Edit</a>
+                      <form method="post" action="{% url 'razorpay_delete' config.id %}" onsubmit="return confirm('Delete this Razorpay configuration?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="rz-empty"><i class="fas fa-key" style="font-size:36px;margin-bottom:12px;"></i><br>No saved Razorpay configurations.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

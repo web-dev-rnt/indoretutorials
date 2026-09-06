@@ -641,6 +641,32 @@ class SMTPConfiguration(models.Model):
             return False, f"Error: {str(e)}"
 
 
+class RazorpayConfiguration(models.Model):
+    """Razorpay API credentials managed from the custom admin panel."""
+
+    name = models.CharField(max_length=100, default="Default Razorpay")
+    key_id = models.CharField(max_length=100, help_text="Razorpay Key ID (for example, rzp_test_...)")
+    key_secret = models.CharField(max_length=200, help_text="Razorpay Key Secret")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_active', '-updated_at']
+        verbose_name = "Razorpay Configuration"
+        verbose_name_plural = "Razorpay Configurations"
+
+    def __str__(self):
+        return f"{self.name} ({self.key_id})"
+
+    @property
+    def masked_secret(self):
+        if not self.key_secret:
+            return ""
+        visible = self.key_secret[-4:] if len(self.key_secret) > 4 else ""
+        return f"{'*' * 8}{visible}"
+
+
 
 
 # bundles/models.py

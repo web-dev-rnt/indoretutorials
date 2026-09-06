@@ -11,7 +11,7 @@ from testseries.models import TestSeries, Test, Question, Subject
 
 
 @login_required
-# @user_passes_test(is_admin)
+@user_passes_test(lambda user: user.is_superuser or user.is_staff)
 def test_series_delete(request, pk):
     """Delete a test series"""
     series = get_object_or_404(TestSeries, pk=pk)

@@ -5,12 +5,13 @@ from django.utils.safestring import mark_safe
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.utils import timezone
+from .forms import RazorpayConfigurationForm
 from .models import (
     Notification, DeveloperPopup,
     Coupon, CouponUsage, UserCoupon, Banner, StatCard, CTASection,
     AboutUsSection, WhyChooseUsItem, ServiceItem, NavbarSettings,
     FooterSettings, FooterLink, FooterLegalLink, SMTPConfiguration,
-    ProductBundle
+    RazorpayConfiguration, ProductBundle
 )
 
 
@@ -389,6 +390,15 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
             else:
                 messages.error(request, f'{smtp_config.name}: {message}')
     test_smtp_connection.short_description = 'Test SMTP connection'
+
+
+@admin.register(RazorpayConfiguration)
+class RazorpayConfigurationAdmin(admin.ModelAdmin):
+    form = RazorpayConfigurationForm
+    list_display = ['name', 'key_id', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['name', 'key_id']
+    readonly_fields = ['created_at', 'updated_at']
 
 
 # ============================================

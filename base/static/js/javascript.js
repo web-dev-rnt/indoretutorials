@@ -237,3 +237,27 @@ window.addEventListener('DOMContentLoaded', function() {
     updateCarouselArrows(carouselId);
   });
 });
+// Lazy-load card background images without changing their layout or styling.
+document.addEventListener('DOMContentLoaded', () => {
+  const backgrounds = document.querySelectorAll('[data-background-url]');
+  const loadBackground = (element) => {
+    element.style.backgroundImage = `url("${element.dataset.backgroundUrl}")`;
+    element.removeAttribute('data-background-url');
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    backgrounds.forEach(loadBackground);
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        loadBackground(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '300px 0px' });
+
+  backgrounds.forEach((element) => observer.observe(element));
+});

@@ -18,19 +18,4 @@ class Migration(migrations.Migration):
             name='user',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='coupon_usages', to=settings.AUTH_USER_MODEL),
         ),
-        migrations.CreateModel(
-            name='UserCoupon',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('assigned_at', models.DateTimeField(auto_now_add=True)),
-                ('is_used', models.BooleanField(default=False)),
-                ('used_at', models.DateTimeField(blank=True, null=True)),
-                ('coupon', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_assignments', to='adminpanel.coupon')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_coupons', to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                'ordering': ['-assigned_at'],
-                'unique_together': {('user', 'coupon')},
-            },
-        ),
     ]

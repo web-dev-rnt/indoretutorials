@@ -18,9 +18,52 @@ from .models import (
     FooterLegalLink,
     DeveloperPopup,
     Notification,
+    RazorpayConfiguration,
 )
 
 User = get_user_model()
+
+
+class RazorpayConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = RazorpayConfiguration
+        fields = ['name', 'key_id', 'key_secret', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Default Razorpay',
+            }),
+            'key_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'rzp_test_... or rzp_live_...',
+                'autocomplete': 'off',
+            }),
+            'key_secret': forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter Razorpay key secret',
+                'autocomplete': 'new-password',
+            }, render_value=False),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['key_secret'].required = False
+            self.fields['key_secret'].help_text = (
+                'Leave blank to keep the currently saved secret.'
+            )
+
+    def clean_key_id(self):
+        return self.cleaned_data['key_id'].strip()
+
+    def clean_key_secret(self):
+        secret = self.cleaned_data.get('key_secret', '').strip()
+        if not secret and self.instance and self.instance.pk:
+            return self.instance.key_secret
+        if not secret:
+            raise ValidationError('Razorpay key secret is required.')
+        return secret
 
 # Notifications
 class NotificationForm(forms.ModelForm):

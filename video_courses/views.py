@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from django.urls import reverse
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.db import models
 import json
@@ -13,6 +13,7 @@ from .forms import VideoCourseForm, LearnFormSet, IncludeFormSet, VideoFormSet
 
 
 
+@staff_member_required(login_url="login")
 def video_course_create(request):
     """Create a new video course with formsets"""
     course = None
@@ -124,6 +125,7 @@ def video_course_create(request):
 
 
 
+@staff_member_required(login_url="login")
 def video_course_manage(request):
     """View to display all video courses in a table for management"""
     # Get search query and filter options
@@ -192,6 +194,7 @@ def video_course_manage(request):
 
 
 
+@staff_member_required(login_url="login")
 def video_course_edit(request, slug):
     """Edit course by slug - legacy function"""
     try:
@@ -206,6 +209,7 @@ def video_course_edit(request, slug):
 
 
 
+@staff_member_required(login_url="login")
 def video_course_edit_by_pk(request, pk):
     """Edit an existing video course by primary key"""
     try:
@@ -288,12 +292,10 @@ def video_course_edit_by_pk(request, pk):
 
 
 
-@csrf_exempt
+@staff_member_required(login_url="login")
+@require_POST
 def video_course_delete(request, pk):
     """Delete a video course - supports both AJAX and regular POST"""
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Only POST method allowed"}, status=405)
-    
     try:
         # Get the course
         course = get_object_or_404(VideoCourse, pk=pk)
@@ -356,12 +358,10 @@ def video_course_delete(request, pk):
 
 
 
-@csrf_exempt 
+@staff_member_required(login_url="login")
+@require_POST
 def video_course_toggle_status(request, pk):
     """Toggle course active status - AJAX only"""
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Only POST method allowed"}, status=405)
-    
     try:
         course = get_object_or_404(VideoCourse, pk=pk)
         

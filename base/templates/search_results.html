@@ -252,7 +252,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Categories</h2>
-                <span class="section-count">{{ categories.count }}</span>
+                <span class="section-count">{{ category_count }}</span>
             </div>
             <div class="course-grid">
                 {% for category in categories %}
@@ -322,7 +322,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Video Courses</h2>
-                <span class="section-count">{{ video_courses.count }}</span>
+                <span class="section-count">{{ video_course_count }}</span>
             </div>
             <div class="course-grid">
                 {% for course in video_courses %}
@@ -360,7 +360,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Live Classes</h2>
-                <span class="section-count">{{ live_courses.count }}</span>
+                <span class="section-count">{{ live_course_count }}</span>
             </div>
             <div class="course-grid">
                 {% for course in live_courses %}
@@ -398,7 +398,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Test Series</h2>
-                <span class="section-count">{{ test_series.count }}</span>
+                <span class="section-count">{{ test_series_count }}</span>
             </div>
             <div class="course-grid">
                 {% for series in test_series %}
@@ -438,11 +438,11 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>E-Library</h2>
-                <span class="section-count">{{ elibrary_courses.count }}</span>
+                <span class="section-count">{{ elibrary_course_count }}</span>
             </div>
             <div class="course-grid">
                 {% for course in elibrary_courses %}
-                <a href="{% url 'elibrary_course_detail' course.pk %}" class="course-card">
+                <a href="{% url 'course_detail' course.pk %}" class="course-card">
                     {% if course.cover_image %}
                         <img src="{{ course.cover_image.url }}" 
                              alt="{{ course.title }}" 

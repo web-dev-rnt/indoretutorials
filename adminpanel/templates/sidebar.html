@@ -179,6 +179,11 @@
       <span class="admin-ico"><i class="fas fa-envelope" style="color: #ff5722;"></i></span><span>OTP Configuration</span>
     </a>
 
+    <!-- Razorpay Configuration -->
+    <a href="{% url 'razorpay_configuration' %}" class="{% if request.resolver_match.url_name in 'razorpay_configuration,razorpay_edit,razorpay_delete' %}admin-active{% endif %}">
+      <span class="admin-ico"><i class="fas fa-wallet" style="color: #3395ff;"></i></span><span>Razorpay Configuration</span>
+    </a>
+
     <!-- Backup Management -->
     <a href="{% url 'backup_dashboard' %}" class="{% if request.resolver_match.url_name in 'backup_dashboard,backup_now,backup_restore,backup_download,backup_delete' %}admin-active{% endif %}">
       <span class="admin-ico"><i class="fas fa-database" style="color: #6c757d;"></i></span><span>Backup Management</span>

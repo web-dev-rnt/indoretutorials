@@ -312,7 +312,7 @@
 <section class="course-header">
     <div class="container">
         <div class="thumb">
-            <img src="{% if course.banner_image_desktop %}{{ course.banner_image_desktop.url }}{% else %}{% static 'img/default-live-course.jpg' %}{% endif %}" alt="{{ course.name }}">
+            <img src="{% if course.banner_image_desktop %}{{ course.banner_image_desktop.url }}{% else %}{% static 'img/default-thumb.jpg' %}{% endif %}" alt="{{ course.name }}">
         </div>
         <div class="details">
             <h1>{{ course.name }}</h1>
@@ -535,7 +535,7 @@
     </aside>
 </section>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
 <script>
 // Get CSRF token
 function getCsrf() {

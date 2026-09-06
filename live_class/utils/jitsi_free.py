@@ -1,17 +1,12 @@
 # live_class/utils/jitsi_free.py
 import hashlib
-import secrets
 from django.conf import settings
 
 def generate_room_name(session_id, class_name):
-    """Generate a unique room name for the session"""
-    # Create a unique identifier
-    unique_string = f"{session_id}_{class_name}_{secrets.token_hex(8)}"
-    
-    # Hash it to create a clean room name
-    room_hash = hashlib.md5(unique_string.encode()).hexdigest()[:12]
-    
-    return f"LiveClass_{room_hash}"
+    """Generate one stable, hard-to-guess room name for a saved session."""
+    unique_string = f"{settings.SECRET_KEY}:{session_id}:{class_name}"
+    room_hash = hashlib.sha256(unique_string.encode()).hexdigest()[:24]
+    return f"EduTrellisLiveClass{room_hash}"
 
 def is_room_moderator(user):
     """Determine if user should be a moderator"""

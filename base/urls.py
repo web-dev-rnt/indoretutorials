@@ -7,6 +7,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('dropbox-file/<str:token>/', views.dropbox_file_redirect, name='dropbox_file_redirect'),
     path('', views.home, name='home'),
     path('login_user', views.loginuser, name='login'),
     path('signup_user', views.signup_view, name='signup'),

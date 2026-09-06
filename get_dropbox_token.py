@@ -1,12 +1,26 @@
+import os
+
 import dropbox
 
-APP_KEY = "wgg2fsw5pf16x8q"
-APP_SECRET = "38dg9gi6djz3zuu"
-AUTH_CODE = "A6MmynhsA0MAAAAAAAAALiYNq4m4Lj8Uo9scKG0FV9c"
 
-auth_flow = dropbox.DropboxOAuth2FlowNoRedirect(APP_KEY, APP_SECRET)
+app_key = os.environ.get("DROPBOX_APP_KEY")
+app_secret = os.environ.get("DROPBOX_APP_SECRET")
 
-oauth_result = auth_flow.finish(AUTH_CODE)
+if not app_key or not app_secret:
+    raise SystemExit(
+        "Set DROPBOX_APP_KEY and DROPBOX_APP_SECRET before running this helper."
+    )
+
+auth_flow = dropbox.DropboxOAuth2FlowNoRedirect(
+    app_key,
+    app_secret,
+    token_access_type="offline",
+)
+print("1. Open this URL in your browser:")
+print(auth_flow.start())
+print("2. Approve the application, then paste the authorization code below.")
+authorization_code = input("Authorization code: ").strip()
+oauth_result = auth_flow.finish(authorization_code)
 
 print("Access Token:", oauth_result.access_token)
 print("Refresh Token:", oauth_result.refresh_token)

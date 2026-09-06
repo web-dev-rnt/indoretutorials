@@ -297,41 +297,41 @@
             </div>
         </div>
         
-        {% if video_courses.count > 0 %}
+        {% if video_course_count > 0 %}
         <div class="stat-item">
             <i class="fa fa-play-circle"></i>
             <div>
-                <div class="stat-number">{{ video_courses.count }}</div>
+                <div class="stat-number">{{ video_course_count }}</div>
                 <div class="stat-label">Video Courses</div>
             </div>
         </div>
         {% endif %}
         
-        {% if live_courses.count > 0 %}
+        {% if live_course_count > 0 %}
         <div class="stat-item">
             <i class="fa fa-video-camera"></i>
             <div>
-                <div class="stat-number">{{ live_courses.count }}</div>
+                <div class="stat-number">{{ live_course_count }}</div>
                 <div class="stat-label">Live Classes</div>
             </div>
         </div>
         {% endif %}
         
-        {% if test_series.count > 0 %}
+        {% if test_series_count > 0 %}
         <div class="stat-item">
             <i class="fa fa-file-text"></i>
             <div>
-                <div class="stat-number">{{ test_series.count }}</div>
+                <div class="stat-number">{{ test_series_count }}</div>
                 <div class="stat-label">Test Series</div>
             </div>
         </div>
         {% endif %}
         
-        {% if elibrary_courses.count > 0 %}
+        {% if elibrary_course_count > 0 %}
         <div class="stat-item">
             <i class="fa fa-book"></i>
             <div>
-                <div class="stat-number">{{ elibrary_courses.count }}</div>
+                <div class="stat-number">{{ elibrary_course_count }}</div>
                 <div class="stat-label">E-Library</div>
             </div>
         </div>
@@ -347,7 +347,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Video Courses</h2>
-                <span class="section-count">{{ video_courses.count }}</span>
+                <span class="section-count">{{ video_course_count }}</span>
             </div>
             <div class="course-grid">
                 {% for course in video_courses %}
@@ -387,7 +387,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Live Classes</h2>
-                <span class="section-count">{{ live_courses.count }}</span>
+                <span class="section-count">{{ live_course_count }}</span>
             </div>
             <div class="course-grid">
                 {% for course in live_courses %}
@@ -427,7 +427,7 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>Test Series</h2>
-                <span class="section-count">{{ test_series.count }}</span>
+                <span class="section-count">{{ test_series_count }}</span>
             </div>
             <div class="course-grid">
                 {% for series in test_series %}
@@ -469,11 +469,11 @@
         <div class="results-section">
             <div class="section-header">
                 <h2>E-Library</h2>
-                <span class="section-count">{{ elibrary_courses.count }}</span>
+                <span class="section-count">{{ elibrary_course_count }}</span>
             </div>
             <div class="course-grid">
                 {% for course in elibrary_courses %}
-                <a href="{% url 'elibrary_course_detail' course.pk %}" class="course-card">
+                <a href="{% url 'course_detail' course.pk %}" class="course-card">
                     {% if course.cover_image %}
                         <img src="{{ course.cover_image.url }}" 
                              alt="{{ course.title }}" 

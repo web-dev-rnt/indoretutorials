@@ -10,6 +10,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import Group
+from django.conf import settings
+from django.db import transaction
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count
 from django.http import HttpResponse, JsonResponse
@@ -1286,46 +1288,6 @@ def cta_section_edit(request, pk):
 
 
 @login_required
-@user_passes_test(is_admin)
-def cta_section_edit(request, pk):
-    """Edit an existing CTA section."""
-    cta_section = get_object_or_404(CTASection, pk=pk)
-    
-    if request.method == 'POST':
-        form = CTASectionForm(request.POST, request.FILES, instance=cta_section)
-        if form.is_valid():
-            try:
-                form.save()
-                messages.success(
-                    request,
-                    '✓ CTA Section has been updated successfully!',
-                    extra_tags='success'
-                )
-                return redirect('other_details_edit')
-            except Exception as e:
-                messages.error(
-                    request,
-                    f'✗ Error updating CTA section: {str(e)}',
-                    extra_tags='danger'
-                )
-        else:
-            messages.error(
-                request,
-                '✗ Please correct the errors in the form.',
-                extra_tags='danger'
-            )
-    else:
-        form = CTASectionForm(instance=cta_section)
-    
-    context = {
-        'form': form,
-        'cta_section': cta_section,
-    }
-    
-    return render(request, 'cta_section_edit.html', context)
-
-
-@login_required
 def cta_section_delete(request, pk):
     cta_section = get_object_or_404(CTASection, pk=pk)
     cta_title = cta_section.title  # Store title before deletion
@@ -1851,6 +1813,65 @@ def smtp_delete(request, config_id):
     
     return redirect('smtp_configuration')
 
+
+# ======================== RAZORPAY CONFIG ========================
+
+@login_required(login_url='login')
+@user_passes_test(is_admin)
+def razorpay_configuration(request, config_id=None):
+    config = None
+    if config_id is not None:
+        config = get_object_or_404(RazorpayConfiguration, pk=config_id)
+
+    if request.method == 'POST':
+        posted_id = request.POST.get('config_id')
+        if posted_id:
+            config = get_object_or_404(RazorpayConfiguration, pk=posted_id)
+
+        form = RazorpayConfigurationForm(request.POST, instance=config)
+        if form.is_valid():
+            with transaction.atomic():
+                saved_config = form.save(commit=False)
+                if saved_config.is_active:
+                    RazorpayConfiguration.objects.filter(is_active=True).exclude(
+                        pk=saved_config.pk
+                    ).update(is_active=False)
+                saved_config.save()
+
+            action = 'updated' if config else 'created'
+            messages.success(
+                request,
+                f'Razorpay configuration "{saved_config.name}" {action} successfully.'
+            )
+            return redirect('razorpay_configuration')
+        messages.error(request, 'Please correct the Razorpay configuration errors below.')
+    else:
+        form = RazorpayConfigurationForm(instance=config)
+
+    configurations = RazorpayConfiguration.objects.all()
+    context = {
+        'configurations': configurations,
+        'active_config': configurations.filter(is_active=True).first(),
+        'form': form,
+        'editing_config': config,
+        'environment_key_id': settings.RAZORPAY_KEY_ID,
+        'environment_configured': bool(
+            settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET
+        ),
+    }
+    return render(request, 'adminpanel/razorpay_configuration.html', context)
+
+
+@login_required(login_url='login')
+@user_passes_test(is_admin)
+@require_POST
+def razorpay_delete(request, config_id):
+    config = get_object_or_404(RazorpayConfiguration, pk=config_id)
+    config_name = config.name
+    config.delete()
+    messages.success(request, f'Razorpay configuration "{config_name}" deleted successfully.')
+    return redirect('razorpay_configuration')
+
 #bundles views
 def is_admin(user):
     """Check if user is admin"""
@@ -2133,4 +2154,3 @@ def bundle_calculate_price(request):
         })
     
     return JsonResponse({'success': False, 'error': 'Invalid request'})
-
