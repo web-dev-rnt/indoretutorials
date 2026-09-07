@@ -26,6 +26,7 @@ ALLOWED_HOSTS = [
         "ALLOWED_HOSTS",
         "localhost,127.0.0.1,testserver,www.thevedaeducation.info,"
         "ganeshsirclasses.online,www.ganeshsirclasses.online,"
+        "indoretutorials.online,www.indoretutorials.online,"
         "web-production-ab46.up.railway.app",
     ).split(",")
     if host.strip()
@@ -259,10 +260,15 @@ PWA_APP_ICONS = [
 # CSRF TRUSTED ORIGINS
 # --------------------
 CSRF_TRUSTED_ORIGINS = [
-    "https://www.thevedaeducation.info",
-    "https://ganeshsirclasses.online",
-    "https://www.ganeshsirclasses.online",
-    "https://web-production-ab46.up.railway.app",
+    origin.strip()
+    for origin in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://www.thevedaeducation.info,"
+        "https://ganeshsirclasses.online,https://www.ganeshsirclasses.online,"
+        "https://indoretutorials.online,https://www.indoretutorials.online,"
+        "https://web-production-ab46.up.railway.app",
+    ).split(",")
+    if origin.strip()
 ]
 
 # --------------------
