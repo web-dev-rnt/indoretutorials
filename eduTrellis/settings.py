@@ -27,10 +27,17 @@ ALLOWED_HOSTS = [
         "localhost,127.0.0.1,testserver,www.thevedaeducation.info,"
         "ganeshsirclasses.online,www.ganeshsirclasses.online,"
         "indoretutorials.online,www.indoretutorials.online,"
+        "exams.edutrellis.in,www.exams.edutrellis.in,"
         "web-production-ab46.up.railway.app",
     ).split(",")
     if host.strip()
 ]
+
+# Keep the canonical exam domains available even when ALLOWED_HOSTS is
+# supplied by the deployment environment and replaces the defaults above.
+for host in ("exams.edutrellis.in", "www.exams.edutrellis.in"):
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
 # --------------------
 # APPLICATIONS
@@ -266,10 +273,18 @@ CSRF_TRUSTED_ORIGINS = [
         "https://www.thevedaeducation.info,"
         "https://ganeshsirclasses.online,https://www.ganeshsirclasses.online,"
         "https://indoretutorials.online,https://www.indoretutorials.online,"
+        "https://exams.edutrellis.in,https://www.exams.edutrellis.in,"
         "https://web-production-ab46.up.railway.app",
     ).split(",")
     if origin.strip()
 ]
+
+for origin in (
+    "https://exams.edutrellis.in",
+    "https://www.exams.edutrellis.in",
+):
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # --------------------
 # DROPBOX STORAGE
