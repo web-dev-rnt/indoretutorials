@@ -4,13 +4,13 @@ from video_courses.models import Category
 from django.core.cache import cache
 
 # ── Site-wide contact constants ──────────────────────────────────────────────
-SITE_EMAIL = "support@edutrellis.in"
-SITE_PHONE = "9695953183"
-SITE_PHONE_DISPLAY = "+91 96959 53183"
-SITE_WHATSAPP_NUMBER = "919695953183"  # country code + number, no +
+SITE_EMAIL = "indoretutorial1857@gmail.com"
+SITE_PHONE = "7489699909"
+SITE_PHONE_DISPLAY = "+91 74896 99909"
+SITE_WHATSAPP_NUMBER = "917489699909"  # country code + number, no +
 SITE_WHATSAPP_URL = (
     f"https://wa.me/{SITE_WHATSAPP_NUMBER}"
-    "?text=Hello%2C%20I%20would%20like%20to%20know%20more%20about%20EduTrellis%20courses"
+    "?text=Hello%2C%20I%20would%20like%20to%20know%20more%20about%20Indore%20Tutorial%20courses"
 )
 SITE_ADDRESS = "P-109, Prembagh, Shahpur, Chinhat, Lucknow, Uttar Pradesh 226028"
 SITE_MAPS_URL = "https://maps.google.com/?q=P-109,+Prembagh,+Shahpur,+Chinhat,+Lucknow,+Uttar+Pradesh+226028"
@@ -42,7 +42,7 @@ def site_contact(request):
 def navbar_settings(request):
     """Make navbar settings available in all templates"""
     try:
-        settings = cache.get("site-navbar-settings")
+        settings = cache.get("site-navbar-settings-v3")
         if settings is None:
             settings = NavbarSettings.objects.filter(is_active=True).first()
         if not settings:
@@ -50,7 +50,7 @@ def navbar_settings(request):
                 contact_number=SITE_PHONE,
                 contact_type="whatsapp",
             )
-        cache.set("site-navbar-settings", settings, 300)
+        cache.set("site-navbar-settings-v3", settings, 300)
         return {"navbar_settings": settings}
     except Exception as e:
         import logging
@@ -61,7 +61,7 @@ def navbar_settings(request):
 def footer_settings(request):
     """Make footer settings available in all templates"""
     try:
-        cached_footer = cache.get("site-footer-settings")
+        cached_footer = cache.get("site-footer-settings-v3")
         if cached_footer is None:
             settings = FooterSettings.objects.filter(is_active=True).first()
             footer_links = list(FooterLink.objects.filter(is_active=True))
@@ -72,11 +72,11 @@ def footer_settings(request):
         if not settings:
             settings = FooterSettings.objects.create(
                 email=SITE_EMAIL,
-                copyright_text="Copyright \u00a9 2025 EduTrellis Private Limited. All rights reserved.",
+                copyright_text="Copyright \u00a9 2026 Indore Tutorial. All rights reserved.",
             )
 
         cache.set(
-            "site-footer-settings",
+            "site-footer-settings-v3",
             (settings, footer_links, footer_legal_links),
             300,
         )

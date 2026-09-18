@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator , FileExtensionValidator, R
 from django.utils import timezone
 from django.core.mail import get_connection, send_mail
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 import string
 import random
 import os
@@ -367,15 +368,15 @@ class CTASection(models.Model):
 
 
 class AboutUsSection(models.Model):
-    company_name = models.CharField(max_length=200, default="EduGorilla Community Pvt. Ltd.")
-    heading = models.CharField(max_length=200, default="About EduGorilla")
+    company_name = models.CharField(max_length=200, default="Indore Tutorial")
+    heading = models.CharField(max_length=200, default="About Indore Tutorial")
     description = models.TextField(default="India's fastest-growing one-stop exam prep platform")
     logo = models.ImageField(upload_to='about/', blank=True, help_text="Company logo image")
 
     # Contact Information
     address = models.TextField(default="6th Floor, Intech Capital, Vibhuti Khand, Gomti Nagar, Lucknow - 226010, India")
-    email = models.EmailField(default="info@edugorilla.com")
-    phone = models.CharField(max_length=50, default="0522-3514751")
+    email = models.EmailField(default="indoretutorial1857@gmail.com")
+    phone = models.CharField(max_length=50, default="7489699909")
     phone_hours = models.CharField(max_length=100, default="(10 AM to 7 PM)")
 
     # Social Media Links
@@ -442,7 +443,7 @@ class NavbarSettings(models.Model):
     
     logo = models.ImageField(upload_to='navbar/', blank=True, null=True, help_text="Website logo")
     favicon = models.ImageField(upload_to='navbar/favicon/', blank=True, null=True, help_text="Website favicon (16x16 or 32x32 px)")
-    contact_number = models.CharField(max_length=20, default="7905817391", help_text="Contact phone number")
+    contact_number = models.CharField(max_length=20, default="7489699909", help_text="Contact phone number")
     contact_hours = models.CharField(max_length=50, default="(10 AM to 7 PM)", help_text="Contact hours")
     contact_type = models.CharField(max_length=10, choices=CONTACT_TYPE_CHOICES, default='whatsapp', help_text="Contact method type")
     search_placeholder = models.CharField(max_length=100, default="Search courses", help_text="Search box placeholder text")
@@ -477,13 +478,18 @@ class NavbarSettings(models.Model):
         if not self.pk and NavbarSettings.objects.exists():
             raise ValueError('Only one NavbarSettings instance allowed')
         super().save(*args, **kwargs)
+        cache.delete("site-navbar-settings-v3")
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        cache.delete("site-navbar-settings-v3")
 
 
 
 class FooterSettings(models.Model):
     logo = models.ImageField(upload_to='footer/', blank=True, null=True, help_text="Footer logo image")
-    email = models.EmailField(default="testseries@edugorilla.com", help_text="Contact email")
-    copyright_text = models.CharField(max_length=200, default="Copyright © 2025 EduGorilla Community Pvt. Ltd.")
+    email = models.EmailField(default="indoretutorial1857@gmail.com", help_text="Contact email")
+    copyright_text = models.CharField(max_length=200, default="Copyright © 2026 Indore Tutorial. All rights reserved.")
 
     google_play_url = models.URLField(blank=True, default="https://play.google.com/store/apps", help_text="Google Play Store URL")
     app_store_url = models.URLField(blank=True, default="https://apps.apple.com/app", help_text="Apple App Store URL")
@@ -510,6 +516,11 @@ class FooterSettings(models.Model):
         if not self.pk and FooterSettings.objects.exists():
             raise ValueError('Only one FooterSettings instance allowed')
         super().save(*args, **kwargs)
+        cache.delete("site-footer-settings-v3")
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        cache.delete("site-footer-settings-v3")
 
 
 class FooterLink(models.Model):

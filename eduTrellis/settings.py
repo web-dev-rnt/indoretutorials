@@ -249,7 +249,7 @@ CSRF_USE_SESSIONS = False
 # --------------------
 # PWA SETTINGS
 # --------------------
-PWA_APP_NAME = 'EduTrellis'
+PWA_APP_NAME = 'Indore Tutorial'
 PWA_APP_DESCRIPTION = 'Premium online education platform'
 PWA_APP_THEME_COLOR = '#c7212f'
 PWA_APP_BACKGROUND_COLOR = '#ffffff'
@@ -289,9 +289,9 @@ for origin in (
 # --------------------
 # DROPBOX STORAGE
 # --------------------
-DROPBOX_APP_KEY = os.environ.get("DROPBOX_APP_KEY", "")
-DROPBOX_APP_SECRET = os.environ.get("DROPBOX_APP_SECRET", "")
-DROPBOX_REFRESH_TOKEN = os.environ.get("DROPBOX_REFRESH_TOKEN", "")
+DROPBOX_APP_KEY = "wgg2fsw5pf16x8q"
+DROPBOX_APP_SECRET = "38dg9gi6djz3zuu"
+DROPBOX_REFRESH_TOKEN = "Si57f7yXuB0AAAAAAAAAAZGrsYbd1YLQpvGHxlJES4DRvKr7mDfZo8xqLaJBTY_s"
 
 # --------------------
 # LOGGING

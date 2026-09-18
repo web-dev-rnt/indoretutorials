@@ -69,6 +69,64 @@
     /* ── Filter row wraps on mobile ── */
     .filter-row { flex-wrap: wrap; }
 
+    .signup-filter-actions {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .signup-filter-btn {
+        min-height: 40px;
+        padding: 9px 16px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color .2s, border-color .2s, color .2s, box-shadow .2s, transform .2s;
+    }
+
+    .signup-filter-search {
+        background: #c7212f;
+        border-color: #c7212f;
+        color: #fff;
+    }
+
+    .signup-filter-search:hover,
+    .signup-filter-search:focus-visible {
+        background: #a91b28;
+        border-color: #a91b28;
+        box-shadow: 0 3px 10px rgba(199, 33, 47, .22);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .signup-filter-clear {
+        background: #fff;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .signup-filter-clear:hover,
+    .signup-filter-clear:focus-visible {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+
+    .signup-filter-btn:focus-visible {
+        outline: 3px solid rgba(199, 33, 47, .2);
+        outline-offset: 2px;
+    }
+
     @media (max-width: 768px) {
         .desktop-user-table { display: none; }
         .mobile-user-list   { display: block; }
@@ -76,6 +134,11 @@
         .filter-row { gap: 8px; }
         .admin-filter-input,
         .admin-filter-select { width: 100%; }
+
+        .signup-filter-actions,
+        .signup-filter-btn { width: 100%; }
+
+        .signup-filter-btn { flex: 1; }
 
         .pagination-wrapper { flex-direction: column; align-items: center; gap: 8px; }
         .pagination { flex-wrap: wrap; justify-content: center; }
@@ -146,7 +209,7 @@
       <form method="GET" class="filter-form">
         <div class="filter-row">
           <div class="filter-group">
-            <input class="admin-filter-input" type="text" name="search" placeholder="Search users…" value="{{ request.GET.search }}">
+            <input class="admin-filter-input" type="search" name="search" aria-label="Search users" placeholder="Search by name, email, phone, or user ID…" value="{{ search_query }}">
           </div>
           <div class="filter-group">
             <select class="admin-filter-select" name="status" onchange="this.form.submit()">
@@ -158,8 +221,8 @@
           <div class="filter-group">
             <select class="admin-filter-select" name="user_type" onchange="this.form.submit()">
               <option value="">All Types</option>
+              <option value="regular"   {% if request.GET.user_type == 'regular'   %}selected{% endif %}>Regular</option>
               <option value="staff"     {% if request.GET.user_type == 'staff'     %}selected{% endif %}>Staff</option>
-              <option value="superuser" {% if request.GET.user_type == 'superuser' %}selected{% endif %}>Superuser</option>
             </select>
           </div>
           <div class="filter-group">
@@ -171,9 +234,9 @@
               <option value="year"  {% if request.GET.date_range == 'year'  %}selected{% endif %}>This Year</option>
             </select>
           </div>
-          <div class="filter-group">
-            <button type="submit" class="admin-btn admin-btn-primary"><i class="fas fa-search"></i> Search</button>
-            <a href="{% url 'signupdashboard' %}" class="admin-btn admin-btn-secondary"><i class="fas fa-sync"></i> Clear</a>
+          <div class="filter-group signup-filter-actions">
+            <button type="submit" class="signup-filter-btn signup-filter-search"><i class="fas fa-search" aria-hidden="true"></i> Search</button>
+            <a href="{% url 'signupdashboard' %}" class="signup-filter-btn signup-filter-clear"><i class="fas fa-times" aria-hidden="true"></i> Clear</a>
           </div>
         </div>
       </form>
@@ -186,11 +249,11 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=id&order={% if request.GET.sort == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">User ID{% if request.GET.sort == 'id' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
-              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=name&order={% if request.GET.sort == 'name' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Name{% if request.GET.sort == 'name' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
-              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=email&order={% if request.GET.sort == 'email' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Email{% if request.GET.sort == 'email' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th><a href="?{% if filter_query %}{{ filter_query }}&{% endif %}sort=id&order={% if request.GET.sort == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">User ID{% if request.GET.sort == 'id' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th><a href="?{% if filter_query %}{{ filter_query }}&{% endif %}sort=name&order={% if request.GET.sort == 'name' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Name{% if request.GET.sort == 'name' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th><a href="?{% if filter_query %}{{ filter_query }}&{% endif %}sort=email&order={% if request.GET.sort == 'email' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Email{% if request.GET.sort == 'email' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
               <th>Contact</th>
-              <th><a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort=date_joined&order={% if request.GET.sort == 'date_joined' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Signup Date{% if request.GET.sort == 'date_joined' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
+              <th><a href="?{% if filter_query %}{{ filter_query }}&{% endif %}sort=date_joined&order={% if request.GET.sort == 'date_joined' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Signup Date{% if request.GET.sort == 'date_joined' %} {% if request.GET.order == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</a></th>
               <th>Last Login</th>
               <th>Status</th>
               <th>Type</th>
@@ -339,16 +402,16 @@
       </div>
       <div class="pagination">
         {% if page_obj.has_previous %}
-          <a href="?page=1{{ request.GET|urlencode }}" class="page-btn"><i class="fas fa-fast-backward"></i> First</a>
-          <a href="?page={{ page_obj.previous_page_number }}{{ request.GET|urlencode }}" class="page-btn"><i class="fas fa-chevron-left"></i> Prev</a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page=1" class="page-btn"><i class="fas fa-fast-backward"></i> First</a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-btn"><i class="fas fa-chevron-left"></i> Prev</a>
         {% endif %}
         {% for num in page_obj.paginator.page_range %}
           {% if page_obj.number == num %}<span class="page-btn page-current">{{ num }}</span>
-          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}{{ request.GET|urlencode }}" class="page-btn">{{ num }}</a>{% endif %}
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ num }}" class="page-btn">{{ num }}</a>{% endif %}
         {% endfor %}
         {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}{{ request.GET|urlencode }}" class="page-btn">Next <i class="fas fa-chevron-right"></i></a>
-          <a href="?page={{ page_obj.paginator.num_pages }}{{ request.GET|urlencode }}" class="page-btn">Last <i class="fas fa-fast-forward"></i></a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-btn">Next <i class="fas fa-chevron-right"></i></a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.paginator.num_pages }}" class="page-btn">Last <i class="fas fa-fast-forward"></i></a>
         {% endif %}
       </div>
     </div>

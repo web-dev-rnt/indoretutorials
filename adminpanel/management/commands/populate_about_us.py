@@ -9,13 +9,13 @@ class Command(BaseCommand):
         # Create default About Us section
         about_us, created = AboutUsSection.objects.get_or_create(
             defaults={
-                'company_name': 'EduGorilla Community Pvt. Ltd.',
-                'heading': 'About EduGorilla',
+                'company_name': 'Indore Tutorial',
+                'heading': 'About Indore Tutorial',
                 'description': '''India's fastest-growing one-stop exam prep platform (Trusted by over 4 crore users!).
 We empower exam aspirants with affordable online live classes, mock tests, e-books, and personalized learning journeys across 1,600+ national and state exams. Maximize your success with best-in-class technology, analytics, and top educators!''',
                 'address': '6th Floor, Intech Capital, Vibhuti Khand, Gomti Nagar, Lucknow - 226010, India',
-                'email': 'info@edugorilla.com',
-                'phone': '0522-3514751',
+                'email': 'indoretutorial1857@gmail.com',
+                'phone': '7489699909',
                 'phone_hours': '(10 AM to 7 PM)',
                 'facebook_url': 'https://facebook.com/edugorilla',
                 'twitter_url': 'https://twitter.com/edugorilla',

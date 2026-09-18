@@ -115,9 +115,9 @@ def manifest(request):
         return request.build_absolute_uri(settings.STATIC_URL + f'img/{filename}')
     
     manifest_data = {
-        "name": "EduTrellis - Complete Learning Platform",
-        "short_name": "EduTrellis",
-        "description": "Access live classes, video courses, test series, and e-library. Learn anytime, anywhere with EduTrellis.",
+        "name": "Indore Tutorial - Complete Learning Platform",
+        "short_name": "Indore Tutorial",
+        "description": "Access live classes, video courses, test series, and e-library. Learn anytime, anywhere with Indore Tutorial.",
         "start_url": "/",
         "scope": "/",
         "display": "standalone",

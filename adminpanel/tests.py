@@ -79,3 +79,50 @@ class RazorpayConfigurationTests(TestCase):
         _, key_id = get_razorpay_client()
         self.assertEqual(key_id, 'rzp_live_saved')
         client_class.assert_called_once_with(auth=('rzp_live_saved', 'live-secret'))
+
+
+@override_settings(STORAGES={
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+})
+class SignupAnalyticsTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.admin = User.objects.create_user(
+            email='analytics-admin@example.com',
+            password='test-password',
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.matching_user = User.objects.create_user(
+            email='amit.sharma@example.com',
+            password='test-password',
+            first_name='Amit',
+            last_name='Sharma',
+            contact_number='7489699909',
+        )
+        User.objects.create_user(
+            email='different@example.com',
+            password='test-password',
+            first_name='Different',
+            last_name='User',
+        )
+        self.client.force_login(self.admin)
+
+    def test_multi_word_search_matches_first_and_last_name(self):
+        response = self.client.get(
+            reverse('signupdashboard'),
+            {'search': '  Amit Sharma  '},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['users']), [self.matching_user])
+        self.assertEqual(response.context['search_query'], 'Amit Sharma')
+
+    def test_filter_controls_use_page_specific_button_styles(self):
+        response = self.client.get(reverse('signupdashboard'))
+
+        self.assertContains(response, 'signup-filter-search')
+        self.assertContains(response, 'signup-filter-clear')
+        self.assertContains(response, '<option value="regular"', html=False)
+        self.assertNotContains(response, '<option value="superuser"', html=False)

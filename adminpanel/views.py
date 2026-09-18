@@ -351,7 +351,7 @@ def admin_dashboard(request):
 @staff_member_required
 def signup_dashboard(request):
     """Signup analytics dashboard view - EXCLUDES superusers"""
-    search_query = request.GET.get('search', '')
+    search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', '')
     user_type_filter = request.GET.get('user_type', '')
     date_range = request.GET.get('date_range', '')
@@ -361,14 +361,19 @@ def signup_dashboard(request):
     users = User.objects.filter(is_superuser=False)
 
     if search_query:
-        search_filters = (
-            Q(email__icontains=search_query)
-            | Q(first_name__icontains=search_query)
-            | Q(last_name__icontains=search_query)
-        )
-        if hasattr(User, 'contact_number'):
-            search_filters |= Q(contact_number__icontains=search_query)
-        users = users.filter(search_filters)
+        # Apply every word independently so searches such as "Amit Sharma"
+        # match across first and last name fields as expected.
+        for term in search_query.split():
+            search_filters = (
+                Q(email__icontains=term)
+                | Q(first_name__icontains=term)
+                | Q(last_name__icontains=term)
+            )
+            if hasattr(User, 'contact_number'):
+                search_filters |= Q(contact_number__icontains=term)
+            if term.isdigit():
+                search_filters |= Q(id=int(term))
+            users = users.filter(search_filters)
 
     if user_type_filter == 'staff':
         users = users.filter(is_staff=True, is_superuser=False)
@@ -408,6 +413,15 @@ def signup_dashboard(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    pagination_params = request.GET.copy()
+    pagination_params.pop('page', None)
+    pagination_query = pagination_params.urlencode()
+
+    filter_params = request.GET.copy()
+    for key in ('page', 'sort', 'order'):
+        filter_params.pop(key, None)
+    filter_query = filter_params.urlencode()
+
     total_users = User.objects.filter(is_superuser=False).count()
     active_users = User.objects.filter(is_active=True, is_superuser=False).count()
     inactive_users = User.objects.filter(is_active=False, is_superuser=False).count()
@@ -445,6 +459,9 @@ def signup_dashboard(request):
         'regular_percentage': regular_percentage,
         'monthly_change': monthly_change,
         'total_growth': round((this_month_signups / total_users * 100) if total_users > 0 else 0, 1),
+        'search_query': search_query,
+        'pagination_query': pagination_query,
+        'filter_query': filter_query,
     }
     return render(request, 'analytics/signups.html', context)
 
@@ -1340,8 +1357,8 @@ def about_us_section_edit(request):
     """Edit About Us main section"""
     about_us, _ = AboutUsSection.objects.get_or_create(
         defaults={
-            'company_name': 'EduGorilla Community Pvt. Ltd.',
-            'heading': 'About EduGorilla',
+            'company_name': 'Indore Tutorial',
+            'heading': 'About Indore Tutorial',
             'description': (
                 "India's fastest-growing one-stop exam prep platform (Trusted by over 4 crore users!).\n"
                 'We empower exam aspirants with affordable online live classes, mock tests, e-books, and personalized '
@@ -1463,7 +1480,7 @@ def service_toggle_status(request, pk):
 @login_required
 def navbar_settings_edit(request):
     navbar_settings, _ = NavbarSettings.objects.get_or_create(
-        defaults={'contact_number': '7905817391', 'contact_hours': '(10 AM to 7 PM)', 'search_placeholder': 'Search courses'}
+        defaults={'contact_number': '7489699909', 'contact_hours': '(10 AM to 7 PM)', 'search_placeholder': 'Search courses'}
     )
     if request.method == 'POST':
         form = NavbarSettingsForm(request.POST, request.FILES, instance=navbar_settings)
@@ -1495,7 +1512,7 @@ def footer_edit(request):
 @login_required
 def footer_settings_edit(request):
     footer_settings, _ = FooterSettings.objects.get_or_create(
-        defaults={'email': 'testseries@edugorilla.com', 'copyright_text': 'Copyright © 2025'}
+        defaults={'email': 'indoretutorial1857@gmail.com', 'copyright_text': 'Copyright © 2026 Indore Tutorial. All rights reserved.'}
     )
     if request.method == 'POST':
         form = FooterSettingsForm(request.POST, request.FILES, instance=footer_settings)

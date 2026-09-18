@@ -9,7 +9,7 @@
         {% if about_us.logo %}
           <img src="{{ about_us.logo.url }}" alt="{{ about_us.company_name }} Logo" class="aboutus-logo">
         {% else %}
-          <img src="{% load static %}{% static 'img/mainlogo.png' %}" alt="EduGorilla Logo" class="aboutus-logo">
+          <img src="{% load static %}{% static 'img/mainlogo.png' %}" alt="Indore Tutorial Logo" class="aboutus-logo">
         {% endif %}
         <div class="aboutus-company">{{ about_us.company_name }}</div>
       </div>
@@ -63,7 +63,7 @@
       <div class="aboutus-why">
         <div class="aboutus-why-title">
           <i class="fa-regular fa-lightbulb"></i>
-          Why Choose {{ about_us.company_name|default:"EduGorilla" }}?
+          Why Choose {{ about_us.company_name|default:"Indore Tutorial" }}?
         </div>
         <ul class="aboutus-why-list">
           {% for item in why_choose_items %}
