@@ -6,6 +6,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link href="{% static 'css/fontawesome/all.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/typography.css' %}" rel="stylesheet">
 {% get_favicon_url as favicon_url %}
 {% if favicon_url %}
   <link rel="icon" type="image/png" href="{{ favicon_url }}">
@@ -14,7 +15,7 @@
 {% endif %}
 <title>Backup Management - Admin</title>
 <style>
-html,body{width:100%;height:auto;margin:0;padding:0;background:#fff;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+html,body{width:100%;height:auto;margin:0;padding:0;background:#fff;font-family:var(--font-sans);}
 :root{--admin-bg:#ffffff;--admin-panel:#ffffff;--admin-panel-2:#fafbff;--admin-border:#e9ecf3;--admin-muted:#707793;--admin-text:#162033;--admin-primary:#c7212f;--admin-primary-600:#ad1830;--admin-primary-100:#fde8eb;--admin-success:#16a34a;--admin-warning:#f59e0b;--admin-danger:#dc2626;--admin-card-shadow:0 6px 18px rgba(16,24,40,.05);--admin-radius:14px;--admin-radius-sm:10px;--input-border:#d1d5db;--input-border-focus:#c7212f;--input-bg:#ffffff;}
 a{text-decoration:none;}
 *{box-sizing:border-box;}

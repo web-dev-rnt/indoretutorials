@@ -51,9 +51,28 @@
                 <div class="col-12">
                     <div class="form-group">
                         <label for="description">Description</label>
-                        <textarea id="description" name="description" rows="4" 
+                        <textarea id="description" name="description" rows="4"
                                   placeholder="Brief description of this category (optional)"></textarea>
                         <div class="help-text">Help users understand what courses belong in this category</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="icon">Icon</label>
+                        <input type="text" id="icon" name="icon" maxlength="50"
+                               placeholder="e.g., shield-alt, stethoscope, university"
+                               value="graduation-cap">
+                        <div class="help-text">Font Awesome icon name shown in the navbar dropdown (no "fa-" prefix)</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="icon_color">Icon Color</label>
+                        <div class="color-field">
+                            <input type="color" id="icon_color" name="icon_color" value="#667eea">
+                            <span class="color-field-value">#667EEA</span>
+                        </div>
+                        <div class="help-text">Color of the category icon</div>
                     </div>
                 </div>
             </div>
@@ -69,6 +88,28 @@
     </div>
 </div>
 
+<style>
+.color-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.color-field input[type="color"] {
+    width: 48px;
+    height: 40px;
+    padding: 2px;
+    border: 2px solid var(--input-border);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--input-bg);
+}
+.color-field-value {
+    font-size: 13px;
+    color: var(--admin-muted);
+    font-family: monospace;
+    text-transform: uppercase;
+}
+</style>
 <script>
 function generateSlugPreview(name) {
     const slugPreview = document.getElementById('slug-preview');
@@ -83,6 +124,16 @@ function generateSlugPreview(name) {
         slugPreview.textContent = 'Enter name to see URL';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const colorInput = document.getElementById('icon_color');
+    const colorValue = document.querySelector('.color-field-value');
+    if (colorInput && colorValue) {
+        colorInput.addEventListener('input', function () {
+            colorValue.textContent = colorInput.value.toUpperCase();
+        });
+    }
+});
 
 function showLoading(form) {
     const btn = form.querySelector('button[type="submit"]');

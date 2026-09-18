@@ -13,14 +13,15 @@
   <meta name="keywords" content="online education, live classes, video courses, test series, e-library, Indore Tutorial">
   <meta name="author" content="Indore Tutorial">
   
+  {% get_theme_settings as theme %}
   <!-- PWA Meta Tags -->
-  <meta name="theme-color" content="#c7212f">
+  <meta name="theme-color" content="{{ theme.primary_color|default:'#D4AF37' }}">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Indore Tutorial">
   <meta name="application-name" content="Indore Tutorial">
-  <meta name="msapplication-TileColor" content="#c7212f">
+  <meta name="msapplication-TileColor" content="{{ theme.primary_color|default:'#D4AF37' }}">
   <meta name="msapplication-tap-highlight" content="no">
   <meta name="msapplication-TileImage" content="{% static 'img/icon-192.png' %}">
   
@@ -43,12 +44,20 @@
       <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}">
   {% endif %}
   
-  <!-- Self-hosted icons; typography uses the local system font stack. -->
+  <!-- Self-hosted icons and typography. -->
   <link rel="stylesheet" href="{% static 'css/fontawesome/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/typography.css' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/home-components.css' %}">
 
-    
+  <!-- Site theme color, admin-configurable under Customize Website > Theme Color -->
+  <style>
+    :root {
+      --brand-primary: {{ theme.primary_color|default:"#D4AF37" }};
+      --brand-primary-dark: {{ theme.primary_color_dark|default:"#ae902d" }};
+      --brand-primary-rgb: {{ theme.primary_color_rgb|default:"212, 175, 55" }};
+    }
+  </style>
 </head>
 <body>
 

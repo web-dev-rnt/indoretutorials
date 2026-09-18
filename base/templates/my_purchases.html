@@ -41,7 +41,7 @@
     .purchase-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        border-color: #c7212f;
+        border-color: var(--brand-primary);
     }
 
     .purchase-thumbnail {
@@ -110,7 +110,7 @@
     .btn-access {
         flex: 1;
         padding: 12px;
-        background: #c7212f;
+        background: var(--brand-primary);
         color: white;
         text-align: center;
         text-decoration: none;
@@ -122,9 +122,9 @@
     }
 
     .btn-access:hover {
-        background: #a01a26;
+        background: var(--brand-primary-dark);
         transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(199, 33, 47, 0.3);
+        box-shadow: 0 4px 12px rgba(var(--brand-primary-rgb), 0.3);
     }
 
     .btn-access:disabled {
@@ -149,7 +149,7 @@
     .price-paid {
         font-size: 20px;
         font-weight: 700;
-        color: #c7212f;
+        color: var(--brand-primary);
         margin-top: 8px;
         margin-bottom: 5px;
     }
@@ -186,7 +186,7 @@
 
     .empty-state-icon-wrap i {
         font-size: 44px;
-        color: #c7212f;
+        color: var(--brand-primary);
     }
 
     .empty-state-card h2 {
@@ -224,7 +224,7 @@
     }
 
     .feature-pill i {
-        color: #c7212f;
+        color: var(--brand-primary);
         font-size: 14px;
     }
 
@@ -233,20 +233,20 @@
         align-items: center;
         gap: 10px;
         padding: 15px 36px;
-        background: #c7212f;
+        background: var(--brand-primary);
         color: #fff;
         text-decoration: none;
         border-radius: 10px;
         font-size: 16px;
         font-weight: 700;
         transition: all 0.25s ease;
-        box-shadow: 0 4px 16px rgba(199,33,47,0.25);
+        box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb),0.25);
     }
 
     .btn-browse-courses:hover {
-        background: #a01a26;
+        background: var(--brand-primary-dark);
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(199,33,47,0.35);
+        box-shadow: 0 8px 24px rgba(var(--brand-primary-rgb),0.35);
         color: #fff;
         text-decoration: none;
     }
@@ -267,7 +267,7 @@
     }
 
     .empty-state-help a {
-        color: #c7212f;
+        color: var(--brand-primary);
         text-decoration: none;
         font-weight: 600;
     }

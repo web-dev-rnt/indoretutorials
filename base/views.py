@@ -113,7 +113,10 @@ def manifest(request):
     # Build absolute URLs for icons
     def build_icon_url(filename):
         return request.build_absolute_uri(settings.STATIC_URL + f'img/{filename}')
-    
+
+    from adminpanel.models import ThemeSettings
+    theme_color = ThemeSettings.get_solo().primary_color
+
     manifest_data = {
         "name": "Indore Tutorial - Complete Learning Platform",
         "short_name": "Indore Tutorial",
@@ -122,7 +125,7 @@ def manifest(request):
         "scope": "/",
         "display": "standalone",
         "background_color": "#ffffff",
-        "theme_color": "#c7212f",
+        "theme_color": theme_color,
         "orientation": "portrait-primary",
         "categories": ["education", "learning", "productivity"],
         "lang": "en-IN",
@@ -214,6 +217,14 @@ def manifest(request):
 def offline(request):
     """Offline fallback page"""
     return render(request, 'offline.html')
+
+
+def extra_page_detail(request, slug):
+    """Render an admin-managed static page (Privacy Policy, Disclaimer, Refund Policy, Contact Us, etc.)"""
+    from adminpanel.models import ExtraPage
+    from django.shortcuts import get_object_or_404
+    page = get_object_or_404(ExtraPage, slug=slug, is_active=True)
+    return render(request, 'extra_page_detail.html', {'page': page})
 
 
 #notifications views 

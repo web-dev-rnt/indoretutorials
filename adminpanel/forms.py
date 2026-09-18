@@ -12,13 +12,17 @@ from .models import (
     AboutUsSection,
     WhyChooseUsItem,
     ServiceItem,
+    ThemeSettings,
+    AuthPageSettings,
     NavbarSettings,
     FooterSettings,
     FooterLink,
     FooterLegalLink,
+    ExtraPage,
     DeveloperPopup,
     Notification,
     RazorpayConfiguration,
+    DropboxConfiguration,
 )
 
 User = get_user_model()
@@ -64,6 +68,40 @@ class RazorpayConfigurationForm(forms.ModelForm):
         if not secret:
             raise ValidationError('Razorpay key secret is required.')
         return secret
+
+
+class DropboxConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = DropboxConfiguration
+        fields = ["name", "app_key", "app_secret", "refresh_token", "backup_folder"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "backup-input", "placeholder": "Primary Dropbox"}),
+            "app_key": forms.TextInput(attrs={"class": "backup-input", "autocomplete": "off"}),
+            "app_secret": forms.PasswordInput(attrs={"class": "backup-input", "autocomplete": "new-password"}, render_value=False),
+            "refresh_token": forms.PasswordInput(attrs={"class": "backup-input", "autocomplete": "new-password"}, render_value=False),
+            "backup_folder": forms.TextInput(attrs={"class": "backup-input", "placeholder": "/edutrellis-educational-backup"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            for field in ("app_secret", "refresh_token"):
+                self.fields[field].required = False
+                self.fields[field].help_text = "Leave blank to keep the saved value."
+
+    def clean_backup_folder(self):
+        folder = self.cleaned_data["backup_folder"].strip()
+        if not folder.startswith("/"):
+            folder = f"/{folder}"
+        return folder.rstrip("/") or "/edutrellis-educational-backup"
+
+    def clean_app_secret(self):
+        value = self.cleaned_data.get("app_secret", "").strip()
+        return value or (self.instance.app_secret if self.instance and self.instance.pk else value)
+
+    def clean_refresh_token(self):
+        value = self.cleaned_data.get("refresh_token", "").strip()
+        return value or (self.instance.refresh_token if self.instance and self.instance.pk else value)
 
 # Notifications
 class NotificationForm(forms.ModelForm):
@@ -288,12 +326,15 @@ class CouponApplyForm(forms.Form):
 class BannerForm(forms.ModelForm):
     class Meta:
         model = Banner
-        fields = ['title', 'image', 'alt_text', 'link_url', 'is_active', 'order']
+        fields = ['title', 'image', 'mobile_image', 'alt_text', 'link_url', 'is_active', 'order']
         widgets = {
             'title': forms.TextInput(
                 attrs={'class': 'form-control', 'placeholder': 'Banner Title'}
             ),
             'image': forms.FileInput(
+                attrs={'class': 'form-control', 'accept': 'image/*'}
+            ),
+            'mobile_image': forms.FileInput(
                 attrs={'class': 'form-control', 'accept': 'image/*'}
             ),
             'alt_text': forms.TextInput(
@@ -315,6 +356,11 @@ class BannerForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['image'].help_text = (
             'Recommended size: 1920x800px for best results'
+        )
+        self.fields['mobile_image'].required = False
+        self.fields['mobile_image'].help_text = (
+            'Optional. Recommended size: 750x400px. Shown instead of the desktop image on phones '
+            '(narrow screens) so the banner crops better. Leave blank to reuse the desktop image on mobile.'
         )
 
 
@@ -369,12 +415,19 @@ class StatCardForm(forms.ModelForm):
 class CTASectionForm(forms.ModelForm):
     class Meta:
         model = CTASection
-        fields = ['title', 'button_text', 'button_link', 'is_active']
+        fields = ['title', 'description', 'button_text', 'button_link', 'button_color', 'background_image', 'is_active']
         widgets = {
             'title': forms.TextInput(
                 attrs={
                     'class': 'form-control',
                     'placeholder': 'Increase Selection Chances by 16X',
+                }
+            ),
+            'description': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Brief description or tagline for the call-to-action',
+                    'rows': 3,
                 }
             ),
             'button_text': forms.TextInput(
@@ -385,6 +438,9 @@ class CTASectionForm(forms.ModelForm):
                     'class': 'form-control',
                     'placeholder': 'https://example.com (optional)',
                 }
+            ),
+            'button_color': forms.TextInput(
+                attrs={'class': 'form-control', 'type': 'color'}
             ),
         }
 
@@ -469,6 +525,25 @@ class ServiceItemForm(forms.ModelForm):
             ),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
+
+class ThemeSettingsForm(forms.ModelForm):
+    class Meta:
+        model = ThemeSettings
+        fields = ['primary_color']
+        widgets = {
+            'primary_color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+        }
+
+
+class AuthPageSettingsForm(forms.ModelForm):
+    class Meta:
+        model = AuthPageSettings
+        fields = ['login_image', 'signup_image']
+        widgets = {
+            'login_image': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'signup_image': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+        }
+
 
 class NavbarSettingsForm(forms.ModelForm):
     class Meta:
@@ -566,6 +641,17 @@ class FooterLegalLinkForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'url': forms.TextInput(attrs={'class': 'form-control'}),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+        }
+
+
+class ExtraPageForm(forms.ModelForm):
+    class Meta:
+        model = ExtraPage
+        fields = ['title', 'slug', 'content', 'is_active']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Privacy Policy'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. privacy-policy'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 18}),
         }
 
 

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page.title }} - Indore Tutorials{% endblock %}
+
+{% block content %}
+<div class="extra-page-wrap">
+    <div class="extra-page-card">
+        <h1 class="extra-page-title">{{ page.title }}</h1>
+        <div class="extra-page-updated">Last updated: {{ page.updated_at|date:"F j, Y" }}</div>
+        <div class="extra-page-content">{{ page.content|linebreaks }}</div>
+    </div>
+</div>
+
+<style>
+.extra-page-wrap {
+    background: #f8f9fa;
+    padding: 40px 16px 60px 16px;
+    min-height: 60vh;
+}
+
+.extra-page-card {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+    padding: 40px 44px;
+}
+
+.extra-page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #232540;
+    margin-bottom: 8px;
+}
+
+.extra-page-updated {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.extra-page-content {
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: #333;
+}
+
+.extra-page-content p {
+    margin-bottom: 16px;
+}
+
+.extra-page-content a {
+    color: var(--brand-primary);
+    font-weight: 600;
+}
+
+@media (max-width: 600px) {
+    .extra-page-card {
+        padding: 28px 22px;
+        border-radius: 12px;
+    }
+    .extra-page-title {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}

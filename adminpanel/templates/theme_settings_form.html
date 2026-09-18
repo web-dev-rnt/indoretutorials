@@ -1,0 +1,136 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+{% include 'message.html' %}
+<style>
+.theme-preview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid var(--admin-border);
+}
+
+.theme-preview-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 24px;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.theme-preview-link {
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.theme-preview-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.color-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-field input[type="color"] {
+    width: 56px;
+    height: 44px;
+    padding: 2px;
+    border: 2px solid var(--input-border);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--input-bg);
+}
+
+.color-field-value {
+    font-size: 14px;
+    color: var(--admin-muted);
+    font-family: monospace;
+    text-transform: uppercase;
+}
+</style>
+
+<div class="wrapper">
+    <h1 class="h1">Theme Color</h1>
+    <p class="small">Set the site-wide brand color used for buttons, links, and hover states.</p>
+
+    <div class="nav-buttons">
+        <a href="{% url 'other_details_edit' %}" class="btn">← Back to Site Details</a>
+    </div>
+
+    <div class="panel">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.primary_color.id_for_label }}">Primary Brand Color</label>
+                <div class="color-field">
+                    {{ form.primary_color }}
+                    <span class="color-field-value" id="colorValue">{{ theme.primary_color }}</span>
+                </div>
+                <div class="help-text">Applied across the navbar, buttons, hover states, and highlights on every page. A darker shade is generated automatically for hover states.</div>
+                {% if form.primary_color.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.primary_color.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Update Theme Color</button>
+                <a href="{% url 'other_details_edit' %}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel">
+        <h3 class="panel-title">Live Preview</h3>
+        <div class="theme-preview" id="themePreview">
+            <a href="#" class="theme-preview-btn" id="previewBtn" onclick="return false;">Perform | Analysis | Improve</a>
+            <a href="#" class="theme-preview-link" id="previewLink" onclick="return false;">A themed link</a>
+            <span class="theme-preview-badge" id="previewBadge">FREE</span>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const colorInput = document.getElementById('{{ form.primary_color.id_for_label }}');
+    const colorValue = document.getElementById('colorValue');
+    const previewBtn = document.getElementById('previewBtn');
+    const previewLink = document.getElementById('previewLink');
+    const previewBadge = document.getElementById('previewBadge');
+
+    function applyPreview(hex) {
+        previewBtn.style.background = hex;
+        previewLink.style.color = hex;
+        previewBadge.style.background = hex;
+        previewBadge.style.color = '#fff';
+        if (colorValue) colorValue.textContent = hex.toUpperCase();
+    }
+
+    if (colorInput) {
+        applyPreview(colorInput.value);
+        colorInput.addEventListener('input', function () {
+            applyPreview(colorInput.value);
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -27,6 +27,16 @@ class Category(TimestampedModel):
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     description = models.TextField(blank=True)
+    icon = models.CharField(
+        max_length=50,
+        default='graduation-cap',
+        help_text="Font Awesome icon name, without the 'fa-' prefix (e.g., 'shield-alt', 'stethoscope')."
+    )
+    icon_color = models.CharField(
+        max_length=7,
+        default='#667eea',
+        help_text="Hex color code for the category icon (e.g., #667eea)."
+    )
 
     class Meta:
         ordering = ["name"]
@@ -38,6 +48,18 @@ class Category(TimestampedModel):
         if not self.slug:
             self.slug = slugify(self.name)[:140]
         return super().save(*args, **kwargs)
+
+    @property
+    def icon_color_rgb(self):
+        """icon_color as an 'r, g, b' triplet, for tinted icon backgrounds."""
+        hex_color = (self.icon_color or '#667eea').lstrip('#')
+        if len(hex_color) == 3:
+            hex_color = ''.join(c * 2 for c in hex_color)
+        try:
+            r, g, b = (int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+            return f"{r}, {g}, {b}"
+        except ValueError:
+            return "102, 126, 234"
 
 
 # Upload paths

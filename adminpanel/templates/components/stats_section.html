@@ -2,7 +2,7 @@
 <div class="stats-container">
     <div class="stats">
         {% for stat in stat_cards %}
-            <div class="stat-card" data-index="{{ forloop.counter0 }}" role="button" tabindex="0" aria-label="View {{ stat.label }}" {% if stat.scroll_to %}data-scroll-to="{{ stat.scroll_to }}"{% endif %}>
+            <div class="stat-card" data-index="{{ forloop.counter0 }}" role="button" tabindex="0" aria-label="View {{ stat.label }}" style="--stat-accent: {{ stat.icon_color_rgb }};" {% if stat.scroll_to %}data-scroll-to="{{ stat.scroll_to }}"{% endif %}>
                 <div class="stat-icon">
                     {% if stat.icon_type == 'font_awesome' and stat.icon %}
                         <i class="fas fa-{{ stat.icon }}" style="color: {{ stat.icon_color }};"></i>
@@ -73,13 +73,6 @@
     transform: translateY(0);
     animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
-
-.stat-card:nth-child(2) { --stat-accent: 139, 92, 246; }
-.stat-card:nth-child(3) { --stat-accent: 239, 68, 68; }
-.stat-card:nth-child(4) { --stat-accent: 14, 165, 233; }
-.stat-card:nth-child(5) { --stat-accent: 16, 185, 129; }
-.stat-card:nth-child(6) { --stat-accent: 245, 158, 11; }
-
 
 /* Staggered animation delay */
 .stat-card[data-index="0"] { animation-delay: 0.1s; }
@@ -235,9 +228,9 @@
 
 /* ── Number ── */
 .stat-number {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-sans);
     font-size: 17px;
-    font-weight: 700;
+    font-weight: 800;
     color: #1a202c;
     line-height: 1;
     letter-spacing: -1.2px;
@@ -261,10 +254,10 @@
 
 /* ── Label ── */
 .stat-label {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-sans);
     font-size: 16px;
     color: #64748b;
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1.3;
     margin: 0;
     letter-spacing: 0.1px;
@@ -344,23 +337,39 @@
 
 @media (max-width: 768px) {
     .stats-container { padding: 32px 15px 26px; }
-    .stats { padding: 0 12px; gap: 15px; max-width: 750px; }
-    .stat-card { max-width: 145px; padding: 20px 14px; }
-    .stat-icon { font-size: 36px; height: 44px; margin-bottom: 10px; }
-    .stat-icon .custom-icon { width: 40px; height: 36px; }
-    .stat-number { font-size: 17px; margin-bottom: 7px; letter-spacing: -0.8px; }
-    .stat-label { font-size: 14px; }
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        padding: 0 12px;
+        max-width: 560px;
+    }
+    .stat-card { max-width: none; width: 100%; padding: 16px 10px; }
+    .stat-icon { font-size: 30px; height: 36px; margin-bottom: 8px; }
+    .stat-icon .custom-icon { width: 32px; height: 30px; }
+    .stat-number { font-size: 15px; margin-bottom: 5px; letter-spacing: -0.6px; }
+    .stat-label { font-size: 12px; line-height: 1.3; }
 }
 
 
 @media (max-width: 480px) {
-    .stats-container { padding: 26px 12px 22px; }
-    .stats { padding: 0 10px; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    .stat-card { max-width: 135px; min-width: 120px; padding: 18px 12px; margin-bottom: 0; }
-    .stat-icon { font-size: 32px; height: 40px; margin-bottom: 8px; }
-    .stat-icon .custom-icon { width: 36px; height: 32px; object-fit: contain; }
-    .stat-number { font-size: 17px; margin-bottom: 6px; letter-spacing: -0.6px; }
-    .stat-label { font-size: 13px; line-height: 1.4; }
+    .stats-container { padding: 26px 10px 22px; }
+    .stats { gap: 8px; padding: 0 8px; max-width: 420px; }
+    .stat-card { padding: 12px 6px; border-radius: 12px; }
+    .stat-icon { font-size: 24px; height: 30px; margin-bottom: 6px; }
+    .stat-icon .custom-icon { width: 26px; height: 24px; object-fit: contain; }
+    .stat-number { font-size: 13px; margin-bottom: 4px; letter-spacing: -0.4px; }
+    .stat-label { font-size: 10px; line-height: 1.25; }
+}
+
+
+@media (max-width: 360px) {
+    .stats { gap: 6px; padding: 0 6px; }
+    .stat-card { padding: 10px 4px; }
+    .stat-icon { font-size: 20px; height: 26px; margin-bottom: 5px; }
+    .stat-icon .custom-icon { width: 22px; height: 20px; }
+    .stat-number { font-size: 12px; }
+    .stat-label { font-size: 9px; }
 }
 
 

@@ -7,7 +7,8 @@
     <title>{{ bundle.title }} - Product Bundle</title>
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/fontawesome/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/typography.css' %}">
     
     <!-- Razorpay Checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
@@ -20,7 +21,7 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-sans);
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #1a1a2e;
             line-height: 1.5;

@@ -5,14 +5,24 @@
         <div class="banner-slide {% if forloop.first %}active{% endif %}">
             {% if banner.link_url %}
                 <a href="{{ banner.link_url }}" target="_blank">
+                    <picture>
+                        {% if banner.mobile_image %}
+                            <source media="(max-width: 768px)" srcset="{{ banner.mobile_image.url }}">
+                        {% endif %}
+                        <img src="{{ banner.image.url }}" alt="{{ banner.alt_text }}"
+                             width="1920" height="300"
+                             {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy" decoding="async"{% endif %}>
+                    </picture>
+                </a>
+            {% else %}
+                <picture>
+                    {% if banner.mobile_image %}
+                        <source media="(max-width: 768px)" srcset="{{ banner.mobile_image.url }}">
+                    {% endif %}
                     <img src="{{ banner.image.url }}" alt="{{ banner.alt_text }}"
                          width="1920" height="300"
                          {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy" decoding="async"{% endif %}>
-                </a>
-            {% else %}
-                <img src="{{ banner.image.url }}" alt="{{ banner.alt_text }}"
-                     width="1920" height="300"
-                     {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy" decoding="async"{% endif %}>
+                </picture>
             {% endif %}
         </div>
     {% endfor %}

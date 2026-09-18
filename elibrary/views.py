@@ -256,21 +256,22 @@ def elibrary_course_delete(request, pk):
             # Delete the course
             course.delete()
 
-            messages.success(
-                request,
+            success_message = (
                 f'✓ Course "{course_title}" has been deleted successfully! '
-                f'({deleted_files}/{pdf_count} PDF files removed)',
-                extra_tags='success'
+                f'({deleted_files}/{pdf_count} PDF files removed)'
             )
 
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': success_message, 'course_id': pk})
+
+            messages.success(request, success_message, extra_tags='success')
             return redirect('elibrary_manage')
 
         except Exception as e:
-            messages.error(
-                request,
-                f'✗ Error deleting course: {str(e)}',
-                extra_tags='danger'
-            )
+            error_message = f'✗ Error deleting course: {str(e)}'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': error_message}, status=400)
+            messages.error(request, error_message, extra_tags='danger')
 
     return redirect('elibrary_course_detail', pk=pk)
 
@@ -280,26 +281,26 @@ def elibrary_course_delete(request, pk):
 def elibrary_toggle_course_status(request, pk):
     """Toggle course active/inactive status."""
     course = get_object_or_404(ELibraryCourse, pk=pk)
-    
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     try:
         course.is_active = not course.is_active
         course.save()
-        
+
         status = "activated" if course.is_active else "deactivated"
         icon = "✓" if course.is_active else "⏸"
-        
-        messages.success(
-            request, 
-            f'{icon} Course "{course.title}" has been {status}.',
-            extra_tags='success'
-        )
+        message = f'{icon} Course "{course.title}" has been {status}.'
+
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': message, 'is_active': course.is_active})
+
+        messages.success(request, message, extra_tags='success')
     except Exception as e:
-        messages.error(
-            request,
-            f'✗ Error changing course status: {str(e)}',
-            extra_tags='danger'
-        )
-    
+        error_message = f'✗ Error changing course status: {str(e)}'
+        if is_ajax:
+            return JsonResponse({'success': False, 'message': error_message}, status=400)
+        messages.error(request, error_message, extra_tags='danger')
+
     return redirect('elibrary_manage')
 
 

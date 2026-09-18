@@ -8,6 +8,7 @@
 
 <!-- Self-hosted Font Awesome - AD BLOCKER SAFE -->
 <link href="{% static 'css/fontawesome/all.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/typography.css' %}" rel="stylesheet">
 
 {% get_favicon_url as favicon_url %}
 {% if favicon_url %}
@@ -55,7 +56,7 @@ a {
 }
 
 .admin-root {
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: var(--font-sans);
   background: var(--admin-bg); 
   color: var(--admin-text);
   min-height: 100vh;
@@ -237,7 +238,6 @@ html, body {
 .admin-main {
   margin-left: 300px;
   margin-top: 64px;
-  min-height: calc(100vh - 64px);
   padding: 30px;
   background: var(--admin-bg);
   overflow-y: auto;
@@ -245,7 +245,6 @@ html, body {
   overflow: visible !important;
   height: auto !important;
   max-height: none !important;
-  padding-bottom: 60px !important;
 }
 
 .page-header {
@@ -783,7 +782,7 @@ html, body {
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--admin-bg); color: var(--admin-text); }
+body { margin: 0; font-family: var(--font-sans); background: var(--admin-bg); color: var(--admin-text); }
 .wrapper { max-width: 1200px; margin: 24px auto; padding: 0 16px; min-height: auto; }
 .h1 { font-size: 24px; font-weight: 800; margin: 0 0 6px; }
 .small { color: var(--admin-muted); font-size: 13px; margin-bottom: 12px; }

@@ -212,7 +212,7 @@
                         </thead>
                         <tbody>
                             {% for course in page_obj %}
-                            <tr class="user-row">
+                            <tr class="user-row" id="row-{{ course.pk }}">
                                 <td>
                                     <div class="user-info">
                                         {% if course.cover_image %}
@@ -247,18 +247,16 @@
                                 <td>{{ course.total_pdfs }}</td>
                                 <td>{{ course.enrollment_count }}</td>
                                 <td>
-                                    {% if course.is_active %}
-                                        <span class="status-badge status-active">Active</span>
-                                    {% else %}
-                                        <span class="status-badge status-inactive">Inactive</span>
-                                    {% endif %}
+                                    <span class="status-badge {% if course.is_active %}status-active{% else %}status-inactive{% endif %}" id="status-badge-{{ course.pk }}">
+                                        {% if course.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="action-buttons">
                                         <a href="{% url 'elibrary_course_detail' course.pk %}" class="action-btn" title="View"><i class="fas fa-eye"></i></a>
                                         <a href="{% url 'elibrary_course_edit' course.pk %}" class="action-btn" title="Edit"><i class="fas fa-edit"></i></a>
-                                        <a href="{% url 'elibrary_toggle_course_status' course.pk %}" class="action-btn" title="{% if course.is_active %}Deactivate{% else %}Activate{% endif %}">
-                                            <i class="fas fa-{% if course.is_active %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                                        <a href="{% url 'elibrary_toggle_course_status' course.pk %}" class="action-btn toggle-status-btn" data-course-id="{{ course.pk }}" title="{% if course.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                            <i class="fas fa-{% if course.is_active %}toggle-on{% else %}toggle-off{% endif %}" id="toggle-icon-{{ course.pk }}"></i>
                                         </a>
                                         <button type="button" class="action-btn delete-course-btn"
                                                 data-course-id="{{ course.pk }}"
@@ -282,7 +280,7 @@
                 <!-- Mobile cards -->
                 <div class="mobile-elibrary-list">
                     {% for course in page_obj %}
-                    <div class="mobile-elibrary-card">
+                    <div class="mobile-elibrary-card" id="mobile-row-{{ course.pk }}">
 
                         <div class="mel-header">
                             {% if course.cover_image %}
@@ -332,19 +330,17 @@
                         <div class="mel-row">
                             <span class="mel-label">Status</span>
                             <span class="mel-value">
-                                {% if course.is_active %}
-                                    <span class="status-badge status-active">Active</span>
-                                {% else %}
-                                    <span class="status-badge status-inactive">Inactive</span>
-                                {% endif %}
+                                <span class="status-badge {% if course.is_active %}status-active{% else %}status-inactive{% endif %}" id="status-badge-mobile-{{ course.pk }}">
+                                    {% if course.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
                             </span>
                         </div>
 
                         <div class="mel-actions">
                             <a href="{% url 'elibrary_course_detail' course.pk %}" class="action-btn" title="View"><i class="fas fa-eye"></i></a>
                             <a href="{% url 'elibrary_course_edit' course.pk %}" class="action-btn" title="Edit"><i class="fas fa-edit"></i></a>
-                            <a href="{% url 'elibrary_toggle_course_status' course.pk %}" class="action-btn">
-                                <i class="fas fa-{% if course.is_active %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                            <a href="{% url 'elibrary_toggle_course_status' course.pk %}" class="action-btn toggle-status-btn" data-course-id="{{ course.pk }}">
+                                <i class="fas fa-{% if course.is_active %}toggle-on{% else %}toggle-off{% endif %}" id="toggle-icon-mobile-{{ course.pk }}"></i>
                             </a>
                             <button type="button" class="delete-course-btn"
                                     data-course-id="{{ course.pk }}"
@@ -397,8 +393,68 @@
     </div>
 </div>
 
+<style>
+.admin-toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 360px;
+}
+.admin-toast {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.12);
+    animation: adminToastIn 0.25s ease-out;
+}
+.admin-toast.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.admin-toast.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+@keyframes adminToastIn {
+    from { transform: translateX(30px); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+.row-removing {
+    transition: opacity 0.25s ease;
+    opacity: 0;
+}
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    function getCsrfToken() {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        return input ? input.value : '';
+    }
+
+    function showToast(message, type) {
+        let container = document.querySelector('.admin-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'admin-toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'admin-toast ' + (type === 'success' ? 'success' : 'error');
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function () {
+            toast.remove();
+        }, 4000);
+    }
+
+    function removeCourseRows(courseId) {
+        ['row-' + courseId, 'mobile-row-' + courseId].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add('row-removing');
+            setTimeout(function () { el.remove(); }, 250);
+        });
+    }
+
+    // Delete course — AJAX, no full page reload
     document.querySelectorAll('.delete-course-btn').forEach(function (button) {
         button.addEventListener('click', function (e) {
             e.preventDefault();
@@ -420,10 +476,57 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Are you absolutely sure?'
             );
 
-            if (confirmed) {
-                const form = document.getElementById('delete-form-' + courseId);
-                if (form) form.submit();
-            }
+            if (!confirmed) return;
+
+            fetch('{% url "elibrary_course_delete" 0 %}'.replace('0', courseId), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    showToast(data.message, data.success ? 'success' : 'error');
+                    if (data.success) removeCourseRows(courseId);
+                })
+                .catch(function () {
+                    showToast('✗ Something went wrong while deleting the course.', 'error');
+                });
+        });
+    });
+
+    // Toggle active/inactive status — AJAX, no full page reload
+    document.querySelectorAll('.toggle-status-btn').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            const courseId = this.getAttribute('data-course-id');
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    showToast(data.message, data.success ? 'success' : 'error');
+                    if (!data.success) return;
+
+                    const isActive = data.is_active;
+                    ['status-badge-' + courseId, 'status-badge-mobile-' + courseId].forEach(function (id) {
+                        const badge = document.getElementById(id);
+                        if (!badge) return;
+                        badge.textContent = isActive ? 'Active' : 'Inactive';
+                        badge.classList.toggle('status-active', isActive);
+                        badge.classList.toggle('status-inactive', !isActive);
+                    });
+                    ['toggle-icon-' + courseId, 'toggle-icon-mobile-' + courseId].forEach(function (id) {
+                        const icon = document.getElementById(id);
+                        if (!icon) return;
+                        icon.classList.toggle('fa-toggle-on', isActive);
+                        icon.classList.toggle('fa-toggle-off', !isActive);
+                    });
+                })
+                .catch(function () {
+                    showToast('✗ Something went wrong while updating status.', 'error');
+                });
         });
     });
 });

@@ -57,6 +57,25 @@
                         <div class="help-text">Help users understand what courses belong in this category</div>
                     </div>
                 </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="icon">Icon</label>
+                        <input type="text" id="icon" name="icon" maxlength="50"
+                               placeholder="e.g., shield-alt, stethoscope, university"
+                               value="{{ category.icon }}">
+                        <div class="help-text">Font Awesome icon name shown in the navbar dropdown (no "fa-" prefix)</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="icon_color">Icon Color</label>
+                        <div class="color-field">
+                            <input type="color" id="icon_color" name="icon_color" value="{{ category.icon_color }}">
+                            <span class="color-field-value">{{ category.icon_color }}</span>
+                        </div>
+                        <div class="help-text">Color of the category icon</div>
+                    </div>
+                </div>
             </div>
 
             <div style="padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin: 16px 0; font-size: 13px;">
@@ -74,7 +93,39 @@
     </div>
 </div>
 
+<style>
+.color-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.color-field input[type="color"] {
+    width: 48px;
+    height: 40px;
+    padding: 2px;
+    border: 2px solid var(--input-border);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--input-bg);
+}
+.color-field-value {
+    font-size: 13px;
+    color: var(--admin-muted);
+    font-family: monospace;
+    text-transform: uppercase;
+}
+</style>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const colorInput = document.getElementById('icon_color');
+    const colorValue = document.querySelector('.color-field-value');
+    if (colorInput && colorValue) {
+        colorInput.addEventListener('input', function () {
+            colorValue.textContent = colorInput.value.toUpperCase();
+        });
+    }
+});
+
 function generateSlugPreview(name) {
     // Optional: Show what the new slug would be
     console.log('New slug would be:', name.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-'));

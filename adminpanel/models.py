@@ -10,6 +10,17 @@ import os
 import smtplib
 
 
+def hex_to_rgb_str(hex_color, fallback=(37, 99, 235)):
+    """Convert a '#rrggbb' (or '#rgb') string to an 'r, g, b' triplet for CSS custom properties."""
+    hex_color = (hex_color or '').lstrip('#')
+    if len(hex_color) == 3:
+        hex_color = ''.join(c * 2 for c in hex_color)
+    try:
+        r, g, b = (int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+        return f"{r}, {g}, {b}"
+    except ValueError:
+        return f"{fallback[0]}, {fallback[1]}, {fallback[2]}"
+
 
 #notifications models
 class Notification(models.Model):
@@ -248,7 +259,13 @@ def banner_upload_path(instance, filename):
 
 class Banner(models.Model):
     title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to=banner_upload_path)
+    image = models.ImageField(upload_to=banner_upload_path, help_text="Recommended size: 1920x800px")
+    mobile_image = models.ImageField(
+        upload_to=banner_upload_path,
+        blank=True,
+        null=True,
+        help_text="Optional mobile-only banner. Recommended size: 750x400px. Falls back to the desktop image if left blank."
+    )
     alt_text = models.CharField(max_length=200, help_text="Alternative text for accessibility")
     link_url = models.URLField(blank=True, help_text="Optional link when banner is clicked")
     is_active = models.BooleanField(default=True)
@@ -263,10 +280,13 @@ class Banner(models.Model):
         return self.title
 
     def delete(self, *args, **kwargs):
-        # Delete the image file when banner is deleted
+        # Delete the image files when banner is deleted
         if self.image:
             if os.path.isfile(self.image.path):
                 os.remove(self.image.path)
+        if self.mobile_image:
+            if os.path.isfile(self.mobile_image.path):
+                os.remove(self.mobile_image.path)
         super().delete(*args, **kwargs)
 
 
@@ -332,6 +352,11 @@ class StatCard(models.Model):
         else:
             return f"IMG:{self.icon_image.name if self.icon_image else 'No Image'} {self.number} {self.label}"
 
+    @property
+    def icon_color_rgb(self):
+        """icon_color as an 'r, g, b' triplet, for use in the card's --stat-accent custom property."""
+        return hex_to_rgb_str(self.icon_color or '#007bff')
+
     def get_icon_display(self):
         """Return appropriate icon display based on type"""
         if self.icon_type == 'font_awesome' and self.icon:
@@ -353,8 +378,17 @@ class StatCard(models.Model):
 
 class CTASection(models.Model):
     title = models.CharField(max_length=200, help_text="Main CTA text")
+    description = models.CharField(
+        max_length=300, blank=True, help_text="Brief description or tagline for the call-to-action"
+    )
     button_text = models.CharField(max_length=100, help_text="Button text")
     button_link = models.URLField(blank=True, help_text="Optional button link")
+    button_color = models.CharField(
+        max_length=7, default='#D4AF37', help_text="Hex color code for the CTA button (e.g., #D4AF37)"
+    )
+    background_image = models.ImageField(
+        upload_to='cta/', blank=True, null=True, help_text="Optional background image (recommended 1920x600px)"
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -365,6 +399,11 @@ class CTASection(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def button_color_rgb(self):
+        """button_color as an 'r, g, b' triplet, for use in the button's shadow/hover styling."""
+        return hex_to_rgb_str(self.button_color or '#D4AF37', fallback=(212, 175, 55))
 
 
 class AboutUsSection(models.Model):
@@ -433,6 +472,100 @@ class ServiceItem(models.Model):
 
     def __str__(self):
         return self.service_name
+
+
+class ThemeSettings(models.Model):
+    """Site-wide brand color, applied via CSS custom properties on every page."""
+    primary_color = models.CharField(
+        max_length=7,
+        default='#D4AF37',
+        help_text="Main brand color used for buttons, links, and hover states across the site."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Theme Settings"
+        verbose_name_plural = "Theme Settings"
+
+    def __str__(self):
+        return f"Theme Settings ({self.primary_color})"
+
+    @property
+    def primary_color_rgb(self):
+        return hex_to_rgb_str(self.primary_color, fallback=(212, 175, 55))
+
+    @property
+    def primary_color_dark(self):
+        """A ~18% darker shade of primary_color, for hover/active states."""
+        hex_color = (self.primary_color or '#D4AF37').lstrip('#')
+        if len(hex_color) == 3:
+            hex_color = ''.join(c * 2 for c in hex_color)
+        try:
+            r, g, b = (int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+        except ValueError:
+            r, g, b = (212, 175, 55)
+        r, g, b = (max(0, round(c * 0.82)) for c in (r, g, b))
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and ThemeSettings.objects.exists():
+            raise ValueError('Only one ThemeSettings instance allowed')
+        super().save(*args, **kwargs)
+        cache.delete("site-theme-settings-v1")
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        cache.delete("site-theme-settings-v1")
+
+    @classmethod
+    def get_solo(cls):
+        theme = cache.get("site-theme-settings-v1")
+        if theme is None:
+            theme, _ = cls.objects.get_or_create(pk=1)
+            cache.set("site-theme-settings-v1", theme, 3600)
+        return theme
+
+
+class AuthPageSettings(models.Model):
+    """Side images shown on the login and signup pages."""
+    login_image = models.ImageField(
+        upload_to='auth_pages/',
+        blank=True,
+        null=True,
+        help_text="Side image for the login page. Recommended size: 1000x1200px. Falls back to the default image if left blank."
+    )
+    signup_image = models.ImageField(
+        upload_to='auth_pages/',
+        blank=True,
+        null=True,
+        help_text="Side image for the signup page. Recommended size: 1000x1200px. Falls back to the default image if left blank."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Login/Signup Page Settings"
+        verbose_name_plural = "Login/Signup Page Settings"
+
+    def __str__(self):
+        return "Login/Signup Page Settings"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and AuthPageSettings.objects.exists():
+            raise ValueError('Only one AuthPageSettings instance allowed')
+        super().save(*args, **kwargs)
+        cache.delete("site-auth-page-settings-v1")
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        cache.delete("site-auth-page-settings-v1")
+
+    @classmethod
+    def get_solo(cls):
+        settings_obj = cache.get("site-auth-page-settings-v1")
+        if settings_obj is None:
+            settings_obj, _ = cls.objects.get_or_create(pk=1)
+            cache.set("site-auth-page-settings-v1", settings_obj, 3600)
+        return settings_obj
 
 
 class NavbarSettings(models.Model):
@@ -563,6 +696,28 @@ class FooterLegalLink(models.Model):
         return self.title
 
 
+class ExtraPage(models.Model):
+    """Admin-editable static pages (Privacy Policy, Disclaimer, Refund Policy, Contact Us, etc.)."""
+    title = models.CharField(max_length=150)
+    slug = models.SlugField(max_length=150, unique=True, help_text="Used in the page URL, e.g. privacy-policy")
+    content = models.TextField(help_text="Page content. Basic HTML tags are allowed.")
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['title']
+        verbose_name = "Extra Page"
+        verbose_name_plural = "Extra Pages"
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('extra_page_detail', args=[self.slug])
+
+
 class SMTPConfiguration(models.Model):
     BACKEND_CHOICES = [
         ('django.core.mail.backends.smtp.EmailBackend', 'SMTP Backend'),
@@ -676,6 +831,45 @@ class RazorpayConfiguration(models.Model):
             return ""
         visible = self.key_secret[-4:] if len(self.key_secret) > 4 else ""
         return f"{'*' * 8}{visible}"
+
+
+class DropboxConfiguration(models.Model):
+    """Dropbox backup credentials managed by a super administrator."""
+
+    name = models.CharField(max_length=100, default="Primary Dropbox")
+    app_key = models.CharField(max_length=100)
+    app_secret = models.CharField(max_length=200)
+    refresh_token = models.CharField(max_length=500)
+    backup_folder = models.CharField(max_length=255, default="/edutrellis-educational-backup")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-is_active", "-updated_at"]
+        verbose_name = "Dropbox Configuration"
+        verbose_name_plural = "Dropbox Configurations"
+
+    def __str__(self):
+        return f"{self.name} ({self.masked_app_key})"
+
+    @staticmethod
+    def _masked(value, visible=4):
+        if not value:
+            return "Not set"
+        return f"{'•' * 8}{value[-visible:]}" if len(value) > visible else "•" * len(value)
+
+    @property
+    def masked_app_key(self):
+        return self._masked(self.app_key)
+
+    @property
+    def masked_app_secret(self):
+        return self._masked(self.app_secret)
+
+    @property
+    def masked_refresh_token(self):
+        return self._masked(self.refresh_token, visible=6)
 
 
 

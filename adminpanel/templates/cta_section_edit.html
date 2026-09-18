@@ -50,6 +50,30 @@
     margin-top: 4px;
 }
 
+/* Color Field */
+.color-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-field input[type="color"] {
+    width: 48px;
+    height: 40px;
+    padding: 2px;
+    border: 2px solid var(--input-border);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--input-bg);
+}
+
+.color-field-value {
+    font-size: 13px;
+    color: var(--admin-muted);
+    font-family: monospace;
+    text-transform: uppercase;
+}
+
 /* Checkbox Label */
 .checkbox-label {
     display: flex;
@@ -152,6 +176,22 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.button_color.id_for_label }}">Button Color</label>
+                        <div class="color-field">
+                            {{ form.button_color }}
+                            <span class="color-field-value">{{ cta_section.button_color|default:"#D4AF37" }}</span>
+                        </div>
+                        <div class="help-text">Color of the call-to-action button</div>
+                        {% if form.button_color.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.button_color.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Sidebar Column -->
@@ -192,4 +232,16 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const colorInput = document.getElementById('{{ form.button_color.id_for_label }}');
+    const colorValue = document.querySelector('.color-field-value');
+    if (colorInput && colorValue) {
+        colorInput.addEventListener('input', function () {
+            colorValue.textContent = colorInput.value.toUpperCase();
+        });
+    }
+});
+</script>
 {% endblock %}

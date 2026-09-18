@@ -30,8 +30,8 @@
             <div class="navbar-dropdown-content">
                 {% for category in navbar_categories %}
                     <a href="{% url 'category_detail' category.slug %}">
-                        <div class="navbar-category-icon">
-                            <i class="fa fa-graduation-cap"></i>
+                        <div class="navbar-category-icon" style="background: rgba({{ category.icon_color_rgb }}, 0.12); color: {{ category.icon_color }};">
+                            <i class="fa fa-{{ category.icon|default:'graduation-cap' }}"></i>
                         </div>
                         {{ category.name }}
                     </a>
@@ -210,7 +210,7 @@
                         {% for category in navbar_categories %}
                             <a href="{% url 'category_detail' category.slug %}" class="mobile-category-card">
                                 <div class="mobile-category-card-icon">
-                                    <i class="fa fa-book"></i>
+                                    <i class="fa fa-{{ category.icon|default:'book' }}"></i>
                                 </div>
                                 <p class="mobile-category-card-name">{{ category.name }}</p>
                             </a>
@@ -244,14 +244,14 @@
                 </a>
             {% endif %}
             
-            <a href="{% url 'logout_user' %}" style="margin-top: 10px; background: #ffe8e8; color: #c7212f;">
+            <a href="{% url 'logout_user' %}" style="margin-top: 10px; background: #ffe8e8; color: var(--brand-primary);">
                 <i class="fa fa-sign-out"></i> Log Out
             </a>
         {% else %}
             <a href="{% url 'login' %}">
                 <i class="fa fa-sign-in"></i> Log In
             </a>
-            <a href="{% url 'signup' %}" style="background: #c7212f; color: white;">
+            <a href="{% url 'signup' %}" style="background: var(--brand-primary); color: white;">
                 <i class="fa fa-user-plus"></i> Sign Up
             </a>
             
@@ -265,7 +265,7 @@
                         {% for category in navbar_categories %}
                             <a href="{% url 'category_detail' category.slug %}" class="mobile-category-card">
                                 <div class="mobile-category-card-icon">
-                                    <i class="fa fa-book"></i>
+                                    <i class="fa fa-{{ category.icon|default:'book' }}"></i>
                                 </div>
                                 <p class="mobile-category-card-name">{{ category.name }}</p>
                             </a>

@@ -1,0 +1,139 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}{{ action }} Page{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>{{ action }} 📄 Page</h1>
+        <a href="{% url 'extra_page_list' %}" class="ad-btn ad-btn-secondary">← Back to Extra Pages</a>
+    </div>
+
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>Page Details</h2>
+        </div>
+        <div class="ad-card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}">Page Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="ad-error">{{ form.title.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.slug.id_for_label }}">URL Slug *</label>
+                    {{ form.slug }}
+                    <small class="ad-help-text">
+                        Page will be available at <code>/page/{{ page.slug|default:"your-slug" }}/</code>
+                    </small>
+                    {% if form.slug.errors %}
+                        <div class="ad-error">{{ form.slug.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.content.id_for_label }}">Content *</label>
+                    {{ form.content }}
+                    <small class="ad-help-text">Plain text or basic HTML (e.g. &lt;p&gt;, &lt;strong&gt;, &lt;a&gt;). Blank lines become new paragraphs.</small>
+                    {% if form.content.errors %}
+                        <div class="ad-error">{{ form.content.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="ad-checkbox-label">
+                        {{ form.is_active }}
+                        <span>Active (Show on website / linkable from footer)</span>
+                    </label>
+                </div>
+
+                <div class="ad-form-actions">
+                    <button type="submit" class="ad-btn ad-btn-primary">{{ action }} Page</button>
+                    <a href="{% url 'extra_page_list' %}" class="ad-btn ad-btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-group .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.form-group textarea.form-control {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.ad-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.ad-help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.ad-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.ad-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.ad-btn {
+    padding: 10px 20px;
+    margin: 0 5px 0 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.ad-btn-primary {
+    background: #c7212f;
+    color: white;
+}
+
+.ad-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+</style>
+{% endblock %}

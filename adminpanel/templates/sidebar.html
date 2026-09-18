@@ -135,10 +135,16 @@
     </a>
 
     <!-- Customize Website -->
-    <a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'banneredit,banner_create,banner_edit_single,banner_delete,banner_toggle_status,other_details_edit,stat_card_create,stat_card_edit,stat_card_delete,stat_card_toggle_status,cta_section_create,cta_section_edit,cta_section_delete,cta_section_toggle_status,about_us_edit,about_us_section_edit,why_choose_create,why_choose_edit,why_choose_delete,why_choose_toggle_status,service_create,service_edit,service_delete,service_toggle_status,navbar_settings_edit,footer_edit,footer_settings_edit,footer_link_create,footer_link_edit,footer_link_delete,footer_link_toggle_status,footer_legal_create,footer_legal_edit,footer_legal_delete,footer_legal_toggle_status' %}admin-open{% endif %}">
+    <a href="#" class="admin-dropdown {% if request.resolver_match.url_name in 'theme_settings_edit,auth_page_settings_edit,banneredit,banner_create,banner_edit_single,banner_delete,banner_toggle_status,other_details_edit,stat_card_create,stat_card_edit,stat_card_delete,stat_card_toggle_status,cta_section_create,cta_section_edit,cta_section_delete,cta_section_toggle_status,about_us_edit,about_us_section_edit,why_choose_create,why_choose_edit,why_choose_delete,why_choose_toggle_status,service_create,service_edit,service_delete,service_toggle_status,navbar_settings_edit,footer_edit,footer_settings_edit,footer_link_create,footer_link_edit,footer_link_delete,footer_link_toggle_status,footer_legal_create,footer_legal_edit,footer_legal_delete,footer_legal_toggle_status,extra_page_list,extra_page_create,extra_page_edit,extra_page_delete,extra_page_toggle_status' %}admin-open{% endif %}">
       <span class="admin-ico"><i class="fas fa-paint-brush" style="color: #ff5722;"></i></span><span>Customize Website</span>
     </a>
-    <div class="admin-submenu" {% if request.resolver_match.url_name in 'banneredit,banner_create,banner_edit_single,banner_delete,banner_toggle_status,other_details_edit,stat_card_create,stat_card_edit,stat_card_delete,stat_card_toggle_status,cta_section_create,cta_section_edit,cta_section_delete,cta_section_toggle_status,about_us_edit,about_us_section_edit,why_choose_create,why_choose_edit,why_choose_delete,why_choose_toggle_status,service_create,service_edit,service_delete,service_toggle_status,navbar_settings_edit,footer_edit,footer_settings_edit,footer_link_create,footer_link_edit,footer_link_delete,footer_link_toggle_status,footer_legal_create,footer_legal_edit,footer_legal_delete,footer_legal_toggle_status' %}style="display:flex;"{% endif %}>
+    <div class="admin-submenu" {% if request.resolver_match.url_name in 'theme_settings_edit,auth_page_settings_edit,banneredit,banner_create,banner_edit_single,banner_delete,banner_toggle_status,other_details_edit,stat_card_create,stat_card_edit,stat_card_delete,stat_card_toggle_status,cta_section_create,cta_section_edit,cta_section_delete,cta_section_toggle_status,about_us_edit,about_us_section_edit,why_choose_create,why_choose_edit,why_choose_delete,why_choose_toggle_status,service_create,service_edit,service_delete,service_toggle_status,navbar_settings_edit,footer_edit,footer_settings_edit,footer_link_create,footer_link_edit,footer_link_delete,footer_link_toggle_status,footer_legal_create,footer_legal_edit,footer_legal_delete,footer_legal_toggle_status,extra_page_list,extra_page_create,extra_page_edit,extra_page_delete,extra_page_toggle_status' %}style="display:flex;"{% endif %}>
+      <a href="{% url 'theme_settings_edit' %}" class="{% if request.resolver_match.url_name == 'theme_settings_edit' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-fill-drip" style="color: #d4af37;"></i></span>Theme Color
+      </a>
+      <a href="{% url 'auth_page_settings_edit' %}" class="{% if request.resolver_match.url_name == 'auth_page_settings_edit' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-sign-in-alt" style="color: #0ea5e9;"></i></span>Login/Signup Images
+      </a>
       <a href="{% url 'banneredit' %}" class="{% if request.resolver_match.url_name in 'banneredit,banner_create,banner_edit_single,banner_delete,banner_toggle_status' %}admin-active{% endif %}">
         <span class="admin-ico"><i class="fas fa-image" style="color: #673ab7;"></i></span>Banner Settings
       </a>
@@ -153,6 +159,9 @@
       </a>
       <a href="{% url 'footer_edit' %}" class="{% if request.resolver_match.url_name in 'footer_edit,footer_settings_edit,footer_link_create,footer_link_edit,footer_link_delete,footer_link_toggle_status,footer_legal_create,footer_legal_edit,footer_legal_delete,footer_legal_toggle_status' %}admin-active{% endif %}">
         <span class="admin-ico"><i class="fas fa-shoe-prints" style="color: #795548;"></i></span>Footer Settings
+      </a>
+      <a href="{% url 'extra_page_list' %}" class="{% if request.resolver_match.url_name in 'extra_page_list,extra_page_create,extra_page_edit,extra_page_delete,extra_page_toggle_status' %}admin-active{% endif %}">
+        <span class="admin-ico"><i class="fas fa-file-alt" style="color: #009688;"></i></span>Extra Pages
       </a>
     </div>
 

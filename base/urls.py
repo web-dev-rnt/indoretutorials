@@ -73,5 +73,6 @@ path('notifications/clear-all/', views.clear_all_notifications, name='clear_all_
    # PWA URLs
     path('manifest.json', views.manifest, name='manifest1'),
     path('offline/', views.offline, name='offline'),
+    path('page/<slug:slug>/', views.extra_page_detail, name='extra_page_detail'),
     path('serviceworker.js', views.service_worker, name='service-worker'),
 ]

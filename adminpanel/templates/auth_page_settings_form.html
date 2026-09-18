@@ -1,0 +1,96 @@
+{% extends "admin_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+{% include 'message.html' %}
+<style>
+.auth-image-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.current-image {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+}
+
+.current-image-preview {
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 8px;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .auth-image-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="wrapper">
+    <h1 class="h1">Login / Signup Page Images</h1>
+    <p class="small">Set the side images shown next to the login and signup forms.</p>
+
+    <div class="nav-buttons">
+        <a href="{% url 'other_details_edit' %}" class="btn">← Back to Site Details</a>
+    </div>
+
+    <div class="panel">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="auth-image-grid">
+                <div class="form-group">
+                    <label for="{{ form.login_image.id_for_label }}">Login Page Image</label>
+                    {{ form.login_image }}
+                    <div class="help-text">{{ form.login_image.help_text }}</div>
+                    {% if form.login_image.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.login_image.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if auth_settings.login_image %}
+                        <div class="current-image">
+                            <label>Current Image:</label>
+                            <img src="{{ auth_settings.login_image.url }}" alt="Current login image" class="current-image-preview">
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.signup_image.id_for_label }}">Signup Page Image</label>
+                    {{ form.signup_image }}
+                    <div class="help-text">{{ form.signup_image.help_text }}</div>
+                    {% if form.signup_image.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.signup_image.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if auth_settings.signup_image %}
+                        <div class="current-image">
+                            <label>Current Image:</label>
+                            <img src="{{ auth_settings.signup_image.url }}" alt="Current signup image" class="current-image-preview">
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Update Images</button>
+                <a href="{% url 'other_details_edit' %}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

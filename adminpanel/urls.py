@@ -67,6 +67,8 @@ urlpatterns = [
     path('service/delete/<int:pk>/', views.service_delete, name='service_delete'),
     path('service/toggle/<int:pk>/', views.service_toggle_status, name='service_toggle_status'),
 
+    path('theme-settings/', views.theme_settings_edit, name='theme_settings_edit'),
+    path('auth-page-settings/', views.auth_page_settings_edit, name='auth_page_settings_edit'),
     path('navbar-settings/', views.navbar_settings_edit, name='navbar_settings_edit'),
 
     # Footer Management URLs
@@ -84,6 +86,13 @@ urlpatterns = [
     path('footer-legal/edit/<int:pk>/', views.footer_legal_edit, name='footer_legal_edit'),
     path('footer-legal/delete/<int:pk>/', views.footer_legal_delete, name='footer_legal_delete'),
     path('footer-legal/toggle/<int:pk>/', views.footer_legal_toggle_status, name='footer_legal_toggle_status'),
+
+    # Extra Pages (Privacy Policy, Disclaimer, Refund Policy, Contact Us, etc.) URLs
+    path('extra-pages/', views.extra_page_list, name='extra_page_list'),
+    path('extra-pages/create/', views.extra_page_create, name='extra_page_create'),
+    path('extra-pages/edit/<int:pk>/', views.extra_page_edit, name='extra_page_edit'),
+    path('extra-pages/delete/<int:pk>/', views.extra_page_delete, name='extra_page_delete'),
+    path('extra-pages/toggle/<int:pk>/', views.extra_page_toggle_status, name='extra_page_toggle_status'),
 
     # Category Management URLs
     path('categories/', views.manage_categories, name='manage_categories'),
@@ -142,6 +151,7 @@ urlpatterns = [
     # DATABASE BACKUP (Superadmin only)
     # ================================================================
     path('backup/', backup_views.backup_dashboard, name='backup_dashboard'),
+    path('backup/configuration/', backup_views.backup_configuration_save, name='backup_configuration_save'),
     path('backup/now/', backup_views.backup_now, name='backup_now'),
     path('backup/restore/', backup_views.backup_restore, name='backup_restore'),
     path('backup/download/<str:filename>/', backup_views.backup_download, name='backup_download'),

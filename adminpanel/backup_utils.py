@@ -14,18 +14,33 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-BACKUP_FOLDER = "/edutrellis-educational-backup"
 DB_PATH = str(Path(settings.BASE_DIR) / "db.sqlite3")
+
+
+def _credentials():
+    """Use the active admin-saved configuration, falling back to settings."""
+    from .models import DropboxConfiguration
+
+    config = DropboxConfiguration.objects.filter(is_active=True).first()
+    if config:
+        return config.app_key, config.app_secret, config.refresh_token, config.backup_folder
+    return (
+        settings.DROPBOX_APP_KEY,
+        settings.DROPBOX_APP_SECRET,
+        settings.DROPBOX_REFRESH_TOKEN,
+        "/edutrellis-educational-backup",
+    )
 
 
 def _get_dbx():
     """Return an authenticated Dropbox client, auto-refreshing the token."""
     try:
         import dropbox  # type: ignore
+        app_key, app_secret, refresh_token, _ = _credentials()
         dbx = dropbox.Dropbox(
-            oauth2_refresh_token=settings.DROPBOX_REFRESH_TOKEN,
-            app_key=settings.DROPBOX_APP_KEY,
-            app_secret=settings.DROPBOX_APP_SECRET,
+            oauth2_refresh_token=refresh_token,
+            app_key=app_key,
+            app_secret=app_secret,
         )
         dbx.users_get_current_account()  # validates credentials
         return dbx
@@ -39,12 +54,13 @@ def _ensure_folder(dbx) -> None:
     """Create the backup folder on Dropbox if it does not already exist."""
     try:
         import dropbox  # type: ignore
-        dbx.files_get_metadata(BACKUP_FOLDER)
+        _, _, _, backup_folder = _credentials()
+        dbx.files_get_metadata(backup_folder)
     except Exception:
         try:
             import dropbox  # type: ignore
-            dbx.files_create_folder_v2(BACKUP_FOLDER)
-            logger.info("Created Dropbox folder: %s", BACKUP_FOLDER)
+            dbx.files_create_folder_v2(backup_folder)
+            logger.info("Created Dropbox folder: %s", backup_folder)
         except Exception as exc:
             # Folder may have been created concurrently – ignore
             logger.warning("Could not create Dropbox folder: %s", exc)
@@ -76,7 +92,8 @@ class DropboxBackupManager:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"edutrellis_backup_{timestamp}.sqlite3"
-        dropbox_path = f"{BACKUP_FOLDER}/{filename}"
+        _, _, _, backup_folder = _credentials()
+        dropbox_path = f"{backup_folder}/{filename}"
 
         try:
             dbx = _get_dbx()
@@ -114,7 +131,8 @@ class DropboxBackupManager:
         try:
             dbx = _get_dbx()
             _ensure_folder(dbx)
-            result = dbx.files_list_folder(BACKUP_FOLDER)
+            _, _, _, backup_folder = _credentials()
+            result = dbx.files_list_folder(backup_folder)
             backups = []
             while True:
                 for entry in result.entries:
@@ -146,7 +164,8 @@ class DropboxBackupManager:
         Download the specified backup from Dropbox and replace db.sqlite3.
         Returns dict with keys: success, message.
         """
-        dropbox_path = f"{BACKUP_FOLDER}/{filename}"
+        _, _, _, backup_folder = _credentials()
+        dropbox_path = f"{backup_folder}/{filename}"
         try:
             dbx = _get_dbx()
             _, response = dbx.files_download(dropbox_path)
@@ -173,7 +192,8 @@ class DropboxBackupManager:
         Return a temporary direct download link (4 hour expiry).
         Returns dict with keys: success, url / message.
         """
-        dropbox_path = f"{BACKUP_FOLDER}/{filename}"
+        _, _, _, backup_folder = _credentials()
+        dropbox_path = f"{backup_folder}/{filename}"
         try:
             dbx = _get_dbx()
             link = dbx.files_get_temporary_link(dropbox_path)
@@ -191,7 +211,8 @@ class DropboxBackupManager:
         Permanently delete a backup file from Dropbox.
         Returns dict with keys: success, message.
         """
-        dropbox_path = f"{BACKUP_FOLDER}/{filename}"
+        _, _, _, backup_folder = _credentials()
+        dropbox_path = f"{backup_folder}/{filename}"
         try:
             dbx = _get_dbx()
             dbx.files_delete_v2(dropbox_path)

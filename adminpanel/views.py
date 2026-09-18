@@ -1475,6 +1475,40 @@ def service_toggle_status(request, pk):
     return redirect('about_us_edit')
 
 
+# ======================== THEME SETTINGS ========================
+
+@login_required
+def theme_settings_edit(request):
+    theme = ThemeSettings.get_solo()
+    if request.method == 'POST':
+        form = ThemeSettingsForm(request.POST, instance=theme)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Theme color updated successfully!')
+            return redirect('theme_settings_edit')
+    else:
+        form = ThemeSettingsForm(instance=theme)
+    context = {'form': form, 'theme': theme}
+    return render(request, 'theme_settings_form.html', context)
+
+
+# ======================== LOGIN/SIGNUP PAGE SETTINGS ========================
+
+@login_required
+def auth_page_settings_edit(request):
+    auth_settings = AuthPageSettings.get_solo()
+    if request.method == 'POST':
+        form = AuthPageSettingsForm(request.POST, request.FILES, instance=auth_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Login/Signup page images updated successfully!')
+            return redirect('auth_page_settings_edit')
+    else:
+        form = AuthPageSettingsForm(instance=auth_settings)
+    context = {'form': form, 'auth_settings': auth_settings}
+    return render(request, 'auth_page_settings_form.html', context)
+
+
 # ======================== NAVBAR SETTINGS ========================
 
 @login_required
@@ -1620,6 +1654,62 @@ def footer_legal_toggle_status(request, pk):
     return redirect('footer_edit')
 
 
+# ======================== EXTRA PAGES ========================
+
+@login_required
+def extra_page_list(request):
+    pages = ExtraPage.objects.all()
+    context = {'pages': pages}
+    return render(request, 'extra_pages_list.html', context)
+
+
+@login_required
+def extra_page_create(request):
+    if request.method == 'POST':
+        form = ExtraPageForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Page created successfully!')
+            return redirect('extra_page_list')
+    else:
+        form = ExtraPageForm()
+    context = {'form': form, 'action': 'Create'}
+    return render(request, 'extra_page_form.html', context)
+
+
+@login_required
+def extra_page_edit(request, pk):
+    page = get_object_or_404(ExtraPage, pk=pk)
+    if request.method == 'POST':
+        form = ExtraPageForm(request.POST, instance=page)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Page updated successfully!')
+            return redirect('extra_page_list')
+    else:
+        form = ExtraPageForm(instance=page)
+    context = {'form': form, 'action': 'Edit', 'page': page}
+    return render(request, 'extra_page_form.html', context)
+
+
+@login_required
+def extra_page_delete(request, pk):
+    page = get_object_or_404(ExtraPage, pk=pk)
+    page.delete()
+    messages.success(request, 'Page deleted successfully!')
+    return redirect('extra_page_list')
+
+
+@login_required
+def extra_page_toggle_status(request, pk):
+    page = get_object_or_404(ExtraPage, pk=pk)
+    page.is_active = not page.is_active
+    page.save()
+    status = 'activated' if page.is_active else 'deactivated'
+    messages.success(request, f'Page {status} successfully!')
+    return redirect('extra_page_list')
+
+
 # ======================== CATEGORIES ========================
 
 @login_required
@@ -1637,11 +1727,19 @@ def create_category(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
+        icon = request.POST.get('icon') or 'graduation-cap'
+        icon_color = request.POST.get('icon_color') or '#667eea'
         if name:
             if Category.objects.filter(name__iexact=name).exists():
                 messages.error(request, 'Category with this name already exists.')
             else:
-                category = Category.objects.create(name=name, description=description, slug=slugify(name)[:140])
+                category = Category.objects.create(
+                    name=name,
+                    description=description,
+                    slug=slugify(name)[:140],
+                    icon=icon,
+                    icon_color=icon_color,
+                )
                 messages.success(request, f'Category "{category.name}" created successfully.')
                 return redirect('manage_categories')
         else:
@@ -1655,6 +1753,8 @@ def edit_category(request, category_id):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description')
+        icon = request.POST.get('icon') or 'graduation-cap'
+        icon_color = request.POST.get('icon_color') or '#667eea'
         if name:
             if Category.objects.filter(name__iexact=name).exclude(id=category.id).exists():
                 messages.error(request, 'Another category with this name already exists.')
@@ -1662,6 +1762,8 @@ def edit_category(request, category_id):
                 category.name = name
                 category.description = description
                 category.slug = slugify(name)[:140]
+                category.icon = icon
+                category.icon_color = icon_color
                 category.save()
                 messages.success(request, f'Category "{category.name}" updated successfully.')
                 return redirect('manage_categories')

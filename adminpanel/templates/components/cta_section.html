@@ -1,11 +1,14 @@
 {% for cta in cta_sections %}
-<div class="cta-section">
+<div class="cta-section" {% if cta.background_image %}style="background-image: url('{{ cta.background_image.url }}');"{% endif %}>
     <div class="cta-content">
         <h2 class="cta-title">{{ cta.title }}</h2>
+        {% if cta.description %}
+            <p class="cta-description">{{ cta.description }}</p>
+        {% endif %}
         {% if cta.button_link %}
-            <a href="{{ cta.button_link }}" class="cta-btn" target="_blank">{{ cta.button_text }}</a>
+            <a href="{{ cta.button_link }}" class="cta-btn" style="--cta-color: {{ cta.button_color|default:'#D4AF37' }}; --cta-color-rgb: {{ cta.button_color_rgb }};" target="_blank">{{ cta.button_text }}</a>
         {% else %}
-            <button class="cta-btn" type="button">{{ cta.button_text }}</button>
+            <button class="cta-btn" style="--cta-color: {{ cta.button_color|default:'#D4AF37' }}; --cta-color-rgb: {{ cta.button_color_rgb }};" type="button">{{ cta.button_text }}</button>
         {% endif %}
     </div>
 </div>
@@ -14,11 +17,23 @@
 <style>
 .cta-section {
     background: #ffffff;
+    background-size: cover;
+    background-position: center;
     padding: 0px 20px 55px 20px;
     text-align: center;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
+}
+
+.cta-description {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    color: #4a5568;
+    max-width: 640px;
+    margin: -18px auto 28px;
+    line-height: 1.6;
 }
 
 .cta-content {
@@ -29,9 +44,9 @@
 }
 
 .cta-title {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     font-size: 30px;
-    font-weight: 700;
+    font-weight: 800;
     color: #1a202c;
     margin-bottom: 32px;
     line-height: 1.25;
@@ -44,35 +59,38 @@
 }
 
 .cta-btn {
-    background: #e74c3c;
+    --cta-color: #D4AF37;
+    --cta-color-rgb: 212, 175, 55;
+    background: var(--cta-color);
     color: #ffffff;
     border: none;
     padding: 16px 42px;
     border-radius: 50px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-weight: 600;
+    font-family: var(--font-sans);
+    font-weight: 700;
     font-size: 18px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     display: inline-block;
-    box-shadow: 0 4px 14px rgba(231, 76, 60, 0.35);
+    box-shadow: 0 4px 14px rgba(var(--cta-color-rgb), 0.35);
     letter-spacing: 0.3px;
     text-transform: none;
     white-space: nowrap;
 }
 
 .cta-btn:hover {
-    background: #c0392b;
+    filter: brightness(0.9);
     transform: translateY(-2px);
     color: #ffffff;
     text-decoration: none;
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.45);
+    box-shadow: 0 6px 20px rgba(var(--cta-color-rgb), 0.45);
 }
 
 .cta-btn:active {
+    filter: brightness(0.85);
     transform: translateY(0);
-    box-shadow: 0 3px 10px rgba(231, 76, 60, 0.35);
+    box-shadow: 0 3px 10px rgba(var(--cta-color-rgb), 0.35);
 }
 
 /* Tablet Responsive */

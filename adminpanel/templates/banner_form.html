@@ -49,6 +49,24 @@
                             {% endif %}
                         </div>
 
+                        <!-- Mobile image upload + current image (edit mode) -->
+                        <div class="ad-form-group ad-full-width">
+                            <label for="{{ form.mobile_image.id_for_label }}">Mobile Banner Image (Optional)</label>
+                            {{ form.mobile_image }}
+                            <small class="ad-help-text">{{ form.mobile_image.help_text }}</small>
+                            {% if form.mobile_image.errors %}
+                                <div class="ad-error">{{ form.mobile_image.errors.0 }}</div>
+                            {% endif %}
+                            {% if banner.mobile_image %}
+                                <div class="current-image">
+                                    <label>Current Mobile Image:</label>
+                                    <img src="{{ banner.mobile_image.url }}"
+                                         alt="Current mobile banner"
+                                         class="current-image-preview">
+                                </div>
+                            {% endif %}
+                        </div>
+
                         <!-- Alt text -->
                         <div class="ad-form-group ad-full-width">
                             <label for="{{ form.alt_text.id_for_label }}">Alt Text *</label>
@@ -106,7 +124,7 @@
         <!-- ── Live Preview Card ── -->
         <div class="ad-card">
             <div class="ad-card-header">
-                <h3>🔍 Preview</h3>
+                <h3>🔍 Preview (Desktop)</h3>
             </div>
             <div class="ad-card-body">
                 <div class="image-preview-container">
@@ -121,6 +139,30 @@
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ── Mobile Preview Card ── -->
+        <div class="ad-card">
+            <div class="ad-card-header">
+                <h3>📱 Preview (Mobile)</h3>
+            </div>
+            <div class="ad-card-body">
+                <div class="image-preview-container mobile-preview-container">
+                    <div id="mobileImagePreview" class="image-preview mobile-image-preview">
+                        {% if banner.mobile_image %}
+                            <img src="{{ banner.mobile_image.url }}" alt="Mobile banner preview">
+                        {% elif banner.image %}
+                            <img src="{{ banner.image.url }}" alt="Mobile banner preview (using desktop image)">
+                        {% else %}
+                            <div class="no-image-placeholder">
+                                <span>📷</span>
+                                <p>Mobile preview will appear here</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <small class="ad-help-text">Uses the desktop image until a mobile image is uploaded.</small>
             </div>
         </div>
 
@@ -227,6 +269,21 @@
     margin-bottom: 10px;
 }
 
+/* ─── Mobile preview panel: mimics the on-site mobile banner strip (~750x400 crop) ─── */
+.mobile-preview-container {
+    max-width: 280px;
+    margin: 0 auto;
+}
+.mobile-image-preview {
+    min-height: 0;
+    aspect-ratio: 750 / 400;
+}
+.mobile-image-preview img {
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+}
+
 /* ─── Form actions ─── */
 .ad-form-actions { display: flex; gap: 10px; }
 
@@ -245,6 +302,8 @@ a:-webkit-any-link { text-decoration: none; }
 document.addEventListener('DOMContentLoaded', function () {
     const imageInput   = document.querySelector('#id_image');
     const imagePreview = document.querySelector('#imagePreview');
+    const mobileImageInput   = document.querySelector('#id_mobile_image');
+    const mobileImagePreview = document.querySelector('#mobileImagePreview');
 
     if (imageInput) {
         imageInput.addEventListener('change', function (e) {
@@ -253,6 +312,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    // Mirror onto the mobile preview too, unless a mobile-specific image is already chosen.
+                    if (mobileImagePreview && !(mobileImageInput && mobileImageInput.files[0])) {
+                        mobileImagePreview.innerHTML = `<img src="${e.target.result}" alt="Mobile preview">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (mobileImageInput) {
+        mobileImageInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    mobileImagePreview.innerHTML = `<img src="${e.target.result}" alt="Mobile preview">`;
                 };
                 reader.readAsDataURL(file);
             }

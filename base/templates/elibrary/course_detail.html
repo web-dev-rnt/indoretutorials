@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ course.title }} - eLibrary</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/fontawesome/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/typography.css' %}">
     
     <!-- Razorpay Checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
@@ -14,8 +15,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --primary: #c7212f;
-            --primary-dark: #ad1830;
+            --primary: var(--brand-primary);
+            --primary-dark: var(--brand-primary-dark);
             --text: #162033;
             --muted: #707793;
             --border: #e9ecf3;
@@ -24,7 +25,7 @@
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: var(--font-sans);
             background: var(--bg);
             color: var(--text);
         }
@@ -34,7 +35,7 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: #fff;
             padding: 32px 20px;
-            box-shadow: 0 4px 16px rgba(199, 33, 47, 0.15);
+            box-shadow: 0 4px 16px rgba(var(--brand-primary-rgb), 0.15);
         }
 
         .course-header.free {
@@ -300,7 +301,7 @@
         }
 
         .chapter:hover {
-            box-shadow: 0 4px 12px rgba(199, 33, 47, 0.08);
+            box-shadow: 0 4px 12px rgba(var(--brand-primary-rgb), 0.08);
         }
 
         .chapter-head {
@@ -941,7 +942,7 @@ function openRazorpayCheckout(data) {
             contact: data.user_phone || ''
         },
         theme: {
-            color: "#c7212f"
+            color: "var(--brand-primary)"
         },
         handler: function(response) {
             verifyPayment(response);

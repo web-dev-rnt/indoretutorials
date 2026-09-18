@@ -1,0 +1,184 @@
+{% extends 'admin_dashboard.html' %}
+
+{% block title %}Extra Pages{% endblock %}
+
+{% block content %}
+<div class="ad-main-content">
+    <div class="ad-page-header">
+        <h1>📄 Extra Pages</h1>
+        <p>Manage static pages like Privacy Policy, Disclaimer, Refund Policy and Contact Us — these show up as links in the site footer.</p>
+        <a href="{% url 'extra_page_create' %}" class="ad-btn ad-btn-primary">
+            <span>➕</span> Add New Page
+        </a>
+    </div>
+
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>All Pages</h2>
+        </div>
+        <div class="ad-card-body">
+            {% if pages %}
+                <div class="ad-table-container">
+                    <table class="ad-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for page in pages %}
+                                <tr {% if not page.is_active %}class="ad-inactive"{% endif %}>
+                                    <td><strong>{{ page.title }}</strong></td>
+                                    <td><code>/page/{{ page.slug }}/</code></td>
+                                    <td>
+                                        {% if page.is_active %}
+                                            <span class="ad-status ad-active">Active</span>
+                                        {% else %}
+                                            <span class="ad-status ad-inactive">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ page.updated_at|date:"M j, Y" }}</td>
+                                    <td class="ad-actions">
+                                        <div class="action-buttons">
+                                            {% if page.is_active %}
+                                                <a href="{% url 'extra_page_detail' page.slug %}" target="_blank"
+                                                   class="action-btn view-btn" title="View Page">
+                                                    <span class="btn-icon">👁️</span><span class="btn-text">View</span>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'extra_page_edit' page.pk %}"
+                                               class="action-btn edit-btn" title="Edit Page">
+                                                <span class="btn-icon">✏️</span><span class="btn-text">Edit</span>
+                                            </a>
+                                            <a href="{% url 'extra_page_toggle_status' page.pk %}"
+                                               class="action-btn {% if page.is_active %}hide-btn{% else %}show-btn{% endif %}"
+                                               title="{% if page.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                                <span class="btn-icon">{% if page.is_active %}⏸️{% else %}▶️{% endif %}</span>
+                                                <span class="btn-text">{% if page.is_active %}Hide{% else %}Show{% endif %}</span>
+                                            </a>
+                                            <a href="{% url 'extra_page_delete' page.pk %}"
+                                               onclick="return confirm('Delete this page? This cannot be undone.')"
+                                               class="action-btn delete-btn" title="Delete Page">
+                                                <span class="btn-icon">🗑️</span><span class="btn-text">Delete</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="ad-empty-state">
+                    <h3>No extra pages created yet</h3>
+                    <a href="{% url 'extra_page_create' %}" class="ad-btn ad-btn-primary">Add First Page</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ad-card">
+        <div class="ad-card-header">
+            <h2>⚖️ Footer Legal Links</h2>
+        </div>
+        <div class="ad-card-body">
+            <p class="ad-help-text" style="margin-bottom: 0;">
+                Creating a page here doesn't automatically add it to the footer. Point a
+                <a href="{% url 'footer_edit' %}">Footer Legal Link</a> at <code>/page/&lt;slug&gt;/</code>
+                (e.g. <code>/page/privacy-policy/</code>) to show it in the footer's bottom bar.
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+.ad-actions {
+    white-space: nowrap;
+    min-width: 240px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.view-btn {
+    background: #ede7f6;
+    color: #5e35b1;
+    border-color: #d1c4e9;
+}
+.view-btn:hover {
+    background: #d1c4e9;
+    color: #311b92;
+    transform: translateY(-1px);
+}
+
+.edit-btn {
+    background: #e3f2fd;
+    color: #1976d2;
+    border-color: #bbdefb;
+}
+.edit-btn:hover {
+    background: #bbdefb;
+    color: #0d47a1;
+    transform: translateY(-1px);
+}
+
+.hide-btn {
+    background: #fff3e0;
+    color: #f57c00;
+    border-color: #ffcc02;
+}
+.hide-btn:hover {
+    background: #ffcc02;
+    color: #e65100;
+    transform: translateY(-1px);
+}
+
+.show-btn {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border-color: #81c784;
+}
+.show-btn:hover {
+    background: #81c784;
+    color: #1b5e20;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    background: #ffebee;
+    color: #d32f2f;
+    border-color: #ffcdd2;
+}
+.delete-btn:hover {
+    background: #ffcdd2;
+    color: #b71c1c;
+    transform: translateY(-1px);
+}
+
+.ad-status.ad-active { color: #28a745; font-weight: 500; }
+.ad-status.ad-inactive { color: #dc3545; font-weight: 500; }
+
+.ad-help-text a { color: #1976d2; }
+</style>
+{% endblock %}

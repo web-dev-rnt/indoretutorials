@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load navbar_tags %}
 
 {% block content %}
 {% include 'message.html' %}
+{% get_auth_page_settings as auth_settings %}
 
 <style>
 /* Spinner Fix */
@@ -104,14 +106,14 @@
 .resend-link {
   background: transparent;
   border: none;
-  color: #3b82f6;
+  color: var(--brand-primary);
   cursor: pointer;
   padding: 10px;
   text-decoration: underline;
 }
 
 .resend-link:hover {
-  color: #1d4ed8;
+  color: var(--brand-primary-dark);
 }
 
 .resend-link:disabled {
@@ -186,7 +188,7 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: var(--brand-primary);
 }
 
 .show-password span {
@@ -211,8 +213,25 @@
 /* Input Focus Enhancement */
 .form-field input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.15);
+}
+
+/* Side image overlay */
+.auth-image-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+}
+
+.auth-image-quote {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 /* Secure Login Badge */
@@ -232,6 +251,18 @@
   width: 14px;
   height: 14px;
   color: #16a34a;
+}
+
+/* On small screens let the page scroll naturally instead of clipping inside the card */
+@media (max-width: 768px) {
+  .login-card {
+    max-height: none;
+    overflow: visible;
+  }
+  .login-form-container {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 </style>
 
@@ -317,11 +348,10 @@
     </div>
     
 <div class="login-image" aria-hidden="true">
-  <picture>
-    <source media="(min-width: 960px)" srcset="{% static 'img/loginformimg.jpg' %}">
-    <source media="(min-width: 600px)" srcset="{% static 'img/loginformimg.jpg' %}">
-    <img src="{% static 'img/loginformimg.jpg' %}" alt="Login illustration">
-  </picture>
+  <img src="{% if auth_settings.login_image %}{{ auth_settings.login_image.url }}{% else %}{% static 'img/loginformimg.jpg' %}{% endif %}" alt="Login illustration">
+  <div class="auth-image-overlay">
+    <div class="auth-image-quote">"Learning today, leading tomorrow."</div>
+  </div>
 </div>
   </div>
 </div>
